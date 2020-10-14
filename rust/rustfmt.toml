@@ -1,0 +1,16 @@
+unstable_features = true
+
+# Unix or Windows line endings
+newline_style = "Unix"
+
+# Minimum number of blank lines which must be put between items. If two items have fewer blank lines between them, additional blank lines are inserted.
+blank_lines_lower_bound = 0
+
+# Maximum number of blank lines which can be put between items. If more than this number of consecutive empty lines are found, they are trimmed down to match this integer.
+blank_lines_upper_bound = 1
+
+# Put single-expression functions on a single line
+fn_single_line = true
+
+# Error if unable to get comments or string literals within max_width, or they are left with trailing whitespaces.
+error_on_unformatted = true
