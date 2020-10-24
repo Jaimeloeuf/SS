@@ -5,6 +5,7 @@ use std::fs;
 mod Token;
 mod TokenType;
 mod eat;
+mod hash;
 mod scanner;
 
 fn main() {
@@ -21,7 +22,13 @@ fn main() {
 }
 
 fn read_file(filename: &String) {
-    let source = fs::read_to_string(filename).expect("Cannot read file");
+    let mut source = fs::read_to_string(filename).expect("Cannot read file");
 
+    // Debug
     println!("Source content:\n{}", source);
+
+    /* Caching mechanism */
+    // hash::calculate_hash(&source);
+
+    let scanner = scanner::Scanner::new(&mut source);
 }
