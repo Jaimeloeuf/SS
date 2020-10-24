@@ -1,5 +1,11 @@
 use std::env;
 use std::fs;
+// use std::io;
+
+mod Token;
+mod TokenType;
+mod eat;
+mod scanner;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
