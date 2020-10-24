@@ -39,7 +39,12 @@ impl Scanner {
         // Each turn of the loop, we scan a single token.
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token();
+            // self.scan_token();
+            // self.add_token(TokenType::Str, value)
+            match self.scan_token() {
+                Some(token) => println!("{:?}", token),
+                None => println!("Not a token!"),
+            }
         }
 
         // @todo Add Eof / Eol token
@@ -51,15 +56,22 @@ impl Scanner {
         });
 
         // self.tokens
-        for token in self.tokens.iter() {
-            println!("{}", token.to_string())
-        }
+        // println!("Logging out token vector");
+        // for token in self.tokens.iter() {
+        //     println!("{}", token.to_string())
+        // }
+        // println!("End of token vector");
     }
 
-    fn scan_token(&mut self) {
+    // SHIT THIS IS WRONG,
+    // I cannot return token type, cos some stuff like literal needs to be constructed here
+    // So i need to construct the token here then return option token
+    fn scan_token(&mut self) -> Option<TokenType> {
         let current_character: char = self.advance();
+        // println!("Current char {}", current_character);
 
-        let token_type = match current_character {
+        // Match current_character and maybe next character to a TokenType or None
+        match current_character {
             // Standard tokens
             ';' => Some(TokenType::Semicolon),
             '{' => Some(TokenType::LeftBrace),
@@ -91,13 +103,11 @@ impl Scanner {
             '/' if self.conditional_advance('/') => {
                 // eat::line(&mut source);
                 // // return None;
-                // return ();
 
                 while self.peek() != '\n' && !self.is_at_end() {
                     self.advance();
                 }
-
-                return ();
+                None
             }
             // @todo To support block comments once eat methods are completed
             // '/' if self.conditional_advance('*') => {
@@ -119,9 +129,12 @@ impl Scanner {
 
             // String Literals
             // '"' => {
-            //     let literal = eat::string(&mut source);
-            //     return Some(Token::new_string(&literal, *line));
+            //     // let literal = eat::string(&mut source);
+            //     // return Some(Token::new_string(&literal, *line));
+            //     let literal = self.string_literals();
+            //     return Some(TokenType::new_string(&literal, *line));
             // }
+
             // Number Literals
             // '0'..='9' => {
             //     source.push(c);
@@ -152,9 +165,9 @@ impl Scanner {
                 );
                 // Call the error handling code
 
-                return ();
+                None
             }
-        };
+        }
     }
 
     fn is_at_end(&self) -> bool {
@@ -190,6 +203,30 @@ impl Scanner {
         } else {
             self.source.chars().nth(self.current).unwrap()
         }
+    }
+
+    fn string_literals(&mut self) -> String {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            //   Lox.error(line, "Unterminated string.");
+            println!("Unterminated string.");
+            return "".to_string(); // Fix this... I need this to return smth, but shouldnt cos this should just error out
+        }
+
+        // The closing ".
+        self.advance();
+
+        // let value: String = self.source[self.start + 1..self.current - 1].to_string();
+        // self.add_token(TokenType::Str, )
+        // Trim the surrounding quotes.
+        self.source[self.start + 1..self.current - 1].to_string()
     }
 
     // addToken() is for output

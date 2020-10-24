@@ -4,18 +4,21 @@
 #[allow(dead_code)] // @todo Remove once scanner complete
 pub enum TokenType {
   // Single-character tokens.
+  Semicolon,
   LeftParen,
   RightParen,
   LeftBrace,
   RightBrace,
   Comma,
   Dot,
+
+  // Math operators
   Minus,
   Plus,
-  Semicolon,
   Slash,
   Star,
 
+  // Operators
   // One or two character tokens.
   Bang,
   BangEqual,
@@ -26,29 +29,34 @@ pub enum TokenType {
   Less,
   LessEqual,
 
+  // TO replace these with || and &&
+  And,
+  Or,
+
+  // Add in binary operators
+
   // Literals.
   Identifier,
   Str, // String is a reserved keyword in rust
   Number,
 
   // Keywords.
-  And,
-  Break,
-  Class,
+  Break, // Do we need this? Since no loops? should we even have switch case
+  // Class,
+  // Super,
+  // This,
+  If,
   Else,
   False,
-  Fun,
-  For,
-  If,
-  Nil,
-  Or,
-  Print,
+  Function,
+  For,   // to remove?
+  While, // to remove?
+  Nil,   // to remove?
+  Print, // Shouldnt this be in std:: lib instead?
   Return,
-  Super,
-  This,
   True,
-  Var,
-  While,
+  Const,
+
   Eof,
 }
 
