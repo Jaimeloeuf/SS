@@ -1,13 +1,29 @@
 # SS (SimpleScript)
+- Simple
+- Quick to learn
+- No assumptions / quirkiness
+
 idiot n beginner proof language
 prevent me from saying im so dumb when i wastedays trying to figure smth out because it is not intuitive
 simple, flexible and idiot proof n practical
+
+Technical features:
+- Statically typed
+    - Need to know the type at Compile time if compiled
+    - Need to know the 
+    - actually the code is always "compiled" first into a Middle IR that is simple a token, that can be parsed later on.
+        - so in this case, even for the interpreter version, the Type rule is also enforced
+- Immutable
+    - no data can be changed once created.
+- Functional
+- 
 
 ## Language Features
 - Can be both intepreted and compiled AOT into an executable
     - And obviously they should work the exact same way, just one faster and native to the platform
     - If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
     - We also need to take care of cross compilation techniques.
+- Focus on explicit representation of ideas via code. Instead of like JS where there are alot of assumptions/quirks/implicit behaviours/magic
 - Comes with a GC, will be explored further below
 - Paradigm
     - Procedural
@@ -19,6 +35,14 @@ simple, flexible and idiot proof n practical
     - Javascript / Typescript / Rust / 
 - Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
 
+
+
+
+## Build
+- Compile using LLVM backend
+- Execute using Rust/Other intepreters
+    - Might support JIT integrations, but... tbd
+- Support transpilation options? Like transpile to TS/JS/Rust
 
 ## Comments
 Single line comments
@@ -43,6 +67,7 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
 ### Primitives
+<!-- consider using this type of int format instead? -->
 - void? undefined? null? Optional?
     - void means WILL NOT RETURN / NOT ALLOWED TO RETURN from function
         - means that this function is a pure side effect...
@@ -78,7 +103,9 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
         - note that not using double as float is a better word
 - String
     - Fixed length char array! Means no need for complex underlying vector stuff for dynamic growable strings
-- Boolean
+- Bool
+    - true
+    - false
 ### Special data types
 - Object
     - key value maps
@@ -171,31 +198,40 @@ const Array<Number> myArray = [1, 2, 3, 4]
 - SS will come with a GC, either with the runtime or part of the compiled executable
 
 ## Operators
-- logical
-    - not
-    - !
-    - and
-    - &&
-    - or
-    - ||
-- binary
-    - ~
-    - &
-    - |
-- Math
-    - +
-    - -
-    - *
-    - /
-    - %
-    - ^ // Should we include this?
-- Comparison
-    - ==
-    - !=
-    - >
-    - <
-    - >=
-    - <=
+### logical
+When executing expressions with logical operations "and" + "or" short circuting will be applied.
+- not
+- !
+- and
+- &&
+- or
+- ||
+
+### binary
+- ~
+- &
+- |
+
+### Math
+- +
+- -
+- *
+- /
+- %
+- ^ // Should we include this?
+- Notice that they are no Increment and Decrement operators
+    - Say you see some nasty code like ```---a;```
+    - Is it valid? That depends on how the scanner splits the lexemes. If the scanner sees it like: ```- --a;```
+    - Then it could be parsed. But that would require the scanner to know about the grammatical structure of the surrounding code, which entangles things more than we want. Instead, the maximal munch rule says that it is always scanned like: ```-- -a;```
+    - It scans it that way even though doing so leads to a syntax error later in the parser.
+
+### Comparison
+- ==
+- !=
+- >
+- <
+- >=
+- <=
 
 ## Scope
 - Block scope
@@ -245,8 +281,10 @@ else
 ```
 
 ## Loops
-no loops
-only functional iterables
+- no loops
+- only functional iterables
+- not possible to do loops when all your values are constants, how to do a for loop?
+recursion
 ```js
 import iterable from "std:iterable";
 
@@ -274,7 +312,12 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
 - IIFEs are supported, and used mainly to enclose all the data and logic into its self enclosing scope
 - should functions be hoisted? or cannot be accessed after definition
 - overloading?
+- Should there be implicit returns for functions? Does that mean we need to support undefined?
 - Named function arguments? Removes the need for overloading and undefined function inputs to pass in a argument later in the sequence
+- C style syntax uses ()
+    - but when we do something like nested functions, there end up with too man braces, thus making the elm syntax much much nicer
+    - instead of f1(f2(f3(f4(f5(arg)))))
+    - elm syntax f1 f2 f3 f4 f5 arg
 
 ### Pure functions
 ```js
@@ -371,8 +414,10 @@ function factoryFunction(<T> constructorArgs) {
 ```
 
 ## Modules
-- @todo instead of std:libraryname should be std/libraryName?
 - Support breaking code up into modules. Every new file is a module
+
+### Import
+- @todo instead of std:libraryname should be std/libraryName?
 - Import a module from standard library
     ```js
     import moduleName from "std:libraryName"
@@ -385,11 +430,21 @@ function factoryFunction(<T> constructorArgs) {
     ```js
     import moduleName from "./myModuleName"
     ```
+- Import a module into its own namespace instead of the current module's namespace
+    ```js
+    import "./myModuleName" as moduleName
+    ```
 - Libraries/Modules can be scoped in packages
     - e.g. many libraries/modules inside the standard library package
     - namespaced / scoped with std:
     - you can have nested : scoping
     - scoping should be based on file/dir structure
+
+### Export
+- You must export everything explicitly in order for it to be available to module importer's namespace.
+```js
+export 
+```
 
 
 ## Global includes/preamble
@@ -413,6 +468,15 @@ const Object targetObj = {
 // 
 proxy.new(targetObj)
 ```
+
+### Macros
+- Will consider supporting certain types of macros, but TBD
+
+
+## Language extensions
+### FFI
+- Will have builtin language/std-lib level support for FFI to interact with Rust and C/C++ code in the future
+
 
 ## Preferences
 - Use camelCase for constant values
