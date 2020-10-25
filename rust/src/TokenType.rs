@@ -1,6 +1,6 @@
 // use std::fmt; // @todo Used for 'impl' of fmt::Display for TokenType enum
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)] // @todo Remove once scanner complete
 pub enum TokenType {
   // Single-character tokens.
