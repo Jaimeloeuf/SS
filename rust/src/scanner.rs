@@ -1,4 +1,5 @@
 // use crate::eat;
+use crate::Keywords::KEYWORDS;
 use crate::Token::Token;
 use crate::TokenType::TokenType;
 
@@ -15,7 +16,8 @@ pub struct Scanner {
     current: usize, // current points at the character currently being considered
 
     // The line field tracks what source line current is on so we can produce tokens that know their location.
-    line: u32, // which line of the source we are currently on, used mainly for error reporting
+    // line: u32, // which line of the source we are currently on, used mainly for error reporting
+    line: usize, // which line of the source we are currently on, used mainly for error reporting
 }
 
 impl Scanner {
@@ -42,7 +44,7 @@ impl Scanner {
             // self.scan_token();
             // self.add_token(TokenType::Str, value)
             match self.scan_token() {
-                Some(token) => println!("{:?}", token),
+                Some(token) => println!("{}", token.to_string()),
                 None => println!("Not a token!"),
             }
         }
@@ -63,16 +65,8 @@ impl Scanner {
         // println!("End of token vector");
     }
 
-    // SHIT THIS IS WRONG,
-    // I cannot return token type, cos some stuff like literal needs to be constructed here
-    // So i need to construct the token here then return option token
-    fn scan_token(&mut self) -> Option<TokenType> {
-        let current_character: char = self.advance();
-        // println!("Current char {}", current_character);
-
-        // Match current_character and maybe next character to a TokenType or None
+    fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
         match current_character {
-            // Standard tokens
             ';' => Some(TokenType::Semicolon),
             '{' => Some(TokenType::LeftBrace),
             '}' => Some(TokenType::RightBrace),
@@ -128,34 +122,14 @@ impl Scanner {
             }
 
             // String Literals
-            // '"' => {
-            //     // let literal = eat::string(&mut source);
-            //     // return Some(Token::new_string(&literal, *line));
-            //     let literal = self.string_literals();
-            //     return Some(TokenType::new_string(&literal, *line));
-            // }
+            '"' => Some(TokenType::Str),
 
             // Number Literals
-            // '0'..='9' => {
-            //     source.push(c);
-            //     let literal = eat::number(&mut source);
-            //     return Some(Token::new_number(literal, *line));
-            // }
+            '0'..='9' => Some(TokenType::Number),
+
             // Alphabetic words
-            // 'a'...'z' | 'A'...'Z' => {
-            // 'a'..='z' | 'A'..='Z' => {
-            // source.push(c);
-            // let lexeme = eat::identifier(&mut source);
-            // match KEYWORDS.get(&lexeme) {
-            //     Some(type_of) => {
-            //         let type_of = *type_of;
-            //         return Some(Token::new_keyword(type_of, *line));
-            //     }
-            //     None => {
-            //         return Some(Token::new_identifier(&lexeme, *line));
-            //     }
-            // }
-            // }
+            // Identifiers, must start with alphabet or _, but can contain mix of alphanumeric chars
+            'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
 
             // Couldn't Match
             _ => {
@@ -167,6 +141,74 @@ impl Scanner {
 
                 None
             }
+        }
+    }
+
+    // Construct token here then return option token
+    fn scan_token(&mut self) -> Option<Token> {
+        let current_character: char = self.advance();
+        // println!("Current char {}", current_character);
+        let token_type: Option<TokenType> = self.get_token_type(current_character);
+
+        // Match current_character and maybe next character to a TokenType or None
+        match token_type {
+            Some(TokenType::Str) => {
+                // let literal = eat::string(&mut source);
+                // return Some(Token::new_string(&literal, *line));
+
+                let literal = self.string_literals();
+                Some(Token::new_string(literal.to_string(), self.line))
+            }
+
+            // All the other things that need more processing
+            // '0'..='9' => {
+            Some(TokenType::Number) => {
+                // let literal = eat::number(&mut source);
+                // return Some(Token::new_number(literal, *line));
+
+                // Push current character back into source as advance methods removes it.
+                // @todo Or maybe advance method shouldnt remove it? And just borrow ref here?
+                self.source.push(current_character);
+                let literal = self.number_literal();
+                // Hmm this should not be a to_string
+                Some(Token::new_number(literal.to_string(), self.line))
+            }
+
+            Some(TokenType::Identifier) => {
+                self.source.push(current_character);
+                // let lexeme = eat::identifier(&mut source);
+                // match KEYWORDS.get(&lexeme) {
+                //     Some(type_of) => {
+                //         let type_of = *type_of;
+                //         return Some(Token::new_keyword(type_of, *line));
+                //     }
+                //     None => {
+                //         return Some(Token::new_identifier(&lexeme, *line));
+                //     }
+                // }
+
+                let identifier = self.identifier();
+                let keyword = KEYWORDS.get(&identifier);
+
+                match keyword {
+                    // If so, we use that keyword's token type.
+                    Some(keyword) => Some(Token::new_keyword(keyword.clone(), self.line)),
+
+                    // Otherwise, it's a regular user-defined identifier.
+                    None => Some(Token::new_identifier(identifier, self.line)),
+                }
+            }
+
+            Some(token_type) => {
+                // Can unwrap here as we are sure that there is a value because of the Some wrap matching
+                Some(Token::new_none_literal(
+                    token_type,
+                    current_character.to_string(),
+                    self.line,
+                ))
+            }
+            // Return None for Token back to caller of scan_token
+            None => None,
         }
     }
 
@@ -184,7 +226,7 @@ impl Scanner {
         self.source.chars().nth(self.current - 1).unwrap()
     }
 
-    // It’s like a conditional advance(). We only consume the current character if it’s what we’re looking for.
+    // It's like a conditional advance(). We only consume the current character if it's what we're looking for.
     fn conditional_advance(&mut self, expected: char) -> bool {
         if self.is_at_end() || (self.source.chars().nth(self.current).unwrap() != expected) {
             return false;
@@ -205,6 +247,16 @@ impl Scanner {
         }
     }
 
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current + 1).unwrap()
+        }
+    }
+
+    // Returns the String literal between ""
+    // @todo Should this be a new string or a slice?
     fn string_literals(&mut self) -> String {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
@@ -229,8 +281,51 @@ impl Scanner {
         self.source[self.start + 1..self.current - 1].to_string()
     }
 
+    // Returns the String literal between ""
+    // @todo Should this be a new string or a slice?
+    // Size of int is limited to isize? Should we support i128? Or how to do longs?
+    fn number_literal(&mut self) -> isize {
+        while self.peek().is_ascii_digit() {
+            self.advance();
+        }
+
+        // Look for a fractional part.
+        // Second part should be peek next
+        if self.peek() == '.' && self.peek().is_ascii_digit() {
+            // Consume fractional notation "."
+            self.advance();
+
+            while self.peek().is_ascii_digit() {
+                self.advance();
+            }
+        }
+
+        // If a none space character is chained to the number...
+        // What about semicolon? Those are fine to chain right? Why dun we just ignore this and let the parser find issues?
+        // if self.peek() != ' ' {
+        // }
+
+        // This should not be isize, as the value will be limited.
+        // Perhaps we should save this as a string first, then only convert it later
+        // @todo This will fail if it is a fraction
+        self.source[self.start..self.current]
+            .parse::<isize>()
+            .unwrap()
+    }
+
+    // @todo Should this be a new string or a slice?
+    fn identifier(&mut self) -> String {
+        // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
+        // The supported alphanumeric characters
+        while self.peek().is_alphanumeric() {
+            self.advance();
+        }
+
+        self.source[self.start..self.current].to_string()
+    }
+
     // addToken() is for output
-    // It grabs the text of the current lexeme and creates a new token for it. We’ll use the other overload to handle tokens with literal values soon.
+    // It grabs the text of the current lexeme and creates a new token for it. We'll use the other overload to handle tokens with literal values soon.
     // Add basic token is just add token but without any literal
     fn add_basic_token(&mut self, token_type: TokenType) {
         // Perhaps use something like None instead?

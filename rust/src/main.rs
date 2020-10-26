@@ -30,5 +30,6 @@ fn read_file(filename: &String) {
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
-    let scanner = scanner::Scanner::new(&mut source);
+    let mut scanner = scanner::Scanner::new(&mut source);
+    scanner.scan_tokens();
 }
