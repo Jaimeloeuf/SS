@@ -4,7 +4,7 @@ use crate::TokenType::TokenType;
 // we still make this pub? Or just make it pub so that people know what is this type but they shouldnt be able to use it?
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: String, // Ref or new string?
+    // pub lexeme: String, // Ref or new string?
     pub literal: Option<String>,
     pub line: usize,
 }
@@ -15,17 +15,18 @@ impl Token {
     pub fn new_none_literal(token_type: TokenType, lexeme: String, line: usize) -> Token {
         Token {
             token_type,
-            lexeme,
+            // lexeme,
             literal: None,
             line,
         }
     }
 
+    // pub fn new_keyword(token_type: TokenType, line: usize) -> Token {
     pub fn new_keyword(token_type: TokenType, line: usize) -> Token {
         Token {
             token_type,
             // @todo I guess this should be wrapped in Option?
-            lexeme: "".to_string(), // Is this needed? Since the token type itself is always the keyword... why do we need to store the keyword again?
+            // lexeme: "".to_string(), // Is this needed? Since the token type itself is always the keyword... why do we need to store the keyword again?
             literal: None,
             line,
         }
@@ -34,7 +35,7 @@ impl Token {
     pub fn new_identifier(lexeme: String, line: usize) -> Token {
         Token {
             token_type: TokenType::Identifier,
-            lexeme,
+            // lexeme,
             literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
             line,
         }
@@ -43,7 +44,7 @@ impl Token {
     pub fn new_string(lexeme: String, line: usize) -> Token {
         Token {
             token_type: TokenType::Str,
-            lexeme,
+            // lexeme,
             literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
             line,
         }
@@ -52,17 +53,18 @@ impl Token {
     pub fn new_number(lexeme: String, line: usize) -> Token {
         Token {
             token_type: TokenType::Number,
-            lexeme,
+            // lexeme,
             literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
             line,
         }
     }
 
     pub fn to_string(&self) -> String {
-        format!(
-            "{:?} {} {:?} {}",
-            self.token_type, self.lexeme, self.literal, self.line
-        )
+        // format!(
+        //     "{:?} {} {:?} {}",
+        //     self.token_type, self.lexeme, self.literal, self.line
+        // )
+        format!("{:?} {:?} {}", self.token_type, self.literal, self.line)
     }
 }
 
@@ -70,7 +72,7 @@ impl Token {
 pub fn test() {
     let token = Token {
         token_type: TokenType::True,
-        lexeme: String::from("TEST_LEXEME"),
+        // lexeme: String::from("TEST_LEXEME"),
         literal: None,
         line: 1,
     };

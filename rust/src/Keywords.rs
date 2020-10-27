@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 
 lazy_static! {
+    // String or &String? Since the identifier is a String type, then we pass a immutable ref here to get the TokenType back right?
     pub static ref KEYWORDS: HashMap<String, TokenType> = {
         // Should use
         // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.with_capacity

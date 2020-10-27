@@ -44,7 +44,10 @@ impl Scanner {
             // self.scan_token();
             // self.add_token(TokenType::Str, value)
             match self.scan_token() {
-                Some(token) => println!("{}", token.to_string()),
+                Some(token) => {
+                    println!("{}", token.to_string());
+                    self.tokens.push(token);
+                }
                 None => println!("Not a token!"),
             }
         }
@@ -52,7 +55,7 @@ impl Scanner {
         // @todo Add Eof / Eol token
         self.tokens.push(Token {
             token_type: TokenType::Eof,
-            lexeme: "".to_string(),
+            // lexeme: "".to_string(),
             literal: None,
             line: self.line,
         });
@@ -157,7 +160,7 @@ impl Scanner {
                 // return Some(Token::new_string(&literal, *line));
 
                 let literal = self.string_literals();
-                Some(Token::new_string(literal.to_string(), self.line))
+                Some(Token::new_string(literal, self.line))
             }
 
             // All the other things that need more processing
@@ -168,14 +171,15 @@ impl Scanner {
 
                 // Push current character back into source as advance methods removes it.
                 // @todo Or maybe advance method shouldnt remove it? And just borrow ref here?
-                self.source.push(current_character);
+                // self.source.push(current_character);
                 let literal = self.number_literal();
                 // Hmm this should not be a to_string
-                Some(Token::new_number(literal.to_string(), self.line))
+                // Some(Token::new_number(literal.to_string(), self.line))
+                Some(Token::new_number(literal, self.line))
             }
 
             Some(TokenType::Identifier) => {
-                self.source.push(current_character);
+                // self.source.push(current_character);
                 // let lexeme = eat::identifier(&mut source);
                 // match KEYWORDS.get(&lexeme) {
                 //     Some(type_of) => {
@@ -188,10 +192,11 @@ impl Scanner {
                 // }
 
                 let identifier = self.identifier();
-                let keyword = KEYWORDS.get(&identifier);
+                let keyword_token_type = KEYWORDS.get(&identifier);
 
-                match keyword {
+                match keyword_token_type {
                     // If so, we use that keyword's token type.
+                    // How to force move here instead of clone
                     Some(keyword) => Some(Token::new_keyword(keyword.clone(), self.line)),
 
                     // Otherwise, it's a regular user-defined identifier.
@@ -207,6 +212,7 @@ impl Scanner {
                     self.line,
                 ))
             }
+
             // Return None for Token back to caller of scan_token
             None => None,
         }
@@ -281,10 +287,11 @@ impl Scanner {
         self.source[self.start + 1..self.current - 1].to_string()
     }
 
-    // Returns the String literal between ""
     // @todo Should this be a new string or a slice?
     // Size of int is limited to isize? Should we support i128? Or how to do longs?
-    fn number_literal(&mut self) -> isize {
+    // @todo Perhaps return the string version, then we can parse that later
+    // fn number_literal(&mut self) -> isize {
+    fn number_literal(&mut self) -> String {
         while self.peek().is_ascii_digit() {
             self.advance();
         }
@@ -308,15 +315,15 @@ impl Scanner {
         // This should not be isize, as the value will be limited.
         // Perhaps we should save this as a string first, then only convert it later
         // @todo This will fail if it is a fraction
-        self.source[self.start..self.current]
-            .parse::<isize>()
-            .unwrap()
+        // self.source[self.start..self.current]
+        //     .parse::<isize>()
+        //     .unwrap()
+        self.source[self.start..self.current].to_string()
     }
 
-    // @todo Should this be a new string or a slice?
     fn identifier(&mut self) -> String {
+        // See link for the list of supported alphanumeric characters
         // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
-        // The supported alphanumeric characters
         while self.peek().is_alphanumeric() {
             self.advance();
         }
