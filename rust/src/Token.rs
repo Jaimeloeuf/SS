@@ -12,7 +12,7 @@ pub struct Token {
 // For all the methods, should lexeme and line come first since they are always needed
 impl Token {
     // Or should this be just new? then we assume that it is always a none literal
-    pub fn new_none_literal(token_type: TokenType, lexeme: String, line: usize) -> Token {
+    pub fn new_none_literal(token_type: TokenType, line: usize) -> Token {
         Token {
             token_type,
             // lexeme,
@@ -66,15 +66,4 @@ impl Token {
         // )
         format!("{:?} {:?} {}", self.token_type, self.literal, self.line)
     }
-}
-
-// @todo Tmp testing code
-pub fn test() {
-    let token = Token {
-        token_type: TokenType::True,
-        // lexeme: String::from("TEST_LEXEME"),
-        literal: None,
-        line: 1,
-    };
-    println!("{}", token.to_string());
 }

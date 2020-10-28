@@ -8,7 +8,6 @@ pub struct Scanner {
     // @todo Should this be static lifetime?
     // source: &'static mut String,
     source: String,
-    // tokens: vec!
     tokens: Vec<Token>,
 
     // usize for fn is_at_end -> bool cos the source.len is of type usize
@@ -35,37 +34,22 @@ impl Scanner {
         }
     }
 
-    // pub fn scan_tokens(&mut self) -> Vec<Token> {
-    pub fn scan_tokens(&mut self) {
-        // pub fn scan_tokens(&mut self) {
+    pub fn scan_tokens(&mut self) -> &Vec<Token> {
         // Each turn of the loop, we scan a single token.
         while !self.is_at_end() {
+            // At the start of every loop, reset start of the current "line" to the current character's index
             self.start = self.current;
-            // self.scan_token();
-            // self.add_token(TokenType::Str, value)
-            match self.scan_token() {
-                Some(token) => {
-                    println!("{}", token.to_string());
-                    self.tokens.push(token);
-                }
-                None => println!("Not a token!"),
-            }
+
+            // Scan source and create Token struct as needed and add it to "tokens" vector
+            self.scan_token();
         }
 
-        // @todo Add Eof / Eol token
-        self.tokens.push(Token {
-            token_type: TokenType::Eof,
-            // lexeme: "".to_string(),
-            literal: None,
-            line: self.line,
-        });
+        // Add Eof token
+        self.tokens
+            .push(Token::new_none_literal(TokenType::Eof, self.line));
 
-        // self.tokens
-        // println!("Logging out token vector");
-        // for token in self.tokens.iter() {
-        //     println!("{}", token.to_string())
-        // }
-        // println!("End of token vector");
+        // Pass back immutable reference of the tokens vector
+        &self.tokens
     }
 
     fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
@@ -108,6 +92,7 @@ impl Scanner {
             }
             // @todo To support block comments once eat methods are completed
             // '/' if self.conditional_advance('*') => {
+            //     // Must be able to support block comments with new lines
             //     eat::block_comment(&mut source);
             //     // return None;
             //     return ();
@@ -148,7 +133,7 @@ impl Scanner {
     }
 
     // Construct token here then return option token
-    fn scan_token(&mut self) -> Option<Token> {
+    fn scan_token(&mut self) {
         let current_character: char = self.advance();
         // println!("Current char {}", current_character);
         let token_type: Option<TokenType> = self.get_token_type(current_character);
@@ -160,7 +145,7 @@ impl Scanner {
                 // return Some(Token::new_string(&literal, *line));
 
                 let literal = self.string_literals();
-                Some(Token::new_string(literal, self.line))
+                self.tokens.push(Token::new_string(literal, self.line));
             }
 
             // All the other things that need more processing
@@ -174,8 +159,8 @@ impl Scanner {
                 // self.source.push(current_character);
                 let literal = self.number_literal();
                 // Hmm this should not be a to_string
-                // Some(Token::new_number(literal.to_string(), self.line))
-                Some(Token::new_number(literal, self.line))
+                // self.tokens.push(Token::new_number(literal.to_string(), self.line));
+                self.tokens.push(Token::new_number(literal, self.line));
             }
 
             Some(TokenType::Identifier) => {
@@ -197,25 +182,26 @@ impl Scanner {
                 match keyword_token_type {
                     // If so, we use that keyword's token type.
                     // How to force move here instead of clone
-                    Some(keyword) => Some(Token::new_keyword(keyword.clone(), self.line)),
+                    Some(keyword) => self
+                        .tokens
+                        .push(Token::new_keyword(keyword.clone(), self.line)),
 
                     // Otherwise, it's a regular user-defined identifier.
-                    None => Some(Token::new_identifier(identifier, self.line)),
-                }
+                    None => self
+                        .tokens
+                        .push(Token::new_identifier(identifier, self.line)),
+                };
             }
 
             Some(token_type) => {
                 // Can unwrap here as we are sure that there is a value because of the Some wrap matching
-                Some(Token::new_none_literal(
-                    token_type,
-                    current_character.to_string(),
-                    self.line,
-                ))
+                self.tokens
+                    .push(Token::new_none_literal(token_type, self.line));
             }
 
-            // Return None for Token back to caller of scan_token
-            None => None,
-        }
+            // Do nothing for None type TokenType
+            None => (),
+        };
     }
 
     fn is_at_end(&self) -> bool {
@@ -288,17 +274,15 @@ impl Scanner {
     }
 
     // @todo Should this be a new string or a slice?
-    // Size of int is limited to isize? Should we support i128? Or how to do longs?
-    // @todo Perhaps return the string version, then we can parse that later
     // fn number_literal(&mut self) -> isize {
+    // Return string version of number literal to parse later as cannot determine type right now
     fn number_literal(&mut self) -> String {
         while self.peek().is_ascii_digit() {
             self.advance();
         }
 
-        // Look for a fractional part.
-        // Second part should be peek next
-        if self.peek() == '.' && self.peek().is_ascii_digit() {
+        // Look for a fractional part "."
+        if self.peek() == '.' && self.peek_next().is_ascii_digit() {
             // Consume fractional notation "."
             self.advance();
 
@@ -307,17 +291,12 @@ impl Scanner {
             }
         }
 
-        // If a none space character is chained to the number...
-        // What about semicolon? Those are fine to chain right? Why dun we just ignore this and let the parser find issues?
-        // if self.peek() != ' ' {
-        // }
-
         // This should not be isize, as the value will be limited.
-        // Perhaps we should save this as a string first, then only convert it later
         // @todo This will fail if it is a fraction
         // self.source[self.start..self.current]
         //     .parse::<isize>()
         //     .unwrap()
+        // Return as a string first, then only convert it to its type later
         self.source[self.start..self.current].to_string()
     }
 
