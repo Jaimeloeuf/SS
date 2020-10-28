@@ -1,7 +1,7 @@
 // use crate::eat;
-use crate::Keywords::KEYWORDS;
-use crate::Token::Token;
-use crate::TokenType::TokenType;
+use crate::keywords::KEYWORDS;
+use crate::token::Token;
+use crate::token_type::TokenType;
 
 #[allow(dead_code)]
 pub struct Scanner {
@@ -321,7 +321,6 @@ impl Scanner {
     // @todo Fix the literal type
     fn add_token(&mut self, token_type: TokenType, literal: String) {
         // let text: String = self.source[self.start..self.current];
-        let lexeme = String::from("tmp");
 
         // self.tokens.push(Token {
         //     token_type,

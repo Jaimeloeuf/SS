@@ -1,4 +1,4 @@
-use crate::TokenType::TokenType;
+use crate::token_type::TokenType;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 

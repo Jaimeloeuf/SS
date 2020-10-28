@@ -1,4 +1,4 @@
-use crate::TokenType::TokenType;
+use crate::token_type::TokenType;
 
 // If all the construction is done through the new method impls should
 // we still make this pub? Or just make it pub so that people know what is this type but they shouldnt be able to use it?

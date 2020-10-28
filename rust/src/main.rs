@@ -2,11 +2,12 @@ use std::env;
 use std::fs;
 // use std::io;
 
-mod Token;
-mod TokenType;
 mod eat;
 mod hash;
+mod keywords;
 mod scanner;
+mod token;
+mod token_type;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
