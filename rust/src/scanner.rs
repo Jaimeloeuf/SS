@@ -53,6 +53,7 @@ impl Scanner {
     }
 
     fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
+        // Match current_character (and maybe n next character(s)) to a TokenType or None
         match current_character {
             ';' => Some(TokenType::Semicolon),
             '{' => Some(TokenType::LeftBrace),
@@ -132,58 +133,32 @@ impl Scanner {
         }
     }
 
-    // Construct token here then return option token
+    // Scan source and create Tokens before pushing them to the tokens vector
     fn scan_token(&mut self) {
         let current_character: char = self.advance();
-        // println!("Current char {}", current_character);
         let token_type: Option<TokenType> = self.get_token_type(current_character);
 
-        // Match current_character and maybe next character to a TokenType or None
+        // Match TokenType to new Token, and handle processing needed for certain token types
         match token_type {
             Some(TokenType::Str) => {
-                // let literal = eat::string(&mut source);
-                // return Some(Token::new_string(&literal, *line));
-
                 let literal = self.string_literals();
                 self.tokens.push(Token::new_string(literal, self.line));
             }
 
-            // All the other things that need more processing
-            // '0'..='9' => {
             Some(TokenType::Number) => {
-                // let literal = eat::number(&mut source);
-                // return Some(Token::new_number(literal, *line));
-
-                // Push current character back into source as advance methods removes it.
-                // @todo Or maybe advance method shouldnt remove it? And just borrow ref here?
-                // self.source.push(current_character);
                 let literal = self.number_literal();
-                // Hmm this should not be a to_string
-                // self.tokens.push(Token::new_number(literal.to_string(), self.line));
                 self.tokens.push(Token::new_number(literal, self.line));
             }
 
             Some(TokenType::Identifier) => {
-                // self.source.push(current_character);
-                // let lexeme = eat::identifier(&mut source);
-                // match KEYWORDS.get(&lexeme) {
-                //     Some(type_of) => {
-                //         let type_of = *type_of;
-                //         return Some(Token::new_keyword(type_of, *line));
-                //     }
-                //     None => {
-                //         return Some(Token::new_identifier(&lexeme, *line));
-                //     }
-                // }
-
                 let identifier = self.identifier();
                 let keyword_token_type = KEYWORDS.get(&identifier);
 
                 match keyword_token_type {
-                    // If so, we use that keyword's token type.
-                    // How to force move here instead of clone
+                    // If it is a keyword, we use that keyword's token type.
                     Some(keyword) => self
                         .tokens
+                        // @todo How to force move here instead of clone
                         .push(Token::new_keyword(keyword.clone(), self.line)),
 
                     // Otherwise, it's a regular user-defined identifier.
@@ -210,15 +185,13 @@ impl Scanner {
 
     // advance() is for input
     // Consume next character from source and return it.
+    // Must be valid char else this will panic during the unwrap
     fn advance(&mut self) -> char {
         self.current += 1;
-        // self.source.charAt(current - 1)
-        // self.source.get((self.current - 1)..self.current)
-        // let ch = self.source[self.current - 1];
         self.source.chars().nth(self.current - 1).unwrap()
     }
 
-    // It's like a conditional advance(). We only consume the current character if it's what we're looking for.
+    // This is a conditional advance(). Only consumes current character if it's what we're looking for.
     fn conditional_advance(&mut self, expected: char) -> bool {
         if self.is_at_end() || (self.source.chars().nth(self.current).unwrap() != expected) {
             return false;
@@ -227,10 +200,11 @@ impl Scanner {
         // Advance if the expected character is found
         self.current += 1;
 
-        // Return true
         true
     }
 
+    // Get next character in source string without advancing index of current character
+    // Used to check lexical grammar
     fn peek(&self) -> char {
         if self.is_at_end() {
             '\0'
@@ -239,6 +213,8 @@ impl Scanner {
         }
     }
 
+    // Get next next character in source string without advancing index of current character
+    // Used to check lexical grammar
     fn peek_next(&self) -> char {
         if self.current + 1 >= self.source.len() {
             '\0'
@@ -251,6 +227,8 @@ impl Scanner {
     // @todo Should this be a new string or a slice?
     fn string_literals(&mut self) -> String {
         while self.peek() != '"' && !self.is_at_end() {
+            // Allow multiline strings.
+            // @todo Is extra processing needed to remove the \n from the final string? Or keep as is?
             if self.peek() == '\n' {
                 self.line += 1;
             }
@@ -258,18 +236,16 @@ impl Scanner {
             self.advance();
         }
 
+        // @todo Throw error here, something like SS.error(line, "Unterminated string.");
         if self.is_at_end() {
-            //   Lox.error(line, "Unterminated string.");
             println!("Unterminated string.");
-            return "".to_string(); // Fix this... I need this to return smth, but shouldnt cos this should just error out
+            return "".to_string(); // @todo Fix this... I need this to return smth, but shouldnt cos this should just error out
         }
 
-        // The closing ".
+        // The closing double quote "
         self.advance();
 
-        // let value: String = self.source[self.start + 1..self.current - 1].to_string();
-        // self.add_token(TokenType::Str, )
-        // Trim the surrounding quotes.
+        // Trim surrounding quotes and only return the actual string content
         self.source[self.start + 1..self.current - 1].to_string()
     }
 
@@ -308,25 +284,5 @@ impl Scanner {
         }
 
         self.source[self.start..self.current].to_string()
-    }
-
-    // addToken() is for output
-    // It grabs the text of the current lexeme and creates a new token for it. We'll use the other overload to handle tokens with literal values soon.
-    // Add basic token is just add token but without any literal
-    fn add_basic_token(&mut self, token_type: TokenType) {
-        // Perhaps use something like None instead?
-        self.add_token(token_type, "".to_string());
-    }
-
-    // @todo Fix the literal type
-    fn add_token(&mut self, token_type: TokenType, literal: String) {
-        // let text: String = self.source[self.start..self.current];
-
-        // self.tokens.push(Token {
-        //     token_type,
-        //     lexeme,
-        //     literal: None,
-        //     line: self.line,
-        // });
     }
 }
