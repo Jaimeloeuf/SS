@@ -3,7 +3,6 @@ use crate::keywords::KEYWORDS;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
-#[allow(dead_code)]
 pub struct Scanner {
     // @todo Should this be static lifetime?
     // source: &'static mut String,
@@ -186,6 +185,9 @@ impl Scanner {
     // advance() is for input
     // Consume next character from source and return it.
     // Must be valid char else this will panic during the unwrap
+    // Push current character back into source as advance methods removes it.
+    // @todo Or maybe advance method shouldnt remove it? And just borrow ref here?
+    // self.source.push(current_character);
     fn advance(&mut self) -> char {
         self.current += 1;
         self.source.chars().nth(self.current - 1).unwrap()
