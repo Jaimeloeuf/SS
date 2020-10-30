@@ -2,7 +2,8 @@
 Just a simple programming language / experiment to build a simpler and less quirky JavaScript.  
 
 ## Language design goals
-Read more about the language's spec and design goals in the [specs](./spec.md)
+- Read more about the language's spec and design goals in the [specs](./spec.md)
+- See the [syntatic grammar definition in BNF](./syntatic%20grammar.bnf)
 
 Generally:
 - readability (and in extension, familiarity)
