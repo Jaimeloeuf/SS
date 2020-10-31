@@ -224,6 +224,7 @@ When executing expressions with logical operations "and" + "or" short circuting 
     - Is it valid? That depends on how the scanner splits the lexemes. If the scanner sees it like: ```- --a;```
     - Then it could be parsed. But that would require the scanner to know about the grammatical structure of the surrounding code, which entangles things more than we want. Instead, the maximal munch rule says that it is always scanned like: ```-- -a;```
     - It scans it that way even though doing so leads to a syntax error later in the parser.
+    - Similiar to rust and lox
 
 ### Comparison
 - ==
@@ -238,7 +239,7 @@ When executing expressions with logical operations "and" + "or" short circuting 
 {
     
 }
-- Fn/Ifelse/Loop scopes are all block scopes
+- Function / conditionals (IfElse) /Loop scopes are all block scopes
 - variable inheritance in scope
 - child scope can always access things in the outer scope
     - however parent scope cannot access things in child scope
