@@ -19,10 +19,54 @@ impl Expr {
     //
 }
 
+// Infrastructure/Utility methods on the Parser struct
+impl Parser {
+    // Returns immutable reference to the current token
+    fn peek(&self) -> &Token {
+        self.tokens.get(self.current).unwrap()
+    }
+
+    fn check(&self, token_type: TokenType) -> bool {
+        self.peek().token_type == token_type
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.check(TokenType::Eof)
+    }
+
+    fn previous(&self) -> &Token {
+        self.tokens.get(self.current - 1).unwrap()
+    }
+
+    fn advance(&mut self) -> &Token {
+        // Only increment the current token counter if not at end yet
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+
+        self.previous()
+    }
+
+    // checks if current token has any of the given types.
+    // If so, consumes the token and returns true.
+    // Otherwise, returns false and leave current token alone
+    fn is_next_token(&mut self, token_types_to_check: Vec<TokenType>) -> bool {
+        for token_type in token_types_to_check {
+            if self.check(token_type) {
+                self.advance();
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
 impl Parser {
     // Constructor
     // Takes ownership of the token vector
     pub fn new(tokens: Vec<Token>) -> Parser {
+        println!("Processing '{}' tokens", tokens.len());
         Parser { tokens, current: 0 }
     }
 
@@ -34,44 +78,10 @@ impl Parser {
 
         // On each loop, we scan a single token.
         while !self.is_at_end() {
-            // statements.push(self.declaration());
-            let declaration = self.declaration();
-            statements.push(declaration);
+            self.advance();
         }
 
         // Pass back immutable reference of the tokens vector
         statements
-    }
-
-    fn is_at_end(&self) -> bool {
-        // self.peek().token_type == TokenType::Eof
-        // @todo Kinda dumb, why cant I just do simple equality
-        match self.peek().token_type {
-            TokenType::Eof => true,
-            _ => false,
-        }
-    }
-
-    // Get next character in source string without advancing index of current character
-    // Used to check lexical grammar
-    // Get back immutable reference to Token instead.
-    fn peek(&self) -> &Token {
-        // not using get as it returns an option instead, and not sure how to handle None...
-        self.tokens.get(self.current).unwrap()
-        // Will cause program to panic if the index is invalid
-        // file:///C:/Users/JJ/.rustup/toolchains/stable-x86_64-pc-windows-msvc/share/doc/rust/html/book/ch08-01-vectors.html#reading-elements-of-vectors
-        // &self.tokens[self.current]
-    }
-
-    // Get next next character in source string without advancing index of current character
-    // Used to check lexical grammar
-    fn peek_next(&mut self) -> Option<&Token> {
-        // if self.current + 1 >= self.source.len() {
-        if self.current + 1 >= self.tokens.len() {
-            // '\0'
-            None
-        } else {
-            Some(self.tokens.get(self.current + 1).unwrap())
-        }
     }
 }

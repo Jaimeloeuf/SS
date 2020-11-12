@@ -1,5 +1,5 @@
 [package]
-name = "sle"
+name = "SimpleScript"
 version = "0.1.0"
 authors = ["Jaime <jaimeloeuf@gmail.com>"]
 edition = "2018"
