@@ -2,18 +2,16 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Parser {
-    // @todo Maybe remove static
-    tokens: &'static Vec<Token>,
-
-    // usize for fn is_at_end -> bool cos the source.len is of type usize
-    current: usize, // current points at the character currently being considered
+    // Expects ownership of token vector to be given
+    tokens: Vec<Token>,
+    current: usize, // current points at the current token
 }
 
-struct Stmt {
+pub struct Stmt {
     //
 }
 
-struct Expr {
+pub struct Expr {
     //
 }
 
@@ -23,8 +21,8 @@ impl Expr {
 
 impl Parser {
     // Constructor
-    // Should this be a mutable reference or just give this ownership
-    pub fn new(tokens: &'static Vec<Token>) -> Parser {
+    // Takes ownership of the token vector
+    pub fn new(tokens: Vec<Token>) -> Parser {
         Parser { tokens, current: 0 }
     }
 

@@ -20,12 +20,10 @@ pub struct Scanner {
 
 impl Scanner {
     // Constructor
-    // Should this be a mutable reference or just give this ownership
-    // pub fn new(source: String) -> Scanner {
-    // pub fn new(source: &'static mut std::string::String) -> Scanner {
-    pub fn new(source: &mut String) -> Scanner {
+    // Give ownership of source string here
+    pub fn new(source: String) -> Scanner {
         Scanner {
-            source: source.to_string(),
+            source: source,
             tokens: Vec::new(),
             start: 0,
             current: 0,
@@ -33,7 +31,8 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    // Expects self to be moved in instead of being a reference to move out a value from Scanner struct once done.
+    pub fn scan_tokens(mut self) -> Vec<Token> {
         // Each turn of the loop, we scan a single token.
         while !self.is_at_end() {
             // At the start of every loop, reset start of the current "line" to the current character's index
@@ -47,8 +46,9 @@ impl Scanner {
         self.tokens
             .push(Token::new_none_literal(TokenType::Eof, self.line));
 
-        // Pass back immutable reference of the tokens vector
-        &self.tokens
+        // Move token vector out of the scanner struct once scanning is completed
+        // After calling scan_tokens, scanner is no longer used, thus is ok to transfer out ownership
+        self.tokens
     }
 
     fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {

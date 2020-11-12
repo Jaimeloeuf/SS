@@ -23,7 +23,7 @@ fn main() {
 }
 
 fn read_file(filename: &String) {
-    let mut source = fs::read_to_string(filename).expect("Cannot read file");
+    let source = fs::read_to_string(filename).expect("Cannot read file");
 
     // Debug
     println!("Source content:\n{}", source);
@@ -31,6 +31,15 @@ fn read_file(filename: &String) {
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
-    let mut scanner = scanner::Scanner::new(&mut source);
-    scanner.scan_tokens();
+    let scanner = scanner::Scanner::new(source);
+    let tokens = scanner.scan_tokens();
+
+    println!("Logging out token vector");
+    for token in tokens.iter() {
+        println!("{}", token.to_string())
+    }
+    println!("End of token vector");
+
+    let mut parser = parser::Parser::new(tokens);
+    parser.parse();
 }
