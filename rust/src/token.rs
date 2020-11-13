@@ -2,6 +2,9 @@ use crate::token_type::TokenType;
 
 // If all the construction is done through the new method impls should
 // we still make this pub? Or just make it pub so that people know what is this type but they shouldnt be able to use it?
+
+// Debug trait to allow debug printing in the error handling code.
+#[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
     // pub lexeme: String, // Ref or new string?
@@ -59,6 +62,8 @@ impl Token {
         }
     }
 
+    // @todo Temporary allow this
+    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         // format!(
         //     "{:?} {} {:?} {}",

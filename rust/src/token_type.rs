@@ -1,6 +1,8 @@
-// use std::fmt; // @todo Used for 'impl' of fmt::Display for TokenType enum
+//  @todo Used for 'impl' of fmt::Display for TokenType enum
+use std::fmt;
 
-#[derive(Debug, Clone)]
+// PartialEq is used to do comparison instead of match. Refer to Parser struct methods
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)] // @todo Remove once scanner complete
 pub enum TokenType {
   // Single-character tokens.
@@ -60,11 +62,13 @@ pub enum TokenType {
   Eof,
 }
 
-// impl fmt::Display for TokenType {
-//   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//     match *self {
-//       // Instead of match, should write its literal value instead
-//       TokenType::True => write!("true"),
-//     }
-//   }
-// }
+impl fmt::Display for TokenType {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match *self {
+      // @todo Instead of match, should write its literal value instead
+      TokenType::True => write!(f, "true"),
+
+      _ => write!(f, "Either Display trait not implemented yet or invalid"),
+    }
+  }
+}
