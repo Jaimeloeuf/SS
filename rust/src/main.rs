@@ -5,6 +5,7 @@ use std::fs;
 mod eat;
 mod hash;
 mod keywords;
+mod parser;
 mod scanner;
 mod token;
 mod token_type;
@@ -40,6 +41,7 @@ fn read_file(filename: &String) {
     }
     println!("End of token vector");
 
-    let mut parser = parser::Parser::new(tokens);
+    // Might also change to remove the mut and give ownership to parse
+    let mut parser = parser::parser::Parser::new(tokens);
     parser.parse();
 }
