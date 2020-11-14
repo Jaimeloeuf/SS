@@ -1,3 +1,5 @@
 // @todo Might want to change the visibility later on
-pub mod error;
-pub mod parser;
+mod error;
+mod parser;
+pub mod parser_struct;
+mod utility_traits;

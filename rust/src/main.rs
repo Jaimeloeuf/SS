@@ -42,6 +42,6 @@ fn read_file(filename: &String) {
     println!("End of token vector");
 
     // Might also change to remove the mut and give ownership to parse
-    let mut parser = parser::parser::Parser::new(tokens);
-    parser.parse();
+    let mut parser = parser::parser_struct::Parser::new(tokens);
+    let abstract_syntax_tree = parser.parse();
 }
