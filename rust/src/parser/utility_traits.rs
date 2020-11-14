@@ -45,14 +45,17 @@ impl Parser {
         false
     }
 
-    // fn consume(&mut self, token_type: TokenType, message: String) -> Result<Token, ParsingError> {
-    //     if self.check(token_type) {
-    //         Ok(self.advance().clone())
-    //     } else {
-    //         Err(ParsingError::UnexpectedTokenError(
-    //             self.peek().clone(),
-    //             message,
-    //         ))
-    //     }
-    // }
+    // Checks and consumes token if it is of the specified type,
+    // Else bubble up a UnexpectedToken ParsingError with the given string as its message
+    fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParsingError> {
+        if self.check(token_type) {
+            Ok(self.advance())
+        } else {
+            Err(ParsingError::UnexpectedTokenError(
+                // @todo change parsing error to take ref instead?
+                self.peek().clone(),
+                message,
+            ))
+        }
+    }
 }
