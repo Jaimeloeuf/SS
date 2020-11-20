@@ -4,8 +4,6 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Scanner {
-    // @todo Should this be static lifetime?
-    // source: &'static mut String,
     source: String,
     tokens: Vec<Token>,
 

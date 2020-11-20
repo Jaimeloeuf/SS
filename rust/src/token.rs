@@ -4,7 +4,8 @@ use crate::token_type::TokenType;
 // we still make this pub? Or just make it pub so that people know what is this type but they shouldnt be able to use it?
 
 // Debug trait to allow debug printing in the error handling code.
-#[derive(Debug)]
+// Tmp add clone trait for parser utiltiy_traits' "consume" method
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     // pub lexeme: String, // Ref or new string?
