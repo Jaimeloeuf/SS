@@ -38,11 +38,20 @@ Technical features:
 
 
 
-## Build
-- Compile using LLVM backend
-- Execute using Rust/Other intepreters
+## Implementation details
+One of the aim of SimpleScript is that, the spec should be simple and flexible enough to be implemented in all sorts of ways deemed useful. Thus the goal is to build a few reference implementations for the top few popular stacks right now.  
+Thus some of the WIP reference implementations are (sorted by order of development):
+1. Interpreted just like JavaScript using a custom intepreter
+    - Intepreter built using Rust/Other langs
     - Might support JIT integrations, but... tbd
-- Support transpilation options? Like transpile to TS/JS/Rust
+2. Compile to native binaries using LLVM backend and a custom frontend
+3. Compile to WASM as this will be used more and more compared to other VMs like JVM and Erlang BEAM in the future thanks to its sandboxed model and wide language support for Rust/Go/C++/...
+4. Compile to bytecode for VMs like the JVM or Erlang BEAM to support more environments using it
+5. Support transpilation options? Like transpile to JS/Rust
+    - The purpose of this is to take advantage of their build tools, like rusts memory management system and more.
+    - Transpile to JS to make it easier to run and more portable, basically like TypeScript or any dialect of JavaScript, but WASM would be preferred for performance.
+
+
 
 ## Comments
 Single line comments
