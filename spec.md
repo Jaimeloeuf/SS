@@ -311,14 +311,22 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
     function functionName(int arg): int { }
     ```
 - IIFEs are supported, and used mainly to enclose all the data and logic into its self enclosing scope
-- should functions be hoisted? or cannot be accessed after definition
-- overloading?
-- Should there be implicit returns for functions? Does that mean we need to support undefined?
-- Named function arguments? Removes the need for overloading and undefined function inputs to pass in a argument later in the sequence
-- C style syntax uses ()
-    - but when we do something like nested functions, there end up with too man braces, thus making the elm syntax much much nicer
-    - instead of f1(f2(f3(f4(f5(arg)))))
-    - elm syntax f1 f2 f3 f4 f5 arg
+- TBD:
+    - should functions be hoisted? or cannot be accessed after definition
+    - overloading?
+    - Should there be implicit returns for functions? Does that mean we need to support undefined?
+    - Named function arguments like in python? Removes the need for overloading and undefined function inputs to pass in a argument later in the sequence
+    - C style syntax uses ()
+        - but when we do something like nested functions, there end up with too man braces, thus making the elm syntax much much nicer
+        - instead of f1(f2(f3(f4(f5(arg)))))
+        - elm syntax f1 f2 f3 f4 f5 arg
+    - for function calls, should it be pass by value or pass by reference?
+        - pass by reference is fine right? Since values cant be modified anyways right.
+    - what about variadic functions?
+        - like JS provide arguement value?
+        - or like JS Rest parameters, using fn(...Args)
+        - but if using rest parameters, how do you garuntee the type?
+    - default function arguements like JS.
 
 ### Pure functions
 ```js
