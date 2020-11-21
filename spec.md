@@ -228,8 +228,13 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - /
 - %
     - modulo to find remainder
-- ^ // Should we include this?
+- ^  or  **
     - power operator
+    - *Should this be included? How to differentiate "^" from the XOR operator?
+    - Perhaps this should be a function under the Math standard library.
+    - References
+        - <https://stackoverflow.com/questions/4843304/why-is-my-power-operator-not-working>
+        - <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
 - Notice that they are no Increment and Decrement operators
     - Say you see some nasty code like ```---a;```
     - Is it valid? That depends on how the scanner splits the lexemes. If the scanner sees it like: ```- --a;```
