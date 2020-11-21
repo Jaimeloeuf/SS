@@ -63,7 +63,10 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
 - All values are constants (IMMUTABLE)
     - Note that there is no way of declaring variables, you can only create new constants
 - Strongly typed language
-- Should we enforce implicit typing in all places? Or can we have type inference??
+    - generics?
+    - do we really want it to be strongly typed? Giving up type inference too?
+        - well we should be explicit, but this prevents the language from being expressive.
+- Should we enforce explicit typing? Or can we have type inference??
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
 ### Primitives
