@@ -206,11 +206,20 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - &&
 - or
 - ||
+- (expr) ? (true expr) : (false expr)
+    - Ternary operator
 
 ### binary
 - ~
+    - Negate
 - &
+    - AND
 - |
+    - OR
+- ^
+    - XOR
+- << / >>
+    - Bitwise shift operators
 
 ### Math
 - +
@@ -218,13 +227,17 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - *
 - /
 - %
+    - modulo to find remainder
 - ^ // Should we include this?
+    - power operator
 - Notice that they are no Increment and Decrement operators
     - Say you see some nasty code like ```---a;```
     - Is it valid? That depends on how the scanner splits the lexemes. If the scanner sees it like: ```- --a;```
     - Then it could be parsed. But that would require the scanner to know about the grammatical structure of the surrounding code, which entangles things more than we want. Instead, the maximal munch rule says that it is always scanned like: ```-- -a;```
     - It scans it that way even though doing so leads to a syntax error later in the parser.
     - Similiar to rust and lox
+- a += 1     /    a -= 1
+    - What about shorthands like these?
 
 ### Comparison
 - ==
@@ -233,6 +246,7 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - <
 - >=
 - <=
+
 
 ## Scope
 - Block scope
