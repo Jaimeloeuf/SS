@@ -414,6 +414,20 @@ function factoryFunction(<T> constructorArgs) {
 }
 ```
 
+
+## Asynchronous programming
+> tl;dr  
+Single Threaded code just like JavaScript, but users can use the provided event loop library from std lib.  
+Supports multi process code by spinning up new native os processes (implemented by os not our runtime).  
+For now, no kernel thread support, rather user level thread via thread libraries from std lib.
+
+- Similiar to how JavaScript uses a event based / reactive paradigm to achieve asynchronous programming and concurrency, SimpleScript supports asynchronous programming natively making it as easy as possible for users to do asynchronous programming.
+- However the problem with JavaScript's approach is that it limits what the user is able to create because of its single threaded nature. And although JS supports web workers and Node JS supports seperate processes, it is not as ergonomic to the user and can be really confusing even for experienced users, as the Single Threaded nature and event based design can often screw with our existing understanding of how seperate threads and processes work.
+    - Not to mention that this makes the language implementation more difficult.
+- For newer JS users, async/concurrency concepts are also harder to understand, and more often then not, they have to learn the quirks of the event loop the hard way, which is often painful and time consuming (not simple at all 😫)
+- Thus the approach taken by SimpleScript is to combine the best of most worlds as described in the tl;dr by focusing on providing a great bare minimum setup with simple ways to extend it.
+
+
 ## Modules
 - Support breaking code up into modules. Every new file is a module
 
