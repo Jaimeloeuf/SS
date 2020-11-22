@@ -1,11 +1,15 @@
 # SS (SimpleScript)
 - Simple
-- Quick to learn
-- No assumptions / quirkiness
+- Simple to read
+- Simple to understand --> Intuitive code with no assumptions or quirkiness (WYSIWYG)
 
 idiot n beginner proof language
 prevent me from saying im so dumb when i wastedays trying to figure smth out because it is not intuitive
 simple, flexible and idiot proof n practical
+
+One of the goals of this language is to prioritize or optimize for reading code rather than writing code.  
+Code is assumed to be read more often than written, thus it should be easy to read and understand, even if it means sacrificing implicit assumptions unlike other programming languages.  
+In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable.
 
 Technical features:
 - Statically typed
