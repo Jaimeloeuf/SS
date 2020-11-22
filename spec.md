@@ -52,6 +52,26 @@ Thus some of the WIP reference implementations are (sorted by order of developme
     - Transpile to JS to make it easier to run and more portable, basically like TypeScript or any dialect of JavaScript, but WASM would be preferred for performance.
 
 
+## Keywords and symbols
+- All the data types
+- Keywords
+    - const
+    - import
+    - export
+    - function
+    - void? undefined? null?
+        - The case for this is that, functions can have no return values, therefore we should perhaps include a null or None to indicate that there is nothing.
+        - The other thing to consider is, can constants be set as this undefined? Since they can never be changed afterwards.
+- Symbols
+    - All the operators [link]()
+    - ;
+    - ( )
+    - { }
+    - [ ]
+    - Comments
+        - //
+        - /* */
+
 
 ## Comments
 Single line comments
