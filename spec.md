@@ -408,7 +408,7 @@ function functionName(args) {
 ```
 ### Impure functions
 ```js
-@impure // Use decorators to implicitly declare that these are impure functions (anything with side effect / not pure input/output type)
+@impure // Use decorators to explicitly declare these as impure (anything with side effect / none pure input/output type)
 function functionName(args) {
     // Can access both pure and impure functions from within this scope
 }
@@ -564,5 +564,18 @@ proxy.new(targetObj)
 - Will have builtin language/std-lib level support for FFI to interact with Rust and C/C++ code in the future
 
 
+
+## TODO (Things to add to spec)
+- error and exception handling
+    - How do we implement this semantic?
+    - try/catch?
+- A part of the spec should include native code from standard library
+    - native code as in, implemented by the runtime, instead of being libraries written in SS itself
+        - JSON support
+        - assertions (Technically can be implemented in SS using a check and throwing on error)
+- Lazy evaluation
+- Proper definition of the Spread syntax
+- bigints
+    - Should this be provided as part of the language semantic like python numbers? Or as a non native standard library implementation.
 ## Preferences
 - Use camelCase for constant values
