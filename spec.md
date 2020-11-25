@@ -564,6 +564,19 @@ proxy.new(targetObj)
 - Will have builtin language/std-lib level support for FFI to interact with Rust and C/C++ code in the future
 
 
+## Others
+### Why isn't feature "X" included? And what's the workaround?
+- enum
+    - Might consider supporting but TBD... and for now use the workaround
+    - just like in JS, this is not supported, but can be easily worked around using structs/objects
+- Augmented assignment (myVar += 1)
+    - Well since all values are immutable constants... you cant assign back to yourself anyways...
+- Implicit variable declaration
+    - SS requires Explicit variable declaration to make it clearer on scoping rules, can only access after defined and in the same scope or deeper scopes.
+- One variable per declaration to make things more readable and explicit
+    - const x, y = 1, 2; // Not supported by the language
+    - const x = 1; const y = 2; // Use this on 2 lines
+
 
 ## TODO (Things to add to spec)
 - error and exception handling
