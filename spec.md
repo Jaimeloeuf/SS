@@ -356,6 +356,14 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
 ## Functions
 - Split into pure and impure functions
     - Uses decorators
+        - https://www.typescriptlang.org/docs/handbook/decorators.html
+        - Are decorators really that useful? In the python and TS sense? Where they are just syntatic sugar for higher order functions and not special language semantics
+        - These decorators that I am talking about for pure/impure are language semantics rather than user defined meta progrmaming
+- <https://stackoverflow.com/questions/903120/should-i-always-give-a-return-value-to-my-function>
+    - Like the answers in this question, perhaps we should seperate pure and impure programming functions using definitions from mathematics. Where functions refer to pure functions following their definitions of taking a input and giving you a ouput, and procedures/subroutines that are simply a group of imperative code.
+    - so then, when we define a function, by math definition it is a pure function
+    - and if we want a "impure function" so to say, we will define a "subroutine or procedure" instead
+    - This makes it harder for user to change functions to subroutines and vice versa. Say they want to log some stuff to console for testing... they wont be able to do so without changing type.
 - In function signatures, you must declare the type of each parameter.
 - Must also declare return type...
     ```ts
