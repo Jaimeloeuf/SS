@@ -11,16 +11,18 @@ One of the goals of this language is to prioritize or optimize for reading code 
 Code is assumed to be read more often than written, thus it should be easy to read and understand, even if it means sacrificing implicit assumptions unlike other programming languages.  
 In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable.
 
-Technical features:
+Technical features and goals:
 - Statically typed
     - Need to know the type at Compile time if compiled
-    - Need to know the 
-    - actually the code is always "compiled" first into a Middle IR that is simple a token, that can be parsed later on.
-        - so in this case, even for the interpreter version, the Type rule is also enforced
+    - The code is always "compiled" first into an IR that can be parsed later on
+        - so even for interpreted versions, Types can be enforced
 - Immutable
     - no data can be changed once created.
 - Functional
-- 
+- Application programming language, where memory management is abstracted away
+    - See [Memory section](#memory)
+- OS independent
+- Implementation independent (e.g. can be implemented in any programming language and can be runned in any format from AOT binary executables to interpretation)
 
 ## Language Features
 - Can be both intepreted and compiled AOT into an executable
@@ -231,7 +233,9 @@ const Array<Number> myArray = [1, 2, 3, 4]
 - Destructuring syntax
 
 ### Memory
-- SS will come with a GC, either with the runtime or part of the compiled executable
+- SS will come with a GC as part of its runtime
+    - The runtime will either be implemented by the interpreter
+    - Or linked to your source code as part of the final compiled executable like Go
 
 ## Operators
 ### logical
