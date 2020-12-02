@@ -297,7 +297,8 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - <=
 
 
-## Scope
+## Scope and rules
+- lexical/static scoping
 - Block scope
 {
     
@@ -307,7 +308,8 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - child scope can always access things in the outer scope
     - however parent scope cannot access things in child scope
     - only upward access
-    
+- scoping of arrow functions...
+
 
 ## Conditions
 Expressions that evalute to a BOOLEAN ONLY
@@ -382,6 +384,7 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
     function functionName(int arg): int { }
     ```
 - IIFEs are supported, and used mainly to enclose all the data and logic into its self enclosing scope
+- Arrow functions are supported as lambdas / anonymous functions
 - TBD:
     - should functions be hoisted? or cannot be accessed after definition
     - overloading?
