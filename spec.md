@@ -47,11 +47,13 @@ Technical features and goals:
 ## Implementation details
 One of the aim of SimpleScript is that, the spec should be simple and flexible enough to be implemented in all sorts of ways deemed useful. Thus the goal is to build a few reference implementations for the top few popular stacks right now.  
 Thus some of the WIP reference implementations are (sorted by order of development):
-1. Interpreted just like JavaScript using a custom intepreter
+1. Interpreted just like JavaScript using a custom intepreter (Tree walk interpreter for simplicity)
     - Intepreter built using Rust/Other langs
-    - Might support JIT integrations, but... tbd
+    - Might support JIT integrations, but... its damn difficult so tbd
 2. Compile to native binaries using LLVM backend and a custom frontend
 3. Compile to WASM as this will be used more and more compared to other VMs like JVM and Erlang BEAM in the future thanks to its sandboxed model and wide language support for Rust/Go/C++/...
+    - https://wasmer.io/
+    - Instead of providing our own runtime, rely on the WASM runtime...
 4. Compile to bytecode for VMs like the JVM or Erlang BEAM to support more environments using it
 5. Support transpilation options? Like transpile to JS/Rust
     - The purpose of this is to take advantage of their build tools, like rusts memory management system and more.
@@ -104,6 +106,8 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
 - Should we enforce explicit typing? Or can we have type inference??
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
+- Types on the left hand side like TS and other languages that support Type inference.
+
 ### Primitives
 <!-- consider using this type of int format instead? -->
 - void? undefined? null? Optional?
