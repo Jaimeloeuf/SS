@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 // use std::io;
+use std::time::Instant;
 
 mod eat;
 mod hash;
@@ -11,6 +12,8 @@ mod token;
 mod token_type;
 
 fn main() {
+    let startOfMain = Instant::now();
+
     let args: Vec<String> = env::args().collect();
 
     // Use this to get flags as args
@@ -21,6 +24,8 @@ fn main() {
     println!("Entering file '{}'", filename);
 
     read_file(&filename);
+
+    println!("Completed in: {:?}", startOfMain.elapsed());
 }
 
 fn read_file(filename: &String) {
