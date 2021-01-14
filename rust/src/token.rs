@@ -1,3 +1,15 @@
+/*
+Testing the use of Literal enum for the literal value of Token struct,
+instead of just an optional string.
+
+This forces us to deal with the type of the input chars/string before actual processing.
+Might make it eaiser, but will see...
+
+The other option is to keep the optional string, but store it as the lexeme value,
+and use Literal enum variants for the literal value in token struct.
+*/
+
+use crate::literal::Literal;
 use crate::token_type::TokenType;
 
 // If all the construction is done through the new method impls should
@@ -9,7 +21,8 @@ use crate::token_type::TokenType;
 pub struct Token {
     pub token_type: TokenType,
     // pub lexeme: String, // Ref or new string?
-    pub literal: Option<String>,
+    // pub literal: Option<String>,
+    pub literal: Option<Literal>,
     pub line: usize,
 }
 
@@ -25,12 +38,11 @@ impl Token {
         }
     }
 
-    // pub fn new_keyword(token_type: TokenType, line: usize) -> Token {
     pub fn new_keyword(token_type: TokenType, line: usize) -> Token {
         Token {
             token_type,
-            // @todo I guess this should be wrapped in Option?
-            // lexeme: "".to_string(), // Is this needed? Since the token type itself is always the keyword... why do we need to store the keyword again?
+            // Is this needed? Since the token type itself is always the keyword... why do we need to store the keyword again?
+            // lexeme: "".to_string(),
             literal: None,
             line,
         }
@@ -40,7 +52,8 @@ impl Token {
         Token {
             token_type: TokenType::Identifier,
             // lexeme,
-            literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            // literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            literal: Some(Literal::String(lexeme)),
             line,
         }
     }
@@ -49,7 +62,8 @@ impl Token {
         Token {
             token_type: TokenType::Str,
             // lexeme,
-            literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            // literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            literal: Some(Literal::String(lexeme)),
             line,
         }
     }
@@ -58,7 +72,9 @@ impl Token {
         Token {
             token_type: TokenType::Number,
             // lexeme,
-            literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            // literal: Some(lexeme), // ? Should this be like that? Is lexeme same as the string?
+            // Although the input is a string, should this be parsed into a Number?
+            literal: Some(Literal::String(lexeme)),
             line,
         }
     }
