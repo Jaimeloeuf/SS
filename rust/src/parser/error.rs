@@ -23,9 +23,15 @@ impl std::fmt::Display for ParsingError {
                 token.line,
                 message,
                 match &token.literal {
-                    Some(literal) => literal,
-                    None => "",
+                    Some(literal) => literal.to_string(),
+                    None => "IT IS NOT A LITERAL".to_string(),
                 },
+                // This method might be better...
+                // if token.literal.is_none() {
+                //     ""
+                // } else {
+                //     token.literal.to_string()
+                // },
                 token.token_type,
             ),
             ParsingError::UnexpectedEofError => f.write_str("Unexpected end of input"),

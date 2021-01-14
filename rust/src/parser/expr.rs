@@ -1,3 +1,4 @@
+use crate::literal::Literal;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
@@ -6,7 +7,7 @@ use crate::token_type::TokenType;
 pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
-    // Literal(Literal),
+    Literal(Literal),
     Unary(Token, Box<Expr>),
     Const(Token, Option<usize>),
     Assign(Token, Box<Expr>, Option<usize>),

@@ -6,6 +6,7 @@ use std::time::Instant;
 mod eat;
 mod hash;
 mod keywords;
+mod literal;
 mod parser;
 mod scanner;
 mod token;
