@@ -1,6 +1,14 @@
 # SS (SimpleScript)
 Just a simple programming language / experiment to build a simpler and less quirky JavaScript.  
 
+> SimpleScript is a Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+
+Here are its core tenets:
+1. Simple
+2. Simple to Understand --> Intuitive code with no assumptions or quirkiness (WYSIWYG)
+3. Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
+
+
 ## Language design goals
 - Read more about the language's spec and design goals in the [specs](./spec.md)
 - See the [syntatic grammar definition in BNF](./syntatic%20grammar.bnf)
@@ -40,7 +48,7 @@ This is my first time building my own language 😅 so I had lots of help refere
 - [Rust implementation of the lox language 2](https://github.com/epellis/rlox/)
 
 ### License
-MIT
+[MIT](./LICENSE)
 
 ### Contributing
 Hit me up if you wanna!

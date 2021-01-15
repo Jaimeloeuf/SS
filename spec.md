@@ -1,7 +1,10 @@
 # SS (SimpleScript)
 - Simple
-- Simple to read
-- Simple to understand --> Intuitive code with no assumptions or quirkiness (WYSIWYG)
+- Simple to Understand --> Intuitive code with no assumptions or quirkiness (WYSIWYG)
+- Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
+
+Like all other languages, here is a concise introduction to SS.
+> SimpleScript is a Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
 
 idiot n beginner proof language
 prevent me from saying im so dumb when i wastedays trying to figure smth out because it is not intuitive
@@ -24,22 +27,25 @@ Technical features and goals:
 - OS independent
 - Implementation independent (e.g. can be implemented in any programming language and can be runned in any format from AOT binary executables to interpretation)
 
-## Language Features
+## Features and Goals
 - Can be both intepreted and compiled AOT into an executable
     - And obviously they should work the exact same way, just one faster and native to the platform
     - If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
     - We also need to take care of cross compilation techniques.
 - Focus on explicit representation of ideas via code. Instead of like JS where there are alot of assumptions/quirks/implicit behaviours/magic
-- Comes with a GC, will be explored further below
-- Paradigm
+- Multi Paradigm
     - Procedural
     - Functional
-    - Reactive???
+    - Reactive (Some form of this, most likely by introducing a event loop implementation in the standard library)
     - Metaprogramming
 - Expressive and extensible using metaprogramming concepts
 - Inspiration
     - Javascript / Typescript / Rust / 
 - Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
+- Application programming language, where memory management is abstracted away
+    - See [Memory section](#memory)
+- OS independent
+- Implementation independent (e.g. can be implemented in any programming language and can be runned in any format from AOT binary executables to interpretation)
 
 
 
@@ -155,12 +161,18 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
 - struct
     - Objects with fixed schema
     - whereas objects just random KV maps
+    - Can there be optional properties?
+        - E.g. https://www.typescriptlang.org/docs/handbook/interfaces.html#optional-properties
+        - so people can still use struct without falling back to Objects
 - Array
     - Can arrays be expanded? Or are they like rust tuples with fixed length?
     - since arrays are hard length
         - can we check n prevent out of bounds error?
         - [1, 2][4] --> invalid
     - []
+    - Array of elements with different types...?
+        - is this even useful in the first place?
+        - What are some scenarios where this would occur and be needed?
 ### User types
 - Allow user to create types? What is the point if there is no support for classes?
 - Also what is the point of this? if all the types are just a fixed type of struct?
@@ -239,6 +251,7 @@ const Array<Number> myArray = [1, 2, 3, 4]
 ### Memory
 - SS will come with a GC as part of its runtime
     - The runtime will either be implemented by the interpreter
+    - Or memory management taken care by VM targets like JVM
     - Or linked to your source code as part of the final compiled executable like Go
 
 ## Operators
@@ -308,6 +321,8 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - child scope can always access things in the outer scope
     - however parent scope cannot access things in child scope
     - only upward access
+- "this" value?
+    - https://www.typescriptlang.org/docs/handbook/functions.html#this
 - scoping of arrow functions...
 
 
@@ -321,6 +336,7 @@ Expressions that evalute to a BOOLEAN ONLY
         - if too verbose, we have autocompleting snippets for that... just use smth like,
             - ifu --> map to, --> if($1 === undefined)
             - ifnu --> map to, --> if($1 !== undefined)
+    - The reason for this is because too many JS code act weirdly because we forget to check for this truthy and falsey values despite the convienience they give us
 
 
 ## Control flows
@@ -331,17 +347,6 @@ if (condition) {
 } else if (condition) {
     
 } else {
-    
-}
-
-if (condition) {
-    
-}
-else if (condition) {
-    
-}
-else
-{
     
 }
 ```
