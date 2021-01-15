@@ -87,13 +87,46 @@ impl Scanner {
                 while self.peek() != '\n' && !self.is_at_end() {
                     self.advance();
                 }
+
+                /* Optimization:
+                   Technically this is not needed, because if the next character is a new line,
+                   It will be read, removed and have scanner struct's line incremented on the next call to "get_token_type"
+                   The problem is that more often then not, the next char after this is usually a new line,
+                   So instead of making another function call just to remove it,
+                   we can do a much faster check right here and remove it if it exists
+                */
+                if self.peek() == '\n' {
+                    self.advance();
+                    self.line += 1;
+                }
+
                 None
             }
             // Block Comment, comment that can span multiline lines
             '/' if self.conditional_advance('*') => {
                 while self.peek() != '*' && self.peek_next() != '/' && !self.is_at_end() {
-                    self.advance();
+                    // Advance, AND if current char is a newline, increment line count
+                    if self.advance() == '\n' {
+                        self.line += 1;
+                    }
                 }
+
+                // Advance 2 more times to eat the ending star and slash characters.
+                self.advance();
+                self.advance();
+
+                /* Optimization:
+                   Technically this is not needed, because if the next character is a new line,
+                   It will be read, removed and have scanner struct's line incremented on the next call to "get_token_type"
+                   The problem is that more often then not, the next char after this is usually a new line,
+                   So instead of making another function call just to remove it,
+                   we can do a much faster check right here and remove it if it exists
+                */
+                if self.peek() == '\n' {
+                    self.advance();
+                    self.line += 1;
+                }
+
                 None
             }
             '/' => Some(TokenType::Slash),
