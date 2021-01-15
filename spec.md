@@ -503,6 +503,35 @@ function factoryFunction(<T> constructorArgs) {
 
 
 ## Asynchronous programming
+### Legend:
+- Tasks here generally refers to CPU bound tasks
+- Blocking tasks generally refer to Long running CPU bound tasks, or Non CPU (hardware peripheral) bound tasks, e.g counting to 1 million d.p. of Pi, or waiting for Hardrive to respond to a file read request.
+
+### Thoughts, Ideas and Research
+- What is the purpose of asynchronous programming?
+    1. So that we can do more than 1 thing simultaneously?
+        - Both piece of code running at the same time
+    2. Or so that we can do more than 1 thing concurrently?
+        - Both piece of code running across time T,
+        - Both only 1 piece of code running at any given point (Tp) in time T
+        - So only 1 executing at once, but overall across T time, more than 1 can execute
+            - This is so that when 1 piece of code need to wait for e.g. the network, another CPU bound task can execute.
+
+- There are different approaches to implementing each of the 2 purposes above.
+    - But the primary purpose that is more common is point (2)
+
+
+#### How other languages do it
+- Python Concurrency
+    - https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
+    - Running Python threading script on the same machine for downloading images was 4.7 times faster. While this is much faster, it is worth mentioning that only one thread was executing at a time throughout this process due to the GIL.
+    - Therefore, this code is concurrent but not parallel. The reason it is still faster is because this is an IO bound task. The processor hardly breaks a sweat while downloading these images, and the majority of the time is spent waiting for the network.
+    - This is why Python multithreading can provide a large speed increase.
+    - The processor can switch between the threads whenever one of them is ready to do some work.
+    - Using the threading module in Python or any other interpreted language with a GIL can actually result in reduced performance if your code is performing a CPU bound task, such as decompressing gzip files, using the threading module will result in a slower execution time.
+    - For CPU bound tasks and truly parallel execution, we can use the multiprocessing module.
+
+
 > tl;dr  
 Single Threaded code just like JavaScript, but users can use the provided event loop library from std lib.  
 Supports multi process code by spinning up new native os processes (implemented by os not our runtime).  
