@@ -77,24 +77,20 @@ impl Scanner {
 
             // |
 
-            /* Inline and Block Comment */
-            // A comment goes until the end of the line.
+            // Inline Comment, a comment that goes until the end of the line.
             '/' if self.conditional_advance('/') => {
-                // eat::line(&mut source);
-                // // return None;
-
                 while self.peek() != '\n' && !self.is_at_end() {
                     self.advance();
                 }
                 None
             }
-            // @todo To support block comments once eat methods are completed
-            // '/' if self.conditional_advance('*') => {
-            //     // Must be able to support block comments with new lines
-            //     eat::block_comment(&mut source);
-            //     // return None;
-            //     return ();
-            // }
+            // Block Comment, comment that can span multiline lines
+            '/' if self.conditional_advance('*') => {
+                while self.peek() != '*' && self.peek_next() != '/' && !self.is_at_end() {
+                    self.advance();
+                }
+                None
+            }
             '/' => Some(TokenType::Slash),
 
             // Whitespace input types
