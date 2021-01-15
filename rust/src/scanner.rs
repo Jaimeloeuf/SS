@@ -53,10 +53,28 @@ impl Scanner {
     }
 
     // Pass in a character to figure out what type of token it is
+    // Will also eat and discard certain characters that are not used for the Token vector like newlines
     // Can be None, as some characters have no intrinsic token type, e.g. as white space
     fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
         // Match current_character (and maybe n next character(s)) to a TokenType or None
+        // Minor optimization: Match arms are arranged in order of how frequently that character is expected
         match current_character {
+            // Whitespace characters to be eaten and discarded
+            // Because of how we parse, tabs should be preferred over spaces to reduce number of function calls to "get_token_type"
+            ' ' => None,
+            '\r' => None,
+            '\t' => None,
+
+            // Alphabetic words
+            // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
+            'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
+
+            // Newline characters causes line number to be incremented before being eaten and discarded
+            '\n' => {
+                self.line += 1;
+                None
+            }
+
             ';' => Some(TokenType::Semicolon),
             '{' => Some(TokenType::LeftBrace),
             '}' => Some(TokenType::RightBrace),
@@ -93,7 +111,9 @@ impl Scanner {
                    It will be read, removed and have scanner struct's line incremented on the next call to "get_token_type"
                    The problem is that more often then not, the next char after this is usually a new line,
                    So instead of making another function call just to remove it,
-                   we can do a much faster check right here and remove it if it exists
+                   we can do a much faster check right here and remove it if it exists.
+                   Note this optimization can only be used for patterns that return None,
+                   since we cannot increment line number before the caller of this function saves the token with the current line number
                 */
                 if self.peek() == '\n' {
                     self.advance();
@@ -120,7 +140,9 @@ impl Scanner {
                    It will be read, removed and have scanner struct's line incremented on the next call to "get_token_type"
                    The problem is that more often then not, the next char after this is usually a new line,
                    So instead of making another function call just to remove it,
-                   we can do a much faster check right here and remove it if it exists
+                   we can do a much faster check right here and remove it if it exists.
+                   Note this optimization can only be used for patterns that return None,
+                   since we cannot increment line number before the caller of this function saves the token with the current line number
                 */
                 if self.peek() == '\n' {
                     self.advance();
@@ -131,25 +153,11 @@ impl Scanner {
             }
             '/' => Some(TokenType::Slash),
 
-            // Whitespace input types
-            ' ' => None,
-            '\r' => None,
-            '\t' => None,
-
-            '\n' => {
-                self.line += 1;
-                None
-            }
-
             // String Literals
             '"' => Some(TokenType::Str),
 
             // Number Literals
             '0'..='9' => Some(TokenType::Number),
-
-            // Alphabetic words
-            // Identifiers, must start with alphabet or _, but can contain mix of alphanumeric chars
-            'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
 
             // Couldn't Match
             _ => {
@@ -170,17 +178,8 @@ impl Scanner {
         let token_type: Option<TokenType> = self.get_token_type(current_character);
 
         // Match TokenType to new Token, and handle processing needed for certain token types
+        // Minor optimization: Match arms are arranged in order of how frequently that TokenType is expected
         match token_type {
-            Some(TokenType::Str) => {
-                let literal = self.string_literals();
-                self.tokens.push(Token::new_string(literal, self.line));
-            }
-
-            Some(TokenType::Number) => {
-                let literal = self.number_literal();
-                self.tokens.push(Token::new_number(literal, self.line));
-            }
-
             Some(TokenType::Identifier) => {
                 let identifier = self.identifier();
                 let keyword_token_type = KEYWORDS.get(&identifier);
@@ -199,14 +198,25 @@ impl Scanner {
                 };
             }
 
+            // Do nothing for None type TokenType
+            None => (),
+
+            Some(TokenType::Number) => {
+                let literal = self.number_literal();
+                self.tokens.push(Token::new_number(literal, self.line));
+            }
+
+            Some(TokenType::Str) => {
+                let literal = self.string_literals();
+                self.tokens.push(Token::new_string(literal, self.line));
+            }
+
+            // Last match arm to match all other unmatched token types that do not need special processing
             Some(token_type) => {
                 // Can unwrap here as we are sure that there is a value because of the Some wrap matching
                 self.tokens
                     .push(Token::new_none_literal(token_type, self.line));
             }
-
-            // Do nothing for None type TokenType
-            None => (),
         };
     }
 
