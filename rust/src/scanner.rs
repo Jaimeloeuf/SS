@@ -1,8 +1,12 @@
-// use crate::eat;
+/*
+    Scanner module to scan source file for a vector of tokens
+*/
+
 use crate::keywords::KEYWORDS;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+// All integer fields are limited by the size of an unsigned integer of the target system
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
@@ -11,14 +15,13 @@ pub struct Scanner {
     start: usize, // start field points to the first character in the lexeme being scanned
     current: usize, // current points at the character currently being considered
 
-    // The line field tracks what source line current is on so we can produce tokens that know their location.
-    // line: u32, // which line of the source we are currently on, used mainly for error reporting
-    line: usize, // which line of the source we are currently on, used mainly for error reporting
+    // This tracks the line scanner is currently on in the source file to produce tokens that know their location and for error reporting
+    line: usize,
 }
 
 impl Scanner {
     // Constructor
-    // Give ownership of source string here
+    // Move ownership of source string into Scanner struct here
     pub fn new(source: String) -> Scanner {
         Scanner {
             source: source,
@@ -49,6 +52,8 @@ impl Scanner {
         self.tokens
     }
 
+    // Pass in a character to figure out what type of token it is
+    // Can be None, as some characters have no intrinsic token type, e.g. as white space
     fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
         // Match current_character (and maybe n next character(s)) to a TokenType or None
         match current_character {
@@ -119,7 +124,7 @@ impl Scanner {
                     "Unexpected character '{}' on line {}",
                     current_character, self.line
                 );
-                // Call the error handling code
+                // @todo Call the error handling code
 
                 None
             }

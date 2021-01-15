@@ -3,7 +3,6 @@ use std::fs;
 // use std::io;
 use std::time::Instant;
 
-mod eat;
 mod hash;
 mod keywords;
 mod literal;
@@ -13,7 +12,7 @@ mod token;
 mod token_type;
 
 fn main() {
-    let startOfMain = Instant::now();
+    let start_of_main = Instant::now();
 
     let args: Vec<String> = env::args().collect();
 
@@ -26,7 +25,7 @@ fn main() {
 
     read_file(&filename);
 
-    println!("Completed in: {:?}", startOfMain.elapsed());
+    println!("Completed in: {:?}", start_of_main.elapsed());
 }
 
 fn read_file(filename: &String) {
