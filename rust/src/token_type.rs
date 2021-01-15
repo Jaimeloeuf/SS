@@ -53,11 +53,16 @@ pub enum TokenType {
   Function,
   For,   // to remove?
   While, // to remove?
-  Nil,   // to remove?
   Print, // Shouldnt this be in std:: lib instead?
   Return,
   True,
   Const,
+
+  // What about undefined? Void?
+  // Maybe dun allow it, either enforce checking for nulls with the language server,
+  // Or force it at the language level by removing Null, and introducing Tagged union a.k.a optional T for every T
+  // Else uniqueness type
+  Null, // to remove?
 
   Eof,
 }
@@ -66,9 +71,7 @@ impl fmt::Display for TokenType {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
       // @todo Instead of match, should write its literal value instead
-      TokenType::True => write!(f, "true"),
-
-      _ => write!(f, "Either Display trait not implemented yet or invalid"),
+      _ => write!(f, "SS: Either Display trait not implemented yet or invalid"),
     }
   }
 }

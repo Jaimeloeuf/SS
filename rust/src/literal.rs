@@ -3,7 +3,7 @@ pub enum Literal {
     Number(f64),
     String(String),
     Bool(bool),
-    Nil,
+    Null,
 }
 
 impl Literal {
@@ -14,7 +14,7 @@ impl Literal {
         //     Number => self.to_string(),
         //     String => self.to_string(),
         //     Bool => self.to_string(),
-        //     Nil => "Nil".to_string(),
+        //     Null => "Null".to_string(),
         // }
     }
 }

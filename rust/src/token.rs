@@ -82,10 +82,6 @@ impl Token {
     // @todo Temporary allow this
     #[allow(dead_code)]
     pub fn to_string(&self) -> String {
-        // format!(
-        //     "{:?} {} {:?} {}",
-        //     self.token_type, self.lexeme, self.literal, self.line
-        // )
-        format!("{:?} {:?} {}", self.token_type, self.literal, self.line)
+        format!("{} {:?} {:?}", self.line, self.token_type, self.literal)
     }
 }

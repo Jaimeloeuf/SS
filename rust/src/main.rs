@@ -1,6 +1,5 @@
 use std::env;
 use std::fs;
-// use std::io;
 use std::time::Instant;
 
 mod hash;
@@ -31,20 +30,17 @@ fn main() {
 fn read_file(filename: &String) {
     let source = fs::read_to_string(filename).expect("Cannot read file");
 
-    // Debug
-    println!("Source content:\n{}", source);
-
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
     let scanner = scanner::Scanner::new(source);
     let tokens = scanner.scan_tokens();
 
-    println!("Logging out token vector");
-    for token in tokens.iter() {
-        println!("{}", token.to_string())
-    }
-    println!("End of token vector");
+    // println!("Logging out token vector");
+    // for token in tokens.iter() {
+    //     println!("{}", token.to_string())
+    // }
+    // println!("End of token vector");
 
     // Might also change to remove the mut and give ownership to parse
     let mut parser = parser::parser_struct::Parser::new(tokens);

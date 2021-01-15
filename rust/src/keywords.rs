@@ -32,7 +32,7 @@ lazy_static! {
 
         // Should these be included...
         m.insert("print".to_string(), TokenType::Print);
-        m.insert("nil".to_string(), TokenType::Nil);
+        m.insert("null".to_string(), TokenType::Null);
 
         m.insert("true".to_string(), TokenType::True);
         m.insert("false".to_string(), TokenType::False);
@@ -71,7 +71,7 @@ lazy_static! {
 
 //         // Should these be included...
 //         "print" => Some(TokenType::Print),
-//         "nil" => Some(TokenType::Nil),
+//         "Null" => Some(TokenType::Null),
 
 //         "true" => Some(TokenType::True),
 //         "false" => Some(TokenType::False),

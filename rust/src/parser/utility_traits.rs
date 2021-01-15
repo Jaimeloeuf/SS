@@ -1,3 +1,4 @@
+use super::error::ParsingError;
 use super::parser_struct::Parser;
 
 use crate::token::Token;
@@ -31,10 +32,22 @@ impl Parser {
         self.previous()
     }
 
-    // checks if current token has any of the given types.
+    // Checks if current token matches the given type
     // If so, consumes the token and returns true.
     // Otherwise, returns false and leave current token alone
-    pub fn is_next_token(&mut self, token_types_to_check: Vec<TokenType>) -> bool {
+    pub fn is_next_token(&mut self, token_type_to_check: TokenType) -> bool {
+        if self.check(token_type_to_check) {
+            self.advance();
+            true
+        } else {
+            false
+        }
+    }
+
+    // Checks if current token matches any of the given types.
+    // If so, consumes the token and returns true.
+    // Otherwise, returns false and leave current token alone
+    pub fn is_next_token_any_of_these(&mut self, token_types_to_check: Vec<TokenType>) -> bool {
         for token_type in token_types_to_check {
             if self.check(token_type) {
                 self.advance();
