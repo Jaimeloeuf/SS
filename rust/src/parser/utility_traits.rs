@@ -24,11 +24,16 @@ impl Parser {
     }
 
     pub fn advance(&mut self) -> &Token {
+        // Old way of doing it.
         // Only increment the current token counter if not at end yet
-        if !self.is_at_end() {
-            self.current += 1;
-        }
+        // if !self.is_at_end() {
+        //     self.current += 1;
+        // }
+        // Get previous token without call to "previous" method to save the extra function call... but LLVM is probs smart enough to optimize this
+        // self.tokens.get(self.current - 1).unwrap()
 
+        // Assume caller will check if it is at the end of token vector so no need for extra check here
+        self.current += 1;
         self.previous()
     }
 
