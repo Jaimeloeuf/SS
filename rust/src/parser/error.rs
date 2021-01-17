@@ -6,12 +6,14 @@ use std;
 
 #[derive(Debug)]
 pub enum ParsingError {
-    UnexpectedTokenError(Token, String),
+    // Static string message are hardcoded compiler error messages
+    UnexpectedTokenError(Token, &'static str),
     UnexpectedEofError,
     InvalidAssignmentError(Token),
     TooManyArgumentsError,
     TooManyParametersError,
-    InternalError(String),
+    // Static string message are hardcoded compiler error messages
+    InternalError(&'static str),
 }
 
 impl std::fmt::Display for ParsingError {

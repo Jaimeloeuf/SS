@@ -65,7 +65,12 @@ impl Parser {
 
     // Checks and consumes token if it is of the specified type,
     // Else bubble up a UnexpectedToken ParsingError with the given string as its message
-    fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParsingError> {
+    // Static string message to be passed in where the message is a hardcoded compiler error message
+    pub fn consume(
+        &mut self,
+        token_type: TokenType,
+        message: &'static str,
+    ) -> Result<&Token, ParsingError> {
         if self.check(token_type) {
             Ok(self.advance())
         } else {
