@@ -1,3 +1,4 @@
+use super::error::ParsingError;
 use super::parser_struct::Parser;
 
 use crate::token::Token;
@@ -11,13 +12,13 @@ impl Parser {
     // Constructor
     // Takes ownership of the token vector
     pub fn new(tokens: Vec<Token>) -> Parser {
-        println!("Processing '{}' tokens", tokens.len());
         Parser { tokens, current: 0 }
     }
 
-    // Statements and State parse-declaration statements.add(statement());
     // Moves a statments vector out. Move instead of borrow as vec created in this scope
-    pub fn parse(&mut self) -> Vec<Stmt> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ParsingError> {
+        println!("Processing '{}' tokens", self.tokens.len());
+
         let statements: Vec<Stmt> = Vec::<Stmt>::new();
         // let statements: Vec<Stmt> = Vec::new();
 
@@ -26,8 +27,8 @@ impl Parser {
             self.advance();
         }
 
-        // Pass back immutable reference of the tokens vector
-        statements
+        // Pass back immutable reference of the tokens vector wrapped in a Result variant
+        Ok(statements)
     }
 
     // Synchronize the tokens to approx the next valid token
