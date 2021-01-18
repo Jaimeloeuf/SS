@@ -18,23 +18,11 @@ pub enum ParsingError {
 
 impl std::fmt::Display for ParsingError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            ParsingError::UnexpectedTokenError(ref token, ref message) => write!(
+        match self {
+            ParsingError::UnexpectedTokenError(token, message) => write!(
                 f,
-                "[line {}] UnexpectedTokenError: {}\n\nFound Token and Type: {} {}",
-                token.line,
-                message,
-                match &token.literal {
-                    Some(literal) => literal.to_string(),
-                    None => "IT IS NOT A LITERAL".to_string(),
-                },
-                // This method might be better...
-                // if token.literal.is_none() {
-                //     ""
-                // } else {
-                //     token.literal.to_string()
-                // },
-                token.token_type,
+                "[line {}] UnexpectedTokenError: {}\nFound -> {:?}",
+                token.line, message, token,
             ),
             ParsingError::UnexpectedEofError => f.write_str("Unexpected end of input"),
             ParsingError::InvalidAssignmentError(ref token) => {

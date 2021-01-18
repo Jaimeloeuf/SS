@@ -7,14 +7,20 @@ pub enum Literal {
 }
 
 impl Literal {
-    pub fn to_string(&self) -> String {
-        // Not sure if this will work for all variants..?
-        self.to_string()
-        // match self {
-        //     Number => self.to_string(),
-        //     String => self.to_string(),
-        //     Bool => self.to_string(),
-        //     Null => "Null".to_string(),
-        // }
+    // pub fn to_string(&self) -> String {
+    //     // Not sure if this will work for all variants..?
+    //     self.to_string()
+    //     // match self {
+    //     //     Number => self.to_string(),
+    //     //     String => self.to_string(),
+    //     //     Bool => self.to_string(),
+    //     //     Null => "Null".to_string(),
+    //     // }
+    // }
+}
+
+impl std::fmt::Display for Literal {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
