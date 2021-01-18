@@ -9,22 +9,24 @@ pub struct Stmt {
 }
 
 impl Parser {
-    // Constructor
-    // Takes ownership of the token vector
-    pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { tokens, current: 0 }
-    }
+    // Consumes a token vector (takes ownership) to produce a statements vector (moved out)
+    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, ParsingError> {
+        let mut parser = Parser { tokens, current: 0 };
 
-    // Moves a statments vector out. Move instead of borrow as vec created in this scope
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, ParsingError> {
-        println!("Processing '{}' tokens", self.tokens.len());
+        println!("Processing '{}' tokens", parser.tokens.len());
 
         let statements: Vec<Stmt> = Vec::<Stmt>::new();
         // let statements: Vec<Stmt> = Vec::new();
 
         // On each loop, we scan a single token.
-        while !self.is_at_end() {
-            self.advance();
+        while !parser.is_at_end() {
+            let expr = parser.expression();
+            match expr {
+                Ok(expr) => println!("Parsed expression: {}\n", expr),
+                Err(e) => println!("Error parsing: {}\n", e),
+            }
+
+            parser.advance();
         }
 
         // Pass back immutable reference of the tokens vector wrapped in a Result variant

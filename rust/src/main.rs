@@ -10,6 +10,8 @@ mod scanner;
 mod token;
 mod token_type;
 
+use parser::parser_struct::Parser;
+
 fn main() {
     let start_of_main = Instant::now();
 
@@ -42,7 +44,6 @@ fn read_file(filename: &String) {
     // }
     // println!("End of token vector");
 
-    // Might also change to remove the mut and give ownership to parse
-    let mut parser = parser::parser_struct::Parser::new(tokens);
-    let abstract_syntax_tree = parser.parse();
+    // Give tokens to parse directly
+    let abstract_syntax_tree = Parser::parse(tokens);
 }
