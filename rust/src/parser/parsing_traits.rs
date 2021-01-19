@@ -1,4 +1,5 @@
 use super::error::ParsingError;
+use super::expr::Expr;
 use super::parser_struct::Parser;
 
 use crate::token::Token;
@@ -31,6 +32,99 @@ impl Parser {
 
         // Pass back immutable reference of the tokens vector wrapped in a Result variant
         Ok(statements)
+
+    fn expression(&mut self) -> Result<Expr, ParsingError> {
+        return self.equality();
+    }
+
+    fn equality(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.comparison()?;
+
+        while self.is_next_token_any_of_these(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
+            let operator = self.previous().clone();
+            let right = self.comparison()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn comparison(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.term()?;
+
+        while self.is_next_token_any_of_these(vec![
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+        ]) {
+            let operator = self.previous().clone();
+            let right = self.term()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn term(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.factor()?;
+
+        while self.is_next_token_any_of_these(vec![TokenType::Minus, TokenType::Plus]) {
+            let operator = self.previous().clone();
+            let right = self.factor()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn factor(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.unary()?;
+
+        while self.is_next_token_any_of_these(vec![TokenType::Slash, TokenType::Star]) {
+            let operator = self.previous().clone();
+            let right = self.unary()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+        Ok(expr)
+    }
+
+    fn unary(&mut self) -> Result<Expr, ParsingError> {
+        if self.is_next_token_any_of_these(vec![TokenType::Bang, TokenType::Minus]) {
+            let operator = self.previous().clone();
+            let right = self.unary()?;
+            Ok(Expr::Unary(operator, Box::new(right)))
+        } else {
+            Ok(self.primary()?)
+        }
+    }
+
+    fn primary(&mut self) -> Result<Expr, ParsingError> {
+        if self.is_next_token_any_of_these(vec![TokenType::True, TokenType::False, TokenType::Null])
+        {
+            Ok(Expr::Literal(self.previous().clone().token_type))
+        } else if self.is_next_token_any_of_these(vec![
+            TokenType::Identifier,
+            TokenType::Str,
+            TokenType::Number,
+        ]) {
+            Ok(Expr::Literal(self.previous().clone().token_type))
+        } else if self.is_next_token(TokenType::LeftParen) {
+            let expr = self.expression()?;
+
+            // Check if there is a ")" to close the expression
+            if let Err(e) = self.consume(TokenType::RightParen, "Expect ')' after expression.") {
+                Err(e)
+            } else {
+                Ok(Expr::Grouping(Box::new(expr)))
+            }
+        } else {
+            // I dont think we should use self.peek here
+            Err(ParsingError::UnexpectedTokenError(
+                (*self.peek()).clone(),
+                "Invalid token found",
+            ))
+        }
     }
 
     // Synchronize the tokens to approx the next valid token
