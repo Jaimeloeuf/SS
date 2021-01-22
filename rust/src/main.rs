@@ -40,10 +40,26 @@ fn read_file(filename: &String) {
 
     // println!("Logging out token vector");
     // for token in tokens.iter() {
-    //     println!("{}", token.to_string())
+    //     println!("{}", token.to_string());
     // }
     // println!("End of token vector");
 
     // Give tokens to parse directly
     let abstract_syntax_tree = Parser::parse(tokens);
+
+    if let Err(e) = abstract_syntax_tree {
+        println!("Program stopped due to SYNTAX ERROR.");
+
+        // @todo Remove the debug symbol
+        for error in e.iter() {
+            println!("{:?}\n", error);
+        }
+    } else if let Ok(ast) = abstract_syntax_tree {
+        println!("AST generated");
+
+        // @todo Remove the debug symbol
+        for stmts in ast.iter() {
+            println!("{:?}\n", stmts);
+        }
+    }
 }
