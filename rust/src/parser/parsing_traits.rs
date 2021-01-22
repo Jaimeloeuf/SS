@@ -11,27 +11,35 @@ pub struct Stmt {
 
 impl Parser {
     // Consumes a token vector (takes ownership) to produce a statements vector (moved out)
-    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, ParsingError> {
+    // @todo Tmp change of method API to return Vec of Expr instead of Stmt before that is implemented
+    // pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, ParsingError> {
+    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, Vec<ParsingError>> {
         let mut parser = Parser { tokens, current: 0 };
 
         println!("Processing '{}' tokens", parser.tokens.len());
 
-        let statements: Vec<Stmt> = Vec::<Stmt>::new();
-        // let statements: Vec<Stmt> = Vec::new();
+        let mut statements: Vec<Expr> = Vec::<Expr>::new();
+        let mut errors: Vec<ParsingError> = Vec::<ParsingError>::new();
 
         // On each loop, we scan a single token.
         while !parser.is_at_end() {
-            let expr = parser.expression();
-            match expr {
-                Ok(expr) => println!("Parsed expression: {}\n", expr),
-                Err(e) => println!("Error parsing: {}\n", e),
+            // Get expression and based on output, push to either one of the vectors
+            match parser.expression() {
+                Ok(expr) => statements.push(expr),
+                // For err, maybe I should log it to stderr at the same time too, so that LSP can pick it up?
+                Err(e) => errors.push(e),
             }
 
             parser.advance();
         }
 
-        // Pass back immutable reference of the tokens vector wrapped in a Result variant
-        Ok(statements)
+        // Return vector of statements only if there are no errors
+        if errors.is_empty() {
+            Ok(statements)
+        } else {
+            Err(errors)
+        }
+    }
 
     fn expression(&mut self) -> Result<Expr, ParsingError> {
         return self.equality();
