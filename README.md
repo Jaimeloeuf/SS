@@ -1,4 +1,4 @@
-# SS (SimpleScript)
+# SS (SimpleScript) [![Status](https://img.shields.io/badge/Status-Experimenting%20/%20Pre%20Pre%20Pre%20Technical%20Preview-green.svg)](#project-status)
 Just a simple programming language / experiment to build a simpler and less quirky JavaScript.  
 
 > SimpleScript is a Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
@@ -34,6 +34,20 @@ Generally:
     - Perhaps a JVM version?
 - Others
     - VS code and vim extensions!
+
+
+## Project Status
+Research.. Research.. Research.. Research..  
+Currently:
+- doing alot of research on programming languages
+    - learning more about PLT (Programming Language Theory)
+    - studying other languages
+- Working on the language spec whilst learning and building upon the research
+    - Module system design
+    - Researching and experimenting with how to embed Asynchronous programming / Concurrency / Parallel computing into the language semantics itself.
+- Learning how to build interpreters / compilers
+    - Actively building a interpreter in Rust for a modified lox language, inspired by this [book](https://craftinginterpreters.com/) and [rlox](https://github.com/julioolvr/rlox)
+    - The interpreter is not (at least, not yet) for SS, it is for a modified version of of the lox language, which I am building to learn more about building interpreters.
 
 
 ## Author, Credits, License, Contributing
