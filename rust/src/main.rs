@@ -58,9 +58,8 @@ fn read_file(filename: &String) {
     } else if let Ok(ast) = abstract_syntax_tree {
         println!("AST generated");
 
-        // @todo Remove the debug symbol
-        for stmts in ast.iter() {
-            println!("{:?}\n", stmts);
-        }
+        // for stmt in ast.iter() {
+        //     println!("{}\n", stmt);
+        // }
     }
 }

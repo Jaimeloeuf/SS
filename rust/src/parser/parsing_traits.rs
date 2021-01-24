@@ -1,6 +1,7 @@
 use super::error::ParsingError;
 use super::expr::Expr;
 use super::parser_struct::Parser;
+use crate::literal::Literal;
 
 use crate::token::Token;
 use crate::token_type::TokenType;
@@ -108,15 +109,21 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, ParsingError> {
-        if self.is_next_token_any_of_these(vec![TokenType::True, TokenType::False, TokenType::Null])
-        {
-            Ok(Expr::Literal(self.previous().clone().token_type))
+        // Check for Literal values True/False/Null first before moving on to Identifier/Strings/Numbers and lastly grouped expressions
+        if self.is_next_token(TokenType::True) {
+            Ok(Expr::Literal(Literal::Bool(true)))
+        } else if self.is_next_token(TokenType::False) {
+            Ok(Expr::Literal(Literal::Bool(false)))
+        } else if self.is_next_token(TokenType::Null) {
+            Ok(Expr::Literal(Literal::Null))
         } else if self.is_next_token_any_of_these(vec![
             TokenType::Identifier,
             TokenType::Str,
             TokenType::Number,
         ]) {
-            Ok(Expr::Literal(self.previous().clone().token_type))
+            // Need to clone because self.previous returns immutable ref to the Token, thus we cannot move out the literal
+            // Clone first then unwrap, since unwrap consumes the self value
+            Ok(Expr::Literal(self.previous().literal.clone().unwrap()))
         } else if self.is_next_token(TokenType::LeftParen) {
             let expr = self.expression()?;
 
