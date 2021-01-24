@@ -227,12 +227,12 @@ impl Scanner {
     // advance() is for input
     // Consume next character from source and return it.
     // Must be valid char else this will panic during the unwrap
-    // Push current character back into source as advance methods removes it.
-    // @todo Or maybe advance method shouldnt remove it? And just borrow ref here?
-    // self.source.push(current_character);
     fn advance(&mut self) -> char {
         self.current += 1;
         self.source.chars().nth(self.current - 1).unwrap()
+
+        // If needed, push current character back into source as advance methods removes it.
+        // self.source.push(current_character);
     }
 
     // This is a conditional advance(). Only consumes current character if it's what we're looking for.
@@ -268,7 +268,7 @@ impl Scanner {
     }
 
     // Returns the String literal between ""
-    // @todo Should this be a new string or a slice?
+    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
     fn string_literals(&mut self) -> String {
         while self.peek() != '"' && !self.is_at_end() {
             // Allow multiline strings.
@@ -314,6 +314,8 @@ impl Scanner {
         self.source[self.start..self.current].to_string()
     }
 
+    // Get alphanumerical identifier string
+    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
     fn identifier(&mut self) -> String {
         // See link for the list of supported alphanumeric characters
         // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
