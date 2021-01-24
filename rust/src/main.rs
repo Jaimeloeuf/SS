@@ -9,6 +9,7 @@ mod parser;
 mod scanner;
 mod token;
 mod token_type;
+mod value;
 
 use parser::parser_struct::Parser;
 
