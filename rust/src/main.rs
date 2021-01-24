@@ -41,7 +41,7 @@ fn read_file(filename: &String) {
 
     // println!("Logging out token vector");
     // for token in tokens.iter() {
-    //     println!("{}", token.to_string());
+    //     println!("{}", token.to_debug_string());
     // }
     // println!("End of token vector");
 
