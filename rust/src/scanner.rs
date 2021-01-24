@@ -293,9 +293,8 @@ impl Scanner {
         self.source[self.start + 1..self.current - 1].to_string()
     }
 
-    // @todo Should this be a new string or a slice?
-    // fn number_literal(&mut self) -> isize {
-    // Return string version of number literal to parse later as cannot determine type right now
+    // Return string version of number literal to parse later during Token creation
+    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
     fn number_literal(&mut self) -> String {
         while self.peek().is_ascii_digit() {
             self.advance();
@@ -311,12 +310,7 @@ impl Scanner {
             }
         }
 
-        // This should not be isize, as the value will be limited.
-        // @todo This will fail if it is a fraction
-        // self.source[self.start..self.current]
-        //     .parse::<isize>()
-        //     .unwrap()
-        // Return as a string first, then only convert it to its type later
+        // Return as a new string first, then only convert it to its type later
         self.source[self.start..self.current].to_string()
     }
 
