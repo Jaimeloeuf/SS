@@ -6,21 +6,14 @@ pub enum Literal {
     Null,
 }
 
-impl Literal {
-    // pub fn to_string(&self) -> String {
-    //     // Not sure if this will work for all variants..?
-    //     self.to_string()
-    //     // match self {
-    //     //     Number => self.to_string(),
-    //     //     String => self.to_string(),
-    //     //     Bool => self.to_string(),
-    //     //     Null => "Null".to_string(),
-    //     // }
-    // }
-}
-
 impl std::fmt::Display for Literal {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        // Use ref to make sure the values are only borrowed and not moved
+        match self {
+            Literal::Number(ref number) => write!(f, "{}", number),
+            Literal::String(ref string) => write!(f, "{}", string),
+            Literal::Bool(ref boolean) => write!(f, "{}", boolean),
+            Literal::Null => write!(f, "Null"),
+        }
     }
 }
