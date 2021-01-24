@@ -5,9 +5,10 @@ use crate::token::Token;
 // #[derive(Debug, Clone)]
 #[derive(Debug)]
 pub enum Expr {
+    Literal(Literal),
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
-    Literal(Literal),
+    // @todo Use Literal or Value variants directly?
     Unary(Token, Box<Expr>),
     Const(Token, Option<usize>),
     Assign(Token, Box<Expr>, Option<usize>),
@@ -22,25 +23,24 @@ pub enum Expr {
 // Temporary display trait for debugging
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
+        match self {
+            Expr::Literal(ref literal) => write!(f, "{}", literal),
             Expr::Binary(ref left, ref operator, ref right) => {
-                write!(f, "({} {} {})", operator.to_string(), left, right)
+                write!(f, "({} {} {})", operator, left, right)
             }
             Expr::Grouping(ref expr) => write!(f, "(group {})", expr),
-            Expr::Literal(ref literal) => write!(f, "{}", literal),
-            Expr::Unary(ref operator, ref expr) => write!(f, "({} {})", operator.to_string(), expr),
-            Expr::Const(ref token, _) => write!(f, "(Const {})", token.to_string()),
-            Expr::Assign(ref token, ref expr, _) => {
-                write!(f, "(assign {} {})", token.to_string(), expr)
-            }
+            Expr::Unary(ref operator, ref expr) => write!(f, "({} {})", operator, expr),
+            Expr::Const(ref token, _) => write!(f, "(Const {})", token),
+            Expr::Assign(ref token, ref expr, _) => write!(f, "(assign {} {})", token, expr),
             Expr::Logical(ref left, ref operator, ref right) => {
-                write!(f, "({} {} {})", operator.to_string(), left, right)
+                write!(f, "({} {} {})", operator, left, right)
             }
             Expr::Call(ref callee, ref arguments, _) => {
                 write!(f, "(call {} {:?})", callee, arguments)
             }
-            Expr::Get(ref expr, ref token) => write!(f, "(get {} {})", token.to_string(), expr),
-            Expr::Set(ref expr, ref token, _) => write!(f, "(set {} {})", token.to_string(), expr),
+            Expr::Get(ref expr, ref token) => write!(f, "(get {} {})", token, expr),
+            Expr::Set(ref expr, ref token, _) => write!(f, "(set {} {})", token, expr),
+
             // Expr::This(_, _) => write!(f, "this"),
             // Expr::Super(_, ref method, _) => write!(f, "(super {})", method.lexeme),
             _ => write!(f, "Unimplemented display trait for Expr: {:?}", self),
