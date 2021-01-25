@@ -14,18 +14,6 @@ One of the goals of this language is to prioritize or optimize for reading code 
 Code is assumed to be read more often than written, thus it should be easy to read and understand, even if it means sacrificing implicit assumptions unlike other programming languages.  
 In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable.
 
-Technical features and goals:
-- Statically typed
-    - Need to know the type at Compile time if compiled
-    - The code is always "compiled" first into an IR that can be parsed later on
-        - so even for interpreted versions, Types can be enforced
-- Immutable
-    - no data can be changed once created.
-- Functional
-- Application programming language, where memory management is abstracted away
-    - See [Memory section](#memory)
-- OS independent
-- Implementation independent (e.g. can be implemented in any programming language and can be runned in any format from AOT binary executables to interpretation)
 
 ## Features and Goals
 - Can be both intepreted and compiled AOT into an executable
@@ -42,6 +30,12 @@ Technical features and goals:
 - Inspiration
     - Javascript / Typescript / Rust / 
 - Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
+- Statically typed
+    - Need to know the type at Compile time if compiled
+    - The code is always "compiled" first into an IR that can be parsed later on
+        - So even when interpreted, Types can be enforced, kinda like TS
+- Immutable
+    - no data can be changed once created.
 - Application programming language, where memory management is abstracted away
     - See [Memory section](#memory)
 - OS independent
@@ -57,14 +51,20 @@ Thus some of the WIP reference implementations are (sorted by order of developme
     - Intepreter built using Rust/Other langs
     - Might support JIT integrations, but... its damn difficult so tbd
 2. Compile to native binaries using LLVM backend and a custom frontend
-3. Compile to WASM as this will be used more and more compared to other VMs like JVM and Erlang BEAM in the future thanks to its sandboxed model and wide language support for Rust/Go/C++/...
+3. Compile to WASM as this will be used more and more compared to other VMs like JVM / CLR / Erlang BEAM in the future thanks to its sandboxed model and wide language support for Rust/Go/C++/...
     - https://wasmer.io/
     - Instead of providing our own runtime, rely on the WASM runtime...
-4. Compile to bytecode for VMs like the JVM or Erlang BEAM to support more environments using it
+4. Compile to bytecode for VMs like the JVM / CLR / Erlang BEAM to support more environments using it
 5. Support transpilation options? Like transpile to JS/Rust
     - The purpose of this is to take advantage of their build tools, like rusts memory management system and more.
     - Transpile to JS to make it easier to run and more portable, basically like TypeScript or any dialect of JavaScript, but WASM would be preferred for performance.
 
+Notes:
+- For any compilation techniques, the language have to be designed to support seperate compilation like Go, primarily for speed and the ability to link to pre-compiled object files.
+    - To achieve this
+        - https://stackoverflow.com/questions/2976630/how-does-go-compile-so-quickly
+        - https://stackoverflow.com/questions/2976630/how-does-go-compile-so-quickly/49863657#49863657
+        - Essentially, simple syntax and good dependency (modules) management
 
 ## Keywords and symbols
 - All the data types
@@ -154,6 +154,11 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
 - Bool
     - true
     - false
+    - In SS, there are no truthy or falesy literal "values" other then the 'true' and 'false' keywords
+        - All expressions can be evaluated to true or false values during runtime, ONLY the Keyword are treated as true or false literal values without the need for evaluation.
+        - Meaning that, for example an empty string does not evalutes to true or false
+        - Explicit comparision expressions is required to check if the string is empty, e.g. if ("" == "")
+        - Refer to [Conditions](#Conditions)
 ### Special data types
 - Object
     - key value maps
@@ -406,6 +411,11 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
         - or like JS Rest parameters, using fn(...Args)
         - but if using rest parameters, how do you garuntee the type?
     - default function arguements like JS.
+    - If a function that returns something is called and the caller does not use the return value,
+        - Should it be considered as an error?
+        - The [midori method](http://joeduffyblog.com/2016/02/07/the-error-model/) to make it explicit
+            - ignore foo();
+            - [Calling ignore method on promises](http://joeduffyblog.com/2015/11/19/asynchronous-everything/)
 
 ### Pure functions
 ```js
@@ -546,6 +556,9 @@ For now, no kernel thread support, rather user level thread via thread libraries
 
 ## Modules
 - Support breaking code up into modules. Every new file is a module
+- Modules resolution
+    - https://www.typescriptlang.org/docs/handbook/module-resolution.html
+- Modules / Types / Seperate Compilation
 
 ### Import
 - @todo instead of std:libraryname should be std/libraryName?
@@ -605,8 +618,11 @@ proxy.new(targetObj)
 
 
 ## Language extensions
-### FFI
+### FFI (Foreign Function Interface)
 - Will have builtin language/std-lib level support for FFI to interact with Rust and C/C++ code in the future
+- Inspiration from other langs
+    - https://www.lua.org/pil/24.html
+    - https://wren.io/embedding/
 
 
 ## Others
@@ -630,10 +646,34 @@ proxy.new(targetObj)
 - A part of the spec should include native code from standard library
     - native code as in, implemented by the runtime, instead of being libraries written in SS itself
         - JSON support
+            - Should have JSON DOS protection, by checking length of JSON
+                - Either JSON DOS attacks by blocking the CPU thread with long strings
+                - Or by parsing into an extremely large object that takes up lots of ram.
+            - Or offer libs in std that support Async JSON
+                - https://nodejs.org/en/docs/guides/dont-block-the-event-loop/#blocking-the-event-loop-json-dos
         - assertions (Technically can be implemented in SS using a check and throwing on error)
+- Things that not sure if should be implemented at runtime level or user level.
+    - Serialization / Marshalling
+        - This should either be implemented at the runtime level or user/std level
+        - But this should be powerful and allow for interesting use cases like python pickles
+        - Write about why this is needed, and how can this be used, and how will this be implemented
+    - Regexp
+        - Should this be implemented in user land?
+        - https://nodejs.org/en/docs/guides/dont-block-the-event-loop/#blocking-the-event-loop-redos
+        - https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
+    - Crypto
+        - Crypto math functions
 - Lazy evaluation
 - Proper definition of the Spread syntax
 - bigints
-    - Should this be provided as part of the language semantic like python numbers? Or as a non native standard library implementation.
+    - Should this be provided as part of the language semantic like python numbers?
+    - Or as a standard library implemented in SS?
+    - Or as a standard library implemented in Rust then linked via FFI / dynamic library linking / running the code seperatly and calling the process?
+- SIMD support
+    - Will this be directly exposed to the user or implemented in the underlying executable?
+- Permissions model like ink and deno
+    - Where you can specify what permissions to give untrusted scripts, effectively limiting their control and sandboxing them
+    - https://github.com/thesephist/ink#isolation-and-permissions-model
+
 ## Preferences
-- Use camelCase for constant values
+- Use camelCase for value and function names
