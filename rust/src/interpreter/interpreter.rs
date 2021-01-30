@@ -55,6 +55,18 @@ impl Interpreter {
                 let right_value = self.interpret_expr(right)?;
 
                 match operator.token_type {
+                    TokenType::Plus => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Number(left_number + right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for addition!",
+                                "Invalid types used for addition!".to_string(),
+                            )),
+                        }
+                    }
+
                     TokenType::Minus => {
                         match (left_value, right_value) {
                             (Value::Number(left_number), Value::Number(right_number)) => {
@@ -67,6 +79,77 @@ impl Interpreter {
                         }
                     }
 
+                    TokenType::Star => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Number(left_number * right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for multiplication!",
+                                "Invalid types used for multiplication!".to_string(),
+                            )),
+                        }
+                    }
+
+                    TokenType::Slash => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Number(left_number / right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for division!",
+                                "Invalid types used for division!".to_string(),
+                            )),
+                        }
+                    }
+
+                    TokenType::Greater => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Bool(left_number > right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for comparison!",
+                                "Invalid types used for comparison!".to_string(),
+                            )),
+                        }
+                    }
+
+                    TokenType::GreaterEqual => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Bool(left_number >= right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for comparison!",
+                                "Invalid types used for comparison!".to_string(),
+                            )),
+                        }
+                    }
+
+                    TokenType::Less => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Bool(left_number < right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for comparison!",
+                                "Invalid types used for comparison!".to_string(),
+                            )),
+                        }
+                    }
+
+                    TokenType::LessEqual => {
+                        match (left_value, right_value) {
+                            (Value::Number(left_number), Value::Number(right_number)) => {
+                                Ok(Value::Bool(left_number <= right_number))
+                            }
+                            _ => Err(RuntimeError::TypeError(
+                                // "Invalid types used for comparison!",
+                                "Invalid types used for comparison!".to_string(),
+                            )),
+                        }
+                    }
                     // Can we add a try/catch? Then if fail, we return the Err(InternalErro or TypeErroor for cannot compare)
                     TokenType::EqualEqual => {
                         // Can do direct comparison here as long as Value enum derives the PartialEq trait
