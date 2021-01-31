@@ -109,6 +109,17 @@ impl Interpreter {
                         }
                     }
 
+                    // @todo Can we add a try/catch? Then if fail, we return the Err(InternalErro or TypeErroor for cannot compare)
+                    // @todo Allows for comparison of primitive types and string so far, but might want to test for complex types like Functions
+                    TokenType::EqualEqual => {
+                        // Can do direct comparison here as long as Value enum derives the PartialEq trait
+                        Ok(Value::Bool(left_value == right_value))
+                    }
+                    TokenType::BangEqual => {
+                        // Can do direct comparison here as long as Value enum derives the PartialEq trait
+                        Ok(Value::Bool(left_value != right_value))
+                    }
+
                     TokenType::Greater => {
                         match (left_value, right_value) {
                             (Value::Number(left_number), Value::Number(right_number)) => {
@@ -155,15 +166,6 @@ impl Interpreter {
                                 "Invalid types used for comparison!".to_string(),
                             )),
                         }
-                    }
-                    // Can we add a try/catch? Then if fail, we return the Err(InternalErro or TypeErroor for cannot compare)
-                    TokenType::EqualEqual => {
-                        // Can do direct comparison here as long as Value enum derives the PartialEq trait
-                        Ok(Value::Bool(left_value == right_value))
-                    }
-                    TokenType::BangEqual => {
-                        // Can do direct comparison here as long as Value enum derives the PartialEq trait
-                        Ok(Value::Bool(left_value != right_value))
                     }
                     _ => Err(RuntimeError::InternalError(format!(
                         "Invalid binary operator: {}",
