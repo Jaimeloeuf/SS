@@ -60,6 +60,12 @@ impl Interpreter {
                             (Value::Number(left_number), Value::Number(right_number)) => {
                                 Ok(Value::Number(left_number + right_number))
                             }
+                            // Overloading the + operator to support string concatenation
+                            (Value::String(left_string), Value::String(right_string)) => {
+                                // @todo Choose a way for string concat
+                                // Ok(Value::String(format!("{}{}", left_string, right_string)))
+                                Ok(Value::String(left_string + &right_string))
+                            }
                             _ => Err(RuntimeError::TypeError(
                                 // "Invalid types used for addition!",
                                 "Invalid types used for addition!".to_string(),
