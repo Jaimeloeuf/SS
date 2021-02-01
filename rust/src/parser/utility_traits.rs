@@ -23,6 +23,7 @@ impl Parser {
         self.tokens.get(self.current - 1).unwrap()
     }
 
+    // Get current token and Increment 'current' variable of struct.
     pub fn advance(&mut self) -> &Token {
         // Old way of doing it.
         // Only increment the current token counter if not at end yet
@@ -33,6 +34,7 @@ impl Parser {
         // self.tokens.get(self.current - 1).unwrap()
 
         // Assume caller will check if it is at the end of token vector so no need for extra check here
+        // Because when calling advance, you expect 'current' to be advanced and not conditionally advanced if not at end.
         self.current += 1;
         self.previous()
     }

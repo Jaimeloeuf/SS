@@ -48,13 +48,41 @@ impl Interpreter {
 
             Expr::Grouping(ref expr) => self.interpret_expr(expr),
 
+            Expr::Unary(ref token, ref expr) => {
+                let value = self.interpret_expr(expr)?;
+
+                match &token.token_type {
+                    TokenType::Minus => match value {
+                        Value::Number(number) => Ok(Value::Number(-number)),
+                        _ => Err(RuntimeError::TypeError(
+                            // "Invalid types used for number negation!",
+                            "Invalid types used for number negation!".to_string(),
+                        )),
+                    },
+
+                    // Should this support other types, smth like this to handle types? https://stackoverflow.com/a/59152263/13137262
+                    TokenType::Bang => match value {
+                        Value::Bool(bool) => Ok(Value::Bool(!bool)),
+                        _ => Err(RuntimeError::TypeError(
+                            // "Invalid types used for boolean negation!",
+                            "Invalid types used for boolean negation!".to_string(),
+                        )),
+                    },
+
+                    operator => Err(RuntimeError::InternalError(format!(
+                        "Invalid unary operator: {:?}",
+                        operator
+                    ))),
+                }
+            }
+
             Expr::Binary(ref left, ref operator, ref right) => {
                 // This evaluates the Binary expression from left to right
                 // In certain cases, we might want to change this, to support bool short circuiting
                 let left_value = self.interpret_expr(left)?;
                 let right_value = self.interpret_expr(right)?;
 
-                match operator.token_type {
+                match &operator.token_type {
                     TokenType::Plus => {
                         match (left_value, right_value) {
                             (Value::Number(left_number), Value::Number(right_number)) => {
