@@ -178,6 +178,9 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
     - Array of elements with different types...?
         - is this even useful in the first place?
         - What are some scenarios where this would occur and be needed?
+- Monads
+    - Mainly used for higher level error handling abstractions for cleaner code chaining
+
 ### User types
 - Allow user to create types? What is the point if there is no support for classes?
 - Also what is the point of this? if all the types are just a fixed type of struct?
@@ -255,8 +258,8 @@ const Array<Number> myArray = [1, 2, 3, 4]
 
 ### Memory
 - SS will come with a GC as part of its runtime
-    - The runtime will either be implemented by the interpreter
-    - Or memory management taken care by VM targets like JVM
+    - Custom GC as part of the interpreter
+    - Or memory management taken care by VM targets like JVM/CLR
     - Or linked to your source code as part of the final compiled executable like Go
 
 ## Operators
@@ -309,10 +312,15 @@ When executing expressions with logical operations "and" + "or" short circuting 
 ### Comparison
 - ==
 - !=
-- >
+- \>
 - <
-- >=
+- \>=
 - <=
+
+Note:
+- == and != can be used on all types
+- <, >, <=, >= can only be used on numbers
+    - Might support different types, e.g. comparisons between floats and ints
 
 
 ## Scope and rules
@@ -342,10 +350,12 @@ Expressions that evalute to a BOOLEAN ONLY
             - ifu --> map to, --> if($1 === undefined)
             - ifnu --> map to, --> if($1 !== undefined)
     - The reason for this is because too many JS code act weirdly because we forget to check for this truthy and falsey values despite the convienience they give us
+- To use conditions, which only support expressions that evaluates to boolean values, comparisons and equality checks can be used to produce these boolean values.
 
 
 ## Control flows
 ### If/ElseIf/Else
+Bracketless one line statements might be supported later on for cleaner code syntax
 ```js
 if (condition) {
     
@@ -355,6 +365,7 @@ if (condition) {
     
 }
 ```
+
 
 ## Loops
 - no loops
@@ -371,6 +382,9 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
 
 ## Strings
 - Interpolation
+    - How do u "print" or stringify it different types like arrays?
+    - Must be implemented by the runtime?
+- String concat is not supported through + operator overloading
 
 
 ## Functions
@@ -554,35 +568,48 @@ For now, no kernel thread support, rather user level thread via thread libraries
 - Thus the approach taken by SimpleScript is to combine the best of most worlds as described in the tl;dr by focusing on providing a great bare minimum setup with simple ways to extend it.
 
 
-## Modules
-- Support breaking code up into modules. Every new file is a module
-- Modules resolution
-    - https://www.typescriptlang.org/docs/handbook/module-resolution.html
+## Modules & Libraries
+A standard way for splitting up code for shaaring and modularity.
+
+- Modules
+    - Every new file is a module. Module --> alias for "file"
+    - Support breaking code up into modules.
+    - Modules resolution
+        - https://www.typescriptlang.org/docs/handbook/module-resolution.html
+- Libraries
+    - Library, is simply an alias for "file folder"
+    - A library can contain both files and more folders
+    - A library is a collection of modules and or more libraries, with at least 1 module, to faciliate cross project code sharing
+    - The std library is a library containing many sub libraries providing standardised core functionality to projects
+- Modules and Libraries can be used to apply namespaces to the code scope
+- The name of the imported item MUST be the same as the exported item to make explicit what you are importing
 - Modules / Types / Seperate Compilation
 
 ### Import
-- @todo instead of std:libraryname should be std/libraryName?
-- Import a module from standard library
+- Import a standard library
     ```js
-    import moduleName from "std:libraryName"
+    import libraryName from "std/libraryName";
+    ```
+- Import a module from a standard library
+    ```js
+    import moduleName from "std/libraryName/moduleName";
+    ```
+- Import a library
+    ```js
+    import libraryName from "libraryName";
     ```
 - Import a module from a library
     ```js
-    import moduleName from "moduleLocation"
+    import moduleName from "libraryName/moduleName";
     ```
-- Import a module using relative path
+- Import a user written module using relative path
     ```js
-    import moduleName from "./myModuleName"
+    import moduleName from "./myModuleName";
     ```
 - Import a module into its own namespace instead of the current module's namespace
     ```js
     import "./myModuleName" as moduleName
     ```
-- Libraries/Modules can be scoped in packages
-    - e.g. many libraries/modules inside the standard library package
-    - namespaced / scoped with std:
-    - you can have nested : scoping
-    - scoping should be based on file/dir structure
 
 ### Export
 - You must export everything explicitly in order for it to be available to module importer's namespace.
@@ -615,14 +642,26 @@ proxy.new(targetObj)
 
 ### Macros
 - Will consider supporting certain types of macros, but TBD
+- Might be an issue considering most macro implementations require preprocessing in some form or another and is extremely complex to take up with subjective level of advantages especially for a language designed to be easy to use and read.
 
 
 ## Language extensions
 ### FFI (Foreign Function Interface)
 - Will have builtin language/std-lib level support for FFI to interact with Rust and C/C++ code in the future
+- "linking" mechanisms
+    - complie time linking
+    - FFI
+    - dynamic library linking
+    - running the code seperatly and calling the process
 - Inspiration from other langs
     - https://www.lua.org/pil/24.html
     - https://wren.io/embedding/
+
+
+## Printing / Logging mechanisms
+Pretty print
+Allow us to print diff things like variables to strings to functions...
+    - e.g. "native code" for native functions
 
 
 ## Others
@@ -640,9 +679,15 @@ proxy.new(targetObj)
 
 
 ## TODO (Things to add to spec)
+- Pass by reference or pass by copy?
+    - If we continue on, it will be pass by reference by default if all data is immutable
 - error and exception handling
     - How do we implement this semantic?
-    - try/catch?
+        - try/catch?
+        - Monads? Optional Types? Like the go2 draft where there is a "check" keyword to "unwrap the monad" with a nicer syntax
+    - For errors, generate error messages like --> error TS2307: Cannot find module 'moduleA'. Then user can use the given link to a website to learn and find out more.
+    - other languages
+        - https://wren.io/error-handling.html
 - A part of the spec should include native code from standard library
     - native code as in, implemented by the runtime, instead of being libraries written in SS itself
         - JSON support
@@ -674,6 +719,9 @@ proxy.new(targetObj)
 - Permissions model like ink and deno
     - Where you can specify what permissions to give untrusted scripts, effectively limiting their control and sandboxing them
     - https://github.com/thesephist/ink#isolation-and-permissions-model
+- Pointers
+    - https://golang.org/doc/faq#no_pointer_arithmetic
+    - Probably no pointers needed since the goal is to simplify things
 
 ## Preferences
 - Use camelCase for value and function names
