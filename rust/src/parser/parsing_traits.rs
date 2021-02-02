@@ -1,36 +1,36 @@
 use super::error::ParsingError;
 use super::expr::Expr;
 use super::parser_struct::Parser;
+use super::stmt::Stmt;
 use crate::literal::Literal;
 
 use crate::token::Token;
 use crate::token_type::TokenType;
 
-pub struct Stmt {
-    //
-}
-
 impl Parser {
     // Consumes a token vector (takes ownership) to produce a statements vector (moved out)
-    // @todo Tmp change of method API to return Vec of Expr instead of Stmt before that is implemented
-    // pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, ParsingError> {
-    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, Vec<ParsingError>> {
+    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
         let mut parser = Parser { tokens, current: 0 };
 
         println!("Processing '{}' tokens", parser.tokens.len());
 
-        let mut statements: Vec<Expr> = Vec::<Expr>::new();
+        let mut statements: Vec<Stmt> = Vec::<Stmt>::new();
         let mut errors: Vec<ParsingError> = Vec::<ParsingError>::new();
 
         // On each loop, we scan a single token.
         while !parser.is_at_end() {
             // Get expression and based on output, push to either one of the vectors
-            match parser.expression() {
-                Ok(expr) => statements.push(expr),
+            match parser.statement() {
+                Ok(expr) => {
+                    println!("parsed stmt/expr {:?}", expr);
+                    statements.push(expr)
+                }
                 // For err, maybe I should log it to stderr at the same time too, so that LSP can pick it up?
                 Err(e) => errors.push(e),
             }
 
+            // This is needed because we have multiple expression....
+            // Even in the err(e) arm of parser.expression() we still need to advance right?
             parser.advance();
         }
 
