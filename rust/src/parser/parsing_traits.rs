@@ -19,11 +19,11 @@ impl Parser {
 
         // On each loop, we scan a single token.
         while !parser.is_at_end() {
-            // Get expression and based on output, push to either one of the vectors
+            // Get statement and based on output, push to either one of the vectors
             match parser.statement() {
-                Ok(expr) => {
-                    println!("parsed stmt/expr {:?}", expr);
-                    statements.push(expr)
+                Ok(stmt) => {
+                    println!("parsed stmt/expr {:?}", stmt);
+                    statements.push(stmt)
                 }
                 // For err, maybe I should log it to stderr at the same time too, so that LSP can pick it up?
                 Err(e) => errors.push(e),
