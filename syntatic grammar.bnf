@@ -1,3 +1,14 @@
+# @todo Write a version of this that a parser generator can use, instead of a custom BNF syntax
+
+program        → statement* EOF ;
+
+statement      → exprStmt
+               | printStmt ;
+
+# Temporary built in print statment
+printStmt      → "print" expression ";" ;
+exprStmt       → expression ";" ;
+
 expression     → literal
                | unary
                | binary
