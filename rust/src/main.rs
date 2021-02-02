@@ -3,6 +3,7 @@ use std::fs;
 use std::time::Instant;
 
 mod hash;
+mod interpreter;
 mod keywords;
 mod literal;
 mod parser;
@@ -11,6 +12,7 @@ mod token;
 mod token_type;
 mod value;
 
+use interpreter::interpreter::Interpreter;
 use parser::parser_struct::Parser;
 
 fn main() {
@@ -58,8 +60,10 @@ fn read_file(filename: &String) {
     } else if let Ok(ast) = abstract_syntax_tree {
         println!("AST generated");
 
-        // for stmt in ast.iter() {
-        //     println!("{}\n", stmt);
-        // }
+        for stmt in ast.iter() {
+            println!("{:?}", stmt);
+        }
+        println!();
+        Interpreter::interpret(ast);
     }
 }
