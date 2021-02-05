@@ -42,6 +42,50 @@ impl Parser {
         }
     }
 
+    /* ==========================  Start of statement methods  ========================== */
+
+    fn statement(&mut self) -> Result<Stmt, ParsingError> {
+        // Call the different statement parsing methods base on token_type
+        // Else if not a statement token, it must be a expression statement
+        match &self.peek().token_type {
+            TokenType::Print => self.call_stmt_method(Parser::print_statement),
+            // TokenType::LeftBrace => self.call_stmt_method(Parser::leftbrace_statement()),
+            // TokenType::If => self.call_stmt_method(Parser::if_statement()),
+            // TokenType::While => self.call_stmt_method(Parser::while_statement()),
+            // TokenType::For => self.call_stmt_method(Parser::for_statement()),
+            // TokenType::Return => self.call_stmt_method(Parser::return_statement()),
+            _ => self.expression_statement(),
+        }
+    }
+
+    // Indirection for all statement methods, to call advance method first
+    fn call_stmt_method(
+        &mut self,
+        method: fn(&mut Parser) -> Result<Stmt, ParsingError>,
+    ) -> Result<Stmt, ParsingError> {
+        self.advance();
+        method(self)
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, ParsingError> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after value")?;
+        // Pass in the expression too to make it easier for user to fix the issue
+        // self.consume(
+        //     TokenType::Semicolon,
+        //     format!("Expect ';' after value {}", expr),
+        // )?;
+        Ok(Stmt::Print(expr))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, ParsingError> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after expression")?;
+        Ok(Stmt::Expr(expr))
+    }
+
+    /* ==========================  End of statement methods  ========================== */
+
     fn expression(&mut self) -> Result<Expr, ParsingError> {
         return self.equality();
     }

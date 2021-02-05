@@ -21,7 +21,7 @@ impl std::fmt::Display for ParsingError {
         match self {
             ParsingError::UnexpectedTokenError(token, message) => write!(
                 f,
-                "[line {}] UnexpectedTokenError: {}\nFound -> {:?}",
+                "[line {}] UnexpectedTokenError: {}\nFound -> {}",
                 token.line, message, token,
             ),
             ParsingError::UnexpectedEofError => f.write_str("Unexpected end of input"),
