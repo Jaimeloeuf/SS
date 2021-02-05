@@ -1,6 +1,7 @@
 use super::error::RuntimeError;
 use crate::literal::Literal;
 use crate::parser::expr::Expr;
+use crate::parser::stmt::Stmt;
 use crate::token_type::TokenType;
 use crate::value::value::Value;
 
@@ -8,13 +9,13 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn interpret(stmts: Vec<Expr>) -> Option<RuntimeError> {
+    pub fn interpret(stmts: Vec<Stmt>) -> Option<RuntimeError> {
         let mut interpreter = Interpreter {
         };
 
         // Loop through all Expr/Stmt to evaluate and run them, returning any errors
         for stmt in stmts.iter() {
-            match interpreter.interpret_expr(stmt) {
+            match interpreter.interpret_stmt(stmt) {
                 Ok(value) => println!("Evaluated to {:?}", value),
                 Err(err) => {
                     // @todo Use this without the debug symbol using Display trait
@@ -29,7 +30,7 @@ impl Interpreter {
         None
     }
 
-    fn interpret_stmt(&mut self, stmt: &Expr) -> Result<Value, RuntimeError> {
+    fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Value, RuntimeError> {
         Err(RuntimeError::InternalError(
             "Failed to interpret statement".to_string(),
         ))

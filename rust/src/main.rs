@@ -53,9 +53,8 @@ fn read_file(filename: &String) {
     if let Err(e) = abstract_syntax_tree {
         println!("Program stopped due to SYNTAX ERROR.");
 
-        // @todo Remove the debug symbol
         for error in e.iter() {
-            println!("{:?}\n", error);
+            println!("{}\n", error);
         }
     } else if let Ok(ast) = abstract_syntax_tree {
         println!("AST generated");
