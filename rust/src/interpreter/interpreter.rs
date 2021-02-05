@@ -20,7 +20,6 @@ impl Interpreter {
                 Err(err) => {
                     // @todo Use this without the debug symbol using Display trait
                     // @todo Delete this println, and let method caller handle the error
-                    // println!("Error! {}", err);
                     println!("Error! {:?}", err);
                     return Some(err);
                 }
@@ -31,9 +30,21 @@ impl Interpreter {
     }
 
     fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Value, RuntimeError> {
-        Err(RuntimeError::InternalError(
-            "Failed to interpret statement".to_string(),
-        ))
+        match stmt {
+            Stmt::Expr(ref expr) => self.interpret_expr(expr),
+
+            // @todo Dont rely on println macro
+            Stmt::Print(ref expr) => {
+                println!("{}", expr);
+                // @todo Might need to change function signature since this should return None instead of a Value
+                // Using a hack right now, evaluating to a Null
+                Ok(Value::Null)
+            }
+
+            _ => Err(RuntimeError::InternalError(
+                "Failed to interpret statement".to_string(),
+            )),
+        }
     }
 
     fn interpret_expr(&mut self, stmt: &Expr) -> Result<Value, RuntimeError> {
