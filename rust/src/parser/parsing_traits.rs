@@ -28,16 +28,16 @@ impl Parser {
                 // For err, maybe I should log it to stderr at the same time too, so that LSP can pick it up?
                 Err(e) => errors.push(e),
             }
-
-            // This is needed because we have multiple expression....
-            // Even in the err(e) arm of parser.expression() we still need to advance right?
-            parser.advance();
         }
 
         // Return vector of statements only if there are no errors
         if errors.is_empty() {
             Ok(statements)
         } else {
+            // Return an errors if there are any and have the caller handle it
+            // Might handle it differently depending on how many files are there for the program.
+            // NOTE that because we can synchronize when there is an array, we should not return the error immediately
+            // when we get it, perhaps we can return a vector of it or smth...
             Err(errors)
         }
     }
@@ -95,6 +95,7 @@ impl Parser {
             let right = self.unary()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
+
         Ok(expr)
     }
 
@@ -110,6 +111,7 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, ParsingError> {
         // Check for Literal values True/False/Null first before moving on to Identifier/Strings/Numbers and lastly grouped expressions
+        // @todo Boolean types can we still be represented using TokenType, so should literal Bool values be used?
         if self.is_next_token(TokenType::True) {
             Ok(Expr::Literal(Literal::Bool(true)))
         } else if self.is_next_token(TokenType::False) {
@@ -128,11 +130,8 @@ impl Parser {
             let expr = self.expression()?;
 
             // Check if there is a ")" to close the expression
-            if let Err(e) = self.consume(TokenType::RightParen, "Expect ')' after expression.") {
-                Err(e)
-            } else {
-                Ok(Expr::Grouping(Box::new(expr)))
-            }
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
+            Ok(Expr::Grouping(Box::new(expr)))
         } else {
             // I dont think we should use self.peek here
             Err(ParsingError::UnexpectedTokenError(
