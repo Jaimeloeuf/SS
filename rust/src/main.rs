@@ -38,8 +38,7 @@ fn read_file(filename: &String) {
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
-    let scanner = scanner::Scanner::new(source);
-    let tokens = scanner.scan_tokens();
+    let tokens = scanner::Scanner::scan_tokens(source);
 
     // println!("Logging out token vector");
     // for token in tokens.iter() {

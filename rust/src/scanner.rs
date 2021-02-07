@@ -20,36 +20,34 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    // Constructor
     // Move ownership of source string into Scanner struct here
-    pub fn new(source: String) -> Scanner {
-        Scanner {
+    pub fn scan_tokens(source: String) -> Vec<Token> {
+        // Create new scanner struct to use internally
+        let mut scanner = Scanner {
             source: source,
             tokens: Vec::new(),
             start: 0,
             current: 0,
             line: 1,
-        }
-    }
+        };
 
-    // Expects self to be moved in instead of being a reference to move out a value from Scanner struct once done.
-    pub fn scan_tokens(mut self) -> Vec<Token> {
         // Each turn of the loop, we scan a single token.
-        while !self.is_at_end() {
+        while !scanner.is_at_end() {
             // At the start of every loop, reset start of the current "line" to the current character's index
-            self.start = self.current;
+            scanner.start = scanner.current;
 
             // Scan source and create Token struct as needed and add it to "tokens" vector
-            self.scan_token();
+            scanner.scan_token();
         }
 
         // Add Eof token
-        self.tokens
-            .push(Token::new_none_literal(TokenType::Eof, self.line));
+        scanner
+            .tokens
+            .push(Token::new_none_literal(TokenType::Eof, scanner.line));
 
         // Move token vector out of the scanner struct once scanning is completed
         // After calling scan_tokens, scanner is no longer used, thus is ok to transfer out ownership
-        self.tokens
+        scanner.tokens
     }
 
     // Pass in a character to figure out what type of token it is
