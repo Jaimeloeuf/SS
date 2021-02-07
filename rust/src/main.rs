@@ -14,6 +14,7 @@ mod value;
 
 use interpreter::interpreter::Interpreter;
 use parser::parser_struct::Parser;
+use scanner::scanner_struct::Scanner;
 
 fn main() {
     let start_of_main = Instant::now();
@@ -38,7 +39,7 @@ fn read_file(filename: &String) {
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
-    let tokens = scanner::Scanner::scan_tokens(source);
+    let tokens = Scanner::scan_tokens(source);
 
     // println!("Logging out token vector");
     // for token in tokens.iter() {

@@ -2,22 +2,11 @@
     Scanner module to scan source file for a vector of tokens
 */
 
+use super::scanner_struct::Scanner;
+
 use crate::keywords::KEYWORDS;
 use crate::token::Token;
 use crate::token_type::TokenType;
-
-// All integer fields are limited by the size of an unsigned integer of the target system
-pub struct Scanner {
-    source: String,
-    tokens: Vec<Token>,
-
-    // usize for fn is_at_end -> bool cos the source.len is of type usize
-    start: usize, // start field points to the first character in the lexeme being scanned
-    current: usize, // current points at the character currently being considered
-
-    // This tracks the line scanner is currently on in the source file to produce tokens that know their location and for error reporting
-    line: usize,
-}
 
 impl Scanner {
     // Move ownership of source string into Scanner struct here
