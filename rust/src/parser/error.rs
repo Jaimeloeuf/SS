@@ -8,7 +8,7 @@ use std;
 pub enum ParsingError {
     // Static string message are hardcoded compiler error messages
     UnexpectedTokenError(Token, &'static str),
-    UnexpectedEofError,
+    UnexpectedEofError(Token),
     InvalidAssignmentError(Token),
     TooManyArgumentsError,
     TooManyParametersError,
@@ -19,12 +19,14 @@ pub enum ParsingError {
 impl std::fmt::Display for ParsingError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            ParsingError::UnexpectedTokenError(token, message) => write!(
+            ParsingError::UnexpectedTokenError(ref token, message) => write!(
                 f,
-                "[line {}] UnexpectedTokenError: {}\nFound -> {}",
-                token.line, message, token,
+                "[line {}] Error: Unexpected Token Found -> {}\n\t{}",
+                token.line, token, message,
             ),
-            ParsingError::UnexpectedEofError => f.write_str("Unexpected end of input"),
+            ParsingError::UnexpectedEofError(ref token) => {
+                write!(f, "[line {}] Unexpected end of input", token.line)
+            }
             ParsingError::InvalidAssignmentError(ref token) => {
                 write!(f, "[line {}] Invalid assignment target", token.line)
             }
@@ -43,7 +45,7 @@ impl std::error::Error for ParsingError {
     fn description(&self) -> &str {
         match *self {
             ParsingError::UnexpectedTokenError(_, _) => "Unexpected Token",
-            ParsingError::UnexpectedEofError => "Unexpected Eof",
+            ParsingError::UnexpectedEofError(_) => "Unexpected Eof",
             ParsingError::InvalidAssignmentError(_) => "Invalid Assignment",
             ParsingError::TooManyArgumentsError => "Too Many Arguments",
             ParsingError::TooManyParametersError => "Too Many Parameters",

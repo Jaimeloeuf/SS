@@ -21,12 +21,18 @@ impl Parser {
         while !parser.is_at_end() {
             // Get statement and based on output, push to either one of the vectors
             match parser.statement() {
-                Ok(stmt) => {
-                    println!("parsed stmt/expr {:?}", stmt);
-                    statements.push(stmt)
+                Ok(stmt) => statements.push(stmt),
+                // Ok(stmt) => {
+                //     println!("parsed stmt/expr {:?}", stmt);
+                //     statements.push(stmt);
+                // }
+
+                // @todo Maybe log err to stderr too for the LSP to pick it up?
+                // Add error to error vector, and synchronize the parser to continue parsing
+                Err(e) => {
+                    errors.push(e);
+                    parser.synchronize();
                 }
-                // For err, maybe I should log it to stderr at the same time too, so that LSP can pick it up?
-                Err(e) => errors.push(e),
             }
         }
 
@@ -180,13 +186,13 @@ impl Parser {
             // I dont think we should use self.peek here
             Err(ParsingError::UnexpectedTokenError(
                 (*self.peek()).clone(),
-                "Invalid token found",
+                "Invalid token found while parsing expression",
             ))
         }
     }
 
     // Synchronize the tokens to approx the next valid token
-    pub fn synchronize(&mut self) {
+    fn synchronize(&mut self) {
         self.advance();
 
         // Loop till either EOF token or when one of the possible new start tokens is read
