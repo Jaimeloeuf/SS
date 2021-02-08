@@ -1,9 +1,11 @@
+use super::error::ScannerError;
 use crate::token::Token;
 
 // All integer fields are limited by the size of an unsigned integer of the target system
 pub struct Scanner {
     pub source: String,
     pub tokens: Vec<Token>,
+    pub errors: Vec<ScannerError>,
 
     // usize for fn is_at_end -> bool cos the source.len is of type usize
     pub start: usize, // start field points to the first character in the lexeme being scanned

@@ -2,6 +2,7 @@
     Scanner module to scan source file for a vector of tokens
 */
 
+use super::error::ScannerError;
 use super::scanner_struct::Scanner;
 
 use crate::keywords::KEYWORDS;
@@ -15,6 +16,7 @@ impl Scanner {
         let mut scanner = Scanner {
             source: source,
             tokens: Vec::new(),
+            errors: Vec::new(),
             start: 0,
             current: 0,
             line: 1,
@@ -42,48 +44,51 @@ impl Scanner {
     // Pass in a character to figure out what type of token it is
     // Will also eat and discard certain characters that are not used for the Token vector like newlines
     // Can be None, as some characters have no intrinsic token type, e.g. as white space
-    fn get_token_type(&mut self, current_character: char) -> Option<TokenType> {
+    fn get_token_type(
+        &mut self,
+        current_character: char,
+    ) -> Result<Option<TokenType>, ScannerError> {
         // Match current_character (and maybe n next character(s)) to a TokenType or None
         // Minor optimization: Match arms are arranged in order of how frequently that character is expected
         match current_character {
             // Whitespace characters to be eaten and discarded
             // Because of how we parse, tabs should be preferred over spaces to reduce number of function calls to "get_token_type"
-            ' ' => None,
-            '\r' => None,
-            '\t' => None,
+            ' ' => Ok(None),
+            '\r' => Ok(None),
+            '\t' => Ok(None),
 
             // Alphabetic words
             // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
-            'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
+            'a'..='z' | 'A'..='Z' | '_' => Ok(Some(TokenType::Identifier)),
 
             // Newline characters causes line number to be incremented before being eaten and discarded
             '\n' => {
                 self.line += 1;
-                None
+                Ok(None)
             }
 
-            ';' => Some(TokenType::Semicolon),
-            '{' => Some(TokenType::LeftBrace),
-            '}' => Some(TokenType::RightBrace),
-            '(' => Some(TokenType::LeftParen),
-            ')' => Some(TokenType::RightParen),
-            ',' => Some(TokenType::Comma),
-            '.' => Some(TokenType::Dot),
+            ';' => Ok(Some(TokenType::Semicolon)),
+            '{' => Ok(Some(TokenType::LeftBrace)),
+            '}' => Ok(Some(TokenType::RightBrace)),
+            '(' => Ok(Some(TokenType::LeftParen)),
+            ')' => Ok(Some(TokenType::RightParen)),
+            ',' => Ok(Some(TokenType::Comma)),
+            '.' => Ok(Some(TokenType::Dot)),
 
             // Math operators
-            '-' => Some(TokenType::Minus),
-            '+' => Some(TokenType::Plus),
-            '*' => Some(TokenType::Star),
+            '-' => Ok(Some(TokenType::Minus)),
+            '+' => Ok(Some(TokenType::Plus)),
+            '*' => Ok(Some(TokenType::Star)),
 
             // For lexeme that can be "chained" / have another char behind it to form a lexeme of 2 chars
-            '!' if self.conditional_advance('=') => Some(TokenType::BangEqual),
-            '!' => Some(TokenType::Bang),
-            '=' if self.conditional_advance('=') => Some(TokenType::EqualEqual),
-            '=' => Some(TokenType::Equal),
-            '<' if self.conditional_advance('=') => Some(TokenType::LessEqual),
-            '<' => Some(TokenType::Less),
-            '>' if self.conditional_advance('=') => Some(TokenType::GreaterEqual),
-            '>' => Some(TokenType::Greater),
+            '!' if self.conditional_advance('=') => Ok(Some(TokenType::BangEqual)),
+            '!' => Ok(Some(TokenType::Bang)),
+            '=' if self.conditional_advance('=') => Ok(Some(TokenType::EqualEqual)),
+            '=' => Ok(Some(TokenType::Equal)),
+            '<' if self.conditional_advance('=') => Ok(Some(TokenType::LessEqual)),
+            '<' => Ok(Some(TokenType::Less)),
+            '>' if self.conditional_advance('=') => Ok(Some(TokenType::GreaterEqual)),
+            '>' => Ok(Some(TokenType::Greater)),
 
             // |
 
@@ -107,7 +112,7 @@ impl Scanner {
                     self.line += 1;
                 }
 
-                None
+                Ok(None)
             }
             // Block Comment, comment that can span multiline lines
             '/' if self.conditional_advance('*') => {
@@ -136,33 +141,37 @@ impl Scanner {
                     self.line += 1;
                 }
 
-                None
+                Ok(None)
             }
-            '/' => Some(TokenType::Slash),
+            '/' => Ok(Some(TokenType::Slash)),
 
             // String Literals
-            '"' => Some(TokenType::Str),
+            '"' => Ok(Some(TokenType::Str)),
 
             // Number Literals
-            '0'..='9' => Some(TokenType::Number),
+            '0'..='9' => Ok(Some(TokenType::Number)),
 
-            // Couldn't Match
-            _ => {
-                println!(
+            // Return Scanner Error if couldn't match any valid characters
+            _ => Err(ScannerError {
+                line: self.line,
+                description: format!(
                     "Unexpected character '{}' on line {}",
                     current_character, self.line
-                );
-                // @todo Call the error handling code
-
-                None
-            }
+                ),
+            }),
         }
     }
 
     // Scan source and create Tokens before pushing them to the tokens vector
     fn scan_token(&mut self) {
         let current_character: char = self.advance();
-        let token_type: Option<TokenType> = self.get_token_type(current_character);
+        let token_type: Option<TokenType> = match self.get_token_type(current_character) {
+            Ok(token_type) => token_type,
+            Err(e) => {
+                self.errors.push(e);
+                None
+            }
+        };
 
         // Match TokenType to new Token, and handle processing needed for certain token types
         // Minor optimization: Match arms are arranged in order of how frequently that TokenType is expected
