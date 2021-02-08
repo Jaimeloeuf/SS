@@ -105,29 +105,4 @@ pub enum RuntimeError {
             ),
         }
     }
-}
-
-impl std::error::Error for RuntimeError {
-    fn description(&self) -> &str {
-        match *self {
-            RuntimeError::InternalError(_) => "InternalError",
-            RuntimeError::NegateNonNumberError(_) => "NegateNonNumberError",
-            RuntimeError::SubtractNonNumbers(_) => "SubtractNonNumbers",
-            RuntimeError::DivideNonNumbers(_) => "DivideNonNumbers",
-            RuntimeError::MultiplyNonNumbers(_) => "MultiplyNonNumbers",
-            RuntimeError::PlusTypeError(_) => "PlusTypeError",
-            RuntimeError::GreaterNonNumbers(_) => "GreaterNonNumbers",
-            RuntimeError::GreaterEqualNonNumbers(_) => "GreaterEqualNonNumbers",
-            RuntimeError::LessNonNumbers(_) => "LessNonNumbers",
-            RuntimeError::LessEqualNonNumbers(_) => "LessEqualNonNumbers",
-            RuntimeError::DivideByZeroError(_) => "DivideByZeroError",
-            RuntimeError::UndefinedVariable(_) => "UndefinedVariable",
-            RuntimeError::CallOnNonCallable(_) => "CallOnNonCallable",
-            RuntimeError::WrongArity(_, _, _) => "WrongArity",
-            RuntimeError::InvalidGetTarget(_) => "InvalidGetTarget",
-            RuntimeError::UndefinedProperty(_) => "UndefinedProperty",
-            RuntimeError::InvalidSuperclass(_) => "InvalidSuperclass",
-        }
-    }
-}
- */
+}*/

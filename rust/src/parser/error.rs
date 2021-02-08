@@ -40,16 +40,3 @@ impl std::fmt::Display for ParsingError {
         }
     }
 }
-
-impl std::error::Error for ParsingError {
-    fn description(&self) -> &str {
-        match *self {
-            ParsingError::UnexpectedTokenError(_, _) => "Unexpected Token",
-            ParsingError::UnexpectedEofError(_) => "Unexpected Eof",
-            ParsingError::InvalidAssignmentError(_) => "Invalid Assignment",
-            ParsingError::TooManyArgumentsError => "Too Many Arguments",
-            ParsingError::TooManyParametersError => "Too Many Parameters",
-            ParsingError::InternalError(_) => "Internal",
-        }
-    }
-}
