@@ -9,14 +9,20 @@ use crate::keywords::KEYWORDS;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+// Utility function to wrap given token in the return Type signature of "scan_token" method to reduce code repetition
+fn wrap(token: Token) -> Result<Option<Token>, ScannerError> {
+    Ok(Some(token))
+}
+
 impl Scanner {
     // Move ownership of source string into Scanner struct here
-    pub fn scan_tokens(source: String) -> Vec<Token> {
+    pub fn scan_tokens(source: String) -> Result<Vec<Token>, Vec<ScannerError>> {
+        let mut tokens: Vec<Token> = Vec::<Token>::new();
+        let mut errors: Vec<ScannerError> = Vec::<ScannerError>::new();
+
         // Create new scanner struct to use internally
         let mut scanner = Scanner {
             source: source,
-            tokens: Vec::new(),
-            errors: Vec::new(),
             start: 0,
             current: 0,
             line: 1,
@@ -32,39 +38,54 @@ impl Scanner {
             match scanner.scan_token() {
                 Ok(Some(token)) => tokens.push(token),
                 Ok(None) => {}
+                // @todo Question is should we continue to scan if there is an error?
+                // yes right? For things like LSP, since we still want to be able to parse?
+                // Do we need to syncrhonize too?
                 Err(e) => errors.push(e),
             }
         }
 
         // Add Eof token
-        scanner
-            .tokens
-            .push(Token::new_none_literal(TokenType::Eof, scanner.line));
+        tokens.push(Token::new_none_literal(TokenType::Eof, scanner.line));
 
-        // Move token vector out of the scanner struct once scanning is completed
-        // After calling scan_tokens, scanner is no longer used, thus is ok to transfer out ownership
-        scanner.tokens
+        // Return token vector only if there are no errors
+        if errors.is_empty() {
+            Ok(tokens)
+        } else {
+            // Return errors if any and have the caller handle it
+            // Might handle it differently depending on how many files are there for the program.
+            Err(errors)
+        }
     }
 
-    // Pass in a character to figure out what type of token it is
-    // Will also eat and discard certain characters that are not used for the Token vector like newlines
-    // Can be None, as some characters have no intrinsic token type, e.g. as white space
-    fn get_token_type(
-        &mut self,
-        current_character: char,
-    ) -> Result<Option<TokenType>, ScannerError> {
-        // Match current_character (and maybe n next character(s)) to a TokenType or None
-        // Minor optimization: Match arms are arranged in order of how frequently that character is expected
+    // Match current character to new Token, and handle processing needed for certain token types that spans multiple chars like strings
+    // Eats and discards characters for newlines and comments and returns None
+    // Returns a ScannerError if the current character cannot be matched
+    fn scan_token(&mut self) -> Result<Option<Token>, ScannerError> {
+        let current_character: char = self.advance();
+
+        // Minor optimization: Match arms are arranged in order of how frequently that character type is expected
         match current_character {
             // Whitespace characters to be eaten and discarded
-            // Because of how we parse, tabs should be preferred over spaces to reduce number of function calls to "get_token_type"
-            ' ' => Ok(None),
-            '\r' => Ok(None),
-            '\t' => Ok(None),
+            // Because of how we parse, tabs are preferred over spaces to reduce number of times "scan_tokens" calls "scan_token"
+            ' ' | '\r' | '\t' => Ok(None),
 
             // Alphabetic words
             // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
-            'a'..='z' | 'A'..='Z' | '_' => Ok(Some(TokenType::Identifier)),
+            // 'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
+            'a'..='z' | 'A'..='Z' | '_' => {
+                let identifier = self.identifier();
+                let keyword_token_type = KEYWORDS.get(&identifier);
+
+                match keyword_token_type {
+                    // If it is a keyword, we use that keyword's token type.
+                    // @todo How to force move here instead of clone
+                    Some(keyword) => wrap(Token::new_keyword(keyword.clone(), self.line)),
+
+                    // Otherwise, it's a regular user-defined identifier.
+                    None => wrap(Token::new_identifier(identifier, self.line)),
+                }
+            }
 
             // Newline characters causes line number to be incremented before being eaten and discarded
             '\n' => {
@@ -72,28 +93,28 @@ impl Scanner {
                 Ok(None)
             }
 
-            ';' => Ok(Some(TokenType::Semicolon)),
-            '{' => Ok(Some(TokenType::LeftBrace)),
-            '}' => Ok(Some(TokenType::RightBrace)),
-            '(' => Ok(Some(TokenType::LeftParen)),
-            ')' => Ok(Some(TokenType::RightParen)),
-            ',' => Ok(Some(TokenType::Comma)),
-            '.' => Ok(Some(TokenType::Dot)),
+            ';' => self.new_none_literal(TokenType::Semicolon),
+            '{' => self.new_none_literal(TokenType::LeftBrace),
+            '}' => self.new_none_literal(TokenType::RightBrace),
+            '(' => self.new_none_literal(TokenType::LeftParen),
+            ')' => self.new_none_literal(TokenType::RightParen),
+            ',' => self.new_none_literal(TokenType::Comma),
+            '.' => self.new_none_literal(TokenType::Dot),
 
             // Math operators
-            '-' => Ok(Some(TokenType::Minus)),
-            '+' => Ok(Some(TokenType::Plus)),
-            '*' => Ok(Some(TokenType::Star)),
+            '-' => self.new_none_literal(TokenType::Minus),
+            '+' => self.new_none_literal(TokenType::Plus),
+            '*' => self.new_none_literal(TokenType::Star),
 
             // For lexeme that can be "chained" / have another char behind it to form a lexeme of 2 chars
-            '!' if self.conditional_advance('=') => Ok(Some(TokenType::BangEqual)),
-            '!' => Ok(Some(TokenType::Bang)),
-            '=' if self.conditional_advance('=') => Ok(Some(TokenType::EqualEqual)),
-            '=' => Ok(Some(TokenType::Equal)),
-            '<' if self.conditional_advance('=') => Ok(Some(TokenType::LessEqual)),
-            '<' => Ok(Some(TokenType::Less)),
-            '>' if self.conditional_advance('=') => Ok(Some(TokenType::GreaterEqual)),
-            '>' => Ok(Some(TokenType::Greater)),
+            '!' if self.conditional_advance('=') => self.new_none_literal(TokenType::BangEqual),
+            '!' => self.new_none_literal(TokenType::Bang),
+            '=' if self.conditional_advance('=') => self.new_none_literal(TokenType::EqualEqual),
+            '=' => self.new_none_literal(TokenType::Equal),
+            '<' if self.conditional_advance('=') => self.new_none_literal(TokenType::LessEqual),
+            '<' => self.new_none_literal(TokenType::Less),
+            '>' if self.conditional_advance('=') => self.new_none_literal(TokenType::GreaterEqual),
+            '>' => self.new_none_literal(TokenType::Greater),
 
             // |
 
@@ -119,6 +140,7 @@ impl Scanner {
 
                 Ok(None)
             }
+
             // Block Comment, comment that can span multiline lines
             '/' if self.conditional_advance('*') => {
                 while self.peek() != '*' && self.peek_next() != '/' && !self.is_at_end() {
@@ -148,13 +170,14 @@ impl Scanner {
 
                 Ok(None)
             }
-            '/' => Ok(Some(TokenType::Slash)),
+
+            '/' => self.new_none_literal(TokenType::Slash),
 
             // String Literals
-            '"' => Ok(Some(TokenType::Str)),
+            '"' => wrap(Token::new_string(self.string_literals(), self.line)),
 
             // Number Literals
-            '0'..='9' => Ok(Some(TokenType::Number)),
+            '0'..='9' => wrap(Token::new_number(self.number_literal(), self.line)),
 
             // Return Scanner Error if couldn't match any valid characters
             _ => Err(ScannerError {
@@ -165,60 +188,6 @@ impl Scanner {
                 ),
             }),
         }
-    }
-
-    // Scan source and create Tokens before pushing them to the tokens vector
-    fn scan_token(&mut self) {
-        let current_character: char = self.advance();
-        let token_type: Option<TokenType> = match self.get_token_type(current_character) {
-            Ok(token_type) => token_type,
-            Err(e) => {
-                self.errors.push(e);
-                None
-            }
-        };
-
-        // Match TokenType to new Token, and handle processing needed for certain token types
-        // Minor optimization: Match arms are arranged in order of how frequently that TokenType is expected
-        match token_type {
-            Some(TokenType::Identifier) => {
-                let identifier = self.identifier();
-                let keyword_token_type = KEYWORDS.get(&identifier);
-
-                match keyword_token_type {
-                    // If it is a keyword, we use that keyword's token type.
-                    Some(keyword) => self
-                        .tokens
-                        // @todo How to force move here instead of clone
-                        .push(Token::new_keyword(keyword.clone(), self.line)),
-
-                    // Otherwise, it's a regular user-defined identifier.
-                    None => self
-                        .tokens
-                        .push(Token::new_identifier(identifier, self.line)),
-                };
-            }
-
-            // Do nothing for None type TokenType
-            None => (),
-
-            Some(TokenType::Number) => {
-                let literal = self.number_literal();
-                self.tokens.push(Token::new_number(literal, self.line));
-            }
-
-            Some(TokenType::Str) => {
-                let literal = self.string_literals();
-                self.tokens.push(Token::new_string(literal, self.line));
-            }
-
-            // Last match arm to match all other unmatched token types that do not need special processing
-            Some(token_type) => {
-                // Can unwrap here as we are sure that there is a value because of the Some wrap matching
-                self.tokens
-                    .push(Token::new_none_literal(token_type, self.line));
-            }
-        };
     }
 
     // Returns the String literal between ""

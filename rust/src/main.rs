@@ -41,28 +41,42 @@ fn read_file(filename: &String) {
 
     let tokens = Scanner::scan_tokens(source);
 
-    // println!("Logging out token vector");
-    // for token in tokens.iter() {
-    //     println!("{}", token.to_debug_string());
-    // }
-    // println!("End of token vector");
-
-    // Give tokens to parse directly
-    let abstract_syntax_tree = Parser::parse(tokens);
-
-    if let Err(e) = abstract_syntax_tree {
-        println!("Program stopped due to SYNTAX ERROR.");
+    if let Err(e) = tokens {
+        println!("Program stopped due to Scanning SYNTAX ERROR.");
 
         for error in e.iter() {
             println!("{}\n", error);
         }
-    } else if let Ok(ast) = abstract_syntax_tree {
-        println!("AST generated");
 
-        for stmt in ast.iter() {
-            println!("{:?}", stmt);
+        return;
+    } else if let Ok(tokens) = tokens {
+        // println!("Logging out token vector");
+        // for token in tokens.iter() {
+        //     println!("{}", token.to_debug_string());
+        // }
+        // println!("End of token vector");
+
+        // @todo Should not nest call to parser and interpreter like this
+
+        // Give tokens to parse directly
+        let abstract_syntax_tree = Parser::parse(tokens);
+
+        if let Err(e) = abstract_syntax_tree {
+            println!("Program stopped due to SYNTAX ERROR.");
+
+            for error in e.iter() {
+                println!("{}\n", error);
+            }
+        } else if let Ok(ast) = abstract_syntax_tree {
+            println!("AST generated");
+
+            for stmt in ast.iter() {
+                println!("{:?}", stmt);
+            }
+            println!();
+
+            // Return errors if any?
+            // Should be name statements instead of ast
+            Interpreter::interpret(ast);
         }
-        println!();
-        Interpreter::interpret(ast);
     }
-}
