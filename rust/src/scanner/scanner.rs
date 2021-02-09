@@ -27,8 +27,13 @@ impl Scanner {
             // At the start of every loop, reset start of the current "line" to the current character's index
             scanner.start = scanner.current;
 
-            // Scan source and create Token struct as needed and add it to "tokens" vector
-            scanner.scan_token();
+            // Scan source and add tokens if any to the "tokens" vector
+            // Will get back either a token, no token (white spaces and comments) or an error
+            match scanner.scan_token() {
+                Ok(Some(token)) => tokens.push(token),
+                Ok(None) => {}
+                Err(e) => errors.push(e),
+            }
         }
 
         // Add Eof token
@@ -214,53 +219,6 @@ impl Scanner {
                     .push(Token::new_none_literal(token_type, self.line));
             }
         };
-    }
-
-    fn is_at_end(&self) -> bool {
-        self.current >= self.source.len()
-    }
-
-    // advance() is for input
-    // Consume next character from source and return it.
-    // Must be valid char else this will panic during the unwrap
-    fn advance(&mut self) -> char {
-        self.current += 1;
-        self.source.chars().nth(self.current - 1).unwrap()
-
-        // If needed, push current character back into source as advance methods removes it.
-        // self.source.push(current_character);
-    }
-
-    // This is a conditional advance(). Only consumes current character if it's what we're looking for.
-    fn conditional_advance(&mut self, expected: char) -> bool {
-        if self.is_at_end() || (self.source.chars().nth(self.current).unwrap() != expected) {
-            return false;
-        }
-
-        // Advance if the expected character is found
-        self.current += 1;
-
-        true
-    }
-
-    // Get next character in source string without advancing index of current character
-    // Used to check lexical grammar
-    fn peek(&self) -> char {
-        if self.is_at_end() {
-            '\0'
-        } else {
-            self.source.chars().nth(self.current).unwrap()
-        }
-    }
-
-    // Get next next character in source string without advancing index of current character
-    // Used to check lexical grammar
-    fn peek_next(&self) -> char {
-        if self.current + 1 >= self.source.len() {
-            '\0'
-        } else {
-            self.source.chars().nth(self.current + 1).unwrap()
-        }
     }
 
     // Returns the String literal between ""
