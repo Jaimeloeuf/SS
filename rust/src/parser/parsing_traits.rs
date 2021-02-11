@@ -193,11 +193,13 @@ impl Parser {
 
     // Synchronize the tokens to approx the next valid token
     fn synchronize(&mut self) {
-        self.advance();
-
         // Loop till either EOF token or when one of the possible new start tokens is read
         // Where new start token, is a token that could indicate a new start where all previous syntax errors are behind it
         while !self.is_at_end() {
+            // Advance to eat the current token AFTER making sure that we did not hit an EOF
+            // Because if we called advance without checking for EOF with self.is_at_end() rust will panic when we unwrap Token after EOF
+            self.advance();
+
             // Stop synchronize loop when semicolon is read.
             // This assumes that in most cases, the error only cascades to a semicolon
             // This is a best case effort too, where it will fail when dealing with the semicolons in a for loop.
@@ -218,9 +220,6 @@ impl Parser {
                 | TokenType::Return => return,
                 _ => {}
             }
-
-            // Advance to eat the current token
-            self.advance();
         }
     }
 }
