@@ -4,6 +4,7 @@
  * Inherited traits:
  * Debug is to make debug printing easier and skip implementing the display trait
  * PartialEq is used to do comparison instead of match. Refer to Parser struct methods
+ * @todo Clone trait is needed as Token struct contains this, and Token struct derives the Clone trait
  */
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {

@@ -7,6 +7,7 @@ use crate::token_type::TokenType;
 // Infrastructure/Utility methods on the Parser struct
 impl Parser {
     // Returns immutable reference to the current token
+    // @todo Maybe dont unwrap here, pass it back, then inside those, we use the ? operator
     pub fn current(&self) -> &Token {
         self.tokens.get(self.currentIndex).unwrap()
     }
@@ -15,6 +16,7 @@ impl Parser {
         self.current().token_type == token_type
     }
 
+    // @todo Should we check for Eof or should we just check length of vector and current index?
     pub fn is_at_end(&self) -> bool {
         self.check(TokenType::Eof)
     }

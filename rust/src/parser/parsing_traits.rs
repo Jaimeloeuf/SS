@@ -10,7 +10,10 @@ use crate::token_type::TokenType;
 impl Parser {
     // Consumes a token vector (takes ownership) to produce a statements vector (moved out)
     pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
-        let mut parser = Parser { tokens, current: 0 };
+        let mut parser = Parser {
+            tokens,
+            currentIndex: 0,
+        };
 
         println!("Processing '{}' tokens", parser.tokens.len());
 
@@ -40,10 +43,8 @@ impl Parser {
         if errors.is_empty() {
             Ok(statements)
         } else {
-            // Return an errors if there are any and have the caller handle it
+            // Return errors if any and have the caller handle it
             // Might handle it differently depending on how many files are there for the program.
-            // NOTE that because we can synchronize when there is an array, we should not return the error immediately
-            // when we get it, perhaps we can return a vector of it or smth...
             Err(errors)
         }
     }
@@ -198,13 +199,11 @@ impl Parser {
         while !self.is_at_end() {
             // Advance to eat the current token AFTER making sure that we did not hit an EOF
             // Because if we called advance without checking for EOF with self.is_at_end() rust will panic when we unwrap Token after EOF
-            self.advance();
-
-            // Stop synchronize loop when semicolon is read.
-            // This assumes that in most cases, the error only cascades to a semicolon
+            //
+            // Stop synchronize loop when semicolon is read. This assumes that in most cases, the error only cascades to a semicolon
             // This is a best case effort too, where it will fail when dealing with the semicolons in a for loop.
-            // @todo Why is this previous? And cant this be in the match stmt?
-            if self.previous().token_type == TokenType::Semicolon {
+            // self.advance returns previous token, so it is chained here instead of making another call to self.previous()
+            if self.advance().token_type == TokenType::Semicolon {
                 return;
             }
 
