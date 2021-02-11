@@ -76,7 +76,11 @@ impl std::fmt::Display for Token {
         if self.literal.is_none() {
             write!(f, "{:?}", self.token_type)
         } else {
-            write!(f, "{:?} {}", self.token_type, self.literal.clone().unwrap())
+            // Special way to print string literals
+            match self.literal.as_ref().unwrap() {
+                Literal::String(ref string) => write!(f, "String '{}'", string),
+                none_string => write!(f, "{:?} {}", self.token_type, none_string),
+            }
         }
     }
 }
