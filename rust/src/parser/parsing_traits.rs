@@ -53,7 +53,7 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt, ParsingError> {
         // Call the different statement parsing methods base on token_type
         // Else if not a statement token, it must be a expression statement
-        match &self.peek().token_type {
+        match &self.current().token_type {
             TokenType::Print => self.call_stmt_method(Parser::print_statement),
             // TokenType::LeftBrace => self.call_stmt_method(Parser::leftbrace_statement()),
             // TokenType::If => self.call_stmt_method(Parser::if_statement()),
@@ -183,9 +183,9 @@ impl Parser {
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             Ok(Expr::Grouping(Box::new(expr)))
         } else {
-            // I dont think we should use self.peek here
+            // I dont think we should use self.current here
             Err(ParsingError::UnexpectedTokenError(
-                (*self.peek()).clone(),
+                (*self.current()).clone(),
                 "Invalid token found while parsing expression",
             ))
         }
@@ -208,7 +208,7 @@ impl Parser {
 
             // Matching the other TokenTypes
             // When these token types are read, stop the synchronize loop
-            match self.peek().token_type {
+            match self.current().token_type {
                 TokenType::Function
                 | TokenType::Const
                 | TokenType::If

@@ -7,12 +7,12 @@ use crate::token_type::TokenType;
 // Infrastructure/Utility methods on the Parser struct
 impl Parser {
     // Returns immutable reference to the current token
-    pub fn peek(&self) -> &Token {
-        self.tokens.get(self.current).unwrap()
+    pub fn current(&self) -> &Token {
+        self.tokens.get(self.currentIndex).unwrap()
     }
 
     pub fn check(&self, token_type: TokenType) -> bool {
-        self.peek().token_type == token_type
+        self.current().token_type == token_type
     }
 
     pub fn is_at_end(&self) -> bool {
@@ -20,22 +20,22 @@ impl Parser {
     }
 
     pub fn previous(&self) -> &Token {
-        self.tokens.get(self.current - 1).unwrap()
+        self.tokens.get(self.currentIndex - 1).unwrap()
     }
 
-    // Get current token and Increment 'current' variable of struct.
+    // Get current token and Increment 'currentIndex' variable of struct.
     pub fn advance(&mut self) -> &Token {
         // Old way of doing it.
         // Only increment the current token counter if not at end yet
         // if !self.is_at_end() {
-        //     self.current += 1;
+        //     self.currentIndex += 1;
         // }
         // Get previous token without call to "previous" method to save the extra function call... but LLVM is probs smart enough to optimize this
-        // self.tokens.get(self.current - 1).unwrap()
+        // self.tokens.get(self.currentIndex - 1).unwrap()
 
         // Assume caller will check if it is at the end of token vector so no need for extra check here
         // Because when calling advance, you expect 'current' to be advanced and not conditionally advanced if not at end.
-        self.current += 1;
+        self.currentIndex += 1;
         self.previous()
     }
 
@@ -78,7 +78,7 @@ impl Parser {
         } else {
             Err(ParsingError::UnexpectedTokenError(
                 // @todo change parsing error to take ref instead?
-                self.peek().clone(),
+                self.current().clone(),
                 message,
             ))
         }
