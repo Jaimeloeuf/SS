@@ -1,5 +1,6 @@
 use super::error::ParsingError;
 use super::parser_struct::Parser;
+use super::stmt::Stmt;
 
 use crate::token::Token;
 use crate::token_type::TokenType;
@@ -84,5 +85,14 @@ impl Parser {
                 message,
             ))
         }
+    }
+
+    // Indirection for all declaration and statement methods, to call advance method first
+    pub fn advance_and_call(
+        &mut self,
+        method: fn(&mut Parser) -> Result<Stmt, ParsingError>,
+    ) -> Result<Stmt, ParsingError> {
+        self.advance();
+        method(self)
     }
 }

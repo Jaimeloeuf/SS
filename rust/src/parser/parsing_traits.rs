@@ -54,24 +54,17 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt, ParsingError> {
         // Call the different statement parsing methods base on token_type
         // Else if not a statement token, it must be a expression statement
+        // Pass control to expression_statement method to continue parsing for an expression
+        // Using advance_and_call to call advance method before calling method to eat the matched token
         match &self.current().token_type {
-            TokenType::Print => self.call_stmt_method(Parser::print_statement),
-            // TokenType::LeftBrace => self.call_stmt_method(Parser::leftbrace_statement()),
-            // TokenType::If => self.call_stmt_method(Parser::if_statement()),
-            // TokenType::While => self.call_stmt_method(Parser::while_statement()),
-            // TokenType::For => self.call_stmt_method(Parser::for_statement()),
-            // TokenType::Return => self.call_stmt_method(Parser::return_statement()),
+            TokenType::Print => self.advance_and_call(Parser::print_statement),
+            // TokenType::LeftBrace => self.advance_and_call(Parser::leftbrace_statement()),
+            // TokenType::If => self.advance_and_call(Parser::if_statement()),
+            // TokenType::While => self.advance_and_call(Parser::while_statement()),
+            // TokenType::For => self.advance_and_call(Parser::for_statement()),
+            // TokenType::Return => self.advance_and_call(Parser::return_statement()),
             _ => self.expression_statement(),
         }
-    }
-
-    // Indirection for all statement methods, to call advance method first
-    fn call_stmt_method(
-        &mut self,
-        method: fn(&mut Parser) -> Result<Stmt, ParsingError>,
-    ) -> Result<Stmt, ParsingError> {
-        self.advance();
-        method(self)
     }
 
     fn print_statement(&mut self) -> Result<Stmt, ParsingError> {
