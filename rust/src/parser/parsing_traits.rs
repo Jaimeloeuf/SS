@@ -23,7 +23,8 @@ impl Parser {
         // On each loop, we scan a single token.
         while !parser.is_at_end() {
             // Get statement and based on output, push to either one of the vectors
-            match parser.statement() {
+            // Calling declaration parsing method, as declarations have the @todo lowest or highest? precedence in the syntax grammar
+            match parser.declaration() {
                 Ok(stmt) => statements.push(stmt),
                 // Ok(stmt) => {
                 //     println!("parsed stmt/expr {:?}", stmt);
@@ -48,6 +49,46 @@ impl Parser {
             Err(errors)
         }
     }
+
+    /* ==========================  Start of declaration methods  ========================== */
+
+    fn declaration(&mut self) -> Result<Stmt, ParsingError> {
+        // Call the different declaration parsing methods base on token_type
+        // Else if not the initial token of a declaration, it must be either a normal statement or an expression
+        // Pass control to statement method to continue parsing for statment or expression
+        // Using advance_and_call to call advance method before calling method to eat the matched token
+        match &self.current().token_type {
+            TokenType::Const => self.advance_and_call(Parser::const_declaration),
+            _ => self.statement(),
+        }
+    }
+
+    fn const_declaration(&mut self) -> Result<Stmt, ParsingError> {
+        let name = self.consume(TokenType::Identifier, "Expected name for constant")?;
+        // @todo Fails if clone is not done here
+        let name = name.clone();
+
+        // Implementation with Nulls
+        // let initial_value = if self.is_next_token(TokenType::Equal) {
+        //     self.expression()?
+        // } else {
+        //     Expr::Literal(Literal::Null)
+        // };
+
+        if self.is_next_token(TokenType::Equal) {
+            let initial_value = self.expression()?;
+            self.consume(TokenType::Semicolon, "Expect ';' after const declaration")?;
+            Ok(Stmt::Const(name, initial_value))
+        } else {
+            // Err if missing Equal token
+            Err(ParsingError::UnexpectedTokenError(
+                self.current().clone(),
+                "Expected 'Equal' token for assignment after 'const' keyword",
+            ))
+        }
+    }
+
+    /* ==========================  End of declaration methods  ========================== */
 
     /* ==========================  Start of statement methods  ========================== */
 
