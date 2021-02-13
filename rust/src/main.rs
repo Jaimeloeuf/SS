@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 use std::time::Instant;
 
+mod environment;
 mod hash;
 mod interpreter;
 mod keywords;
