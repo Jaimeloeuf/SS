@@ -9,11 +9,6 @@ use crate::keywords::KEYWORDS;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
-// Utility function to wrap given token in the return Type signature of "scan_token" method to reduce code repetition
-fn wrap(token: Token) -> Result<Option<Token>, ScannerError> {
-    Ok(Some(token))
-}
-
 impl Scanner {
     // Move ownership of source string into Scanner struct here
     pub fn scan_tokens(source: String) -> Result<Vec<Token>, Vec<ScannerError>> {
@@ -64,11 +59,15 @@ impl Scanner {
     fn scan_token(&mut self) -> Result<Option<Token>, ScannerError> {
         let current_character: char = self.advance();
 
+        // Wrap match expression in Ok variant instead of wrapping Token options with Ok variant for every arm's token option variant
+        // Err option inside match expression cannot be left to evaluate and be returned implicitly,
+        // it needs to be explicitly returned to break out of this Ok variant wrapping.
+        //
         // Minor optimization: Match arms are arranged in order of how frequently that character type is expected
-        match current_character {
+        Ok(match current_character {
             // Whitespace characters to be eaten and discarded
             // Because of how we parse, tabs are preferred over spaces to reduce number of times "scan_tokens" calls "scan_token"
-            ' ' | '\r' | '\t' => Ok(None),
+            ' ' | '\r' | '\t' => None,
 
             // Alphabetic words
             // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
@@ -80,17 +79,17 @@ impl Scanner {
                 match keyword_token_type {
                     // If it is a keyword, we use that keyword's token type.
                     // @todo How to force move here instead of clone
-                    Some(keyword) => wrap(Token::new_keyword(keyword.clone(), self.line)),
+                    Some(keyword) => Some(Token::new_keyword(keyword.clone(), self.line)),
 
                     // Otherwise, it's a regular user-defined identifier.
-                    None => wrap(Token::new_identifier(identifier, self.line)),
+                    None => Some(Token::new_identifier(identifier, self.line)),
                 }
             }
 
             // Newline characters causes line number to be incremented before being eaten and discarded
             '\n' => {
                 self.line += 1;
-                Ok(None)
+                None
             }
 
             ';' => self.new_none_literal(TokenType::Semicolon),
@@ -138,7 +137,7 @@ impl Scanner {
                     self.line += 1;
                 }
 
-                Ok(None)
+                None
             }
 
             // Block Comment, comment that can span multiline lines
@@ -168,26 +167,29 @@ impl Scanner {
                     self.line += 1;
                 }
 
-                Ok(None)
+                None
             }
 
             '/' => self.new_none_literal(TokenType::Slash),
 
             // String Literals
-            '"' => wrap(Token::new_string(self.string_literals(), self.line)),
+            '"' => Some(Token::new_string(self.string_literals(), self.line)),
 
             // Number Literals
-            '0'..='9' => wrap(Token::new_number(self.number_literal(), self.line)),
+            '0'..='9' => Some(Token::new_number(self.number_literal(), self.line)),
 
-            // Return Scanner Error if couldn't match any valid characters
-            _ => Err(ScannerError {
-                line: self.line,
-                description: format!(
-                    "Unexpected character '{}' on line {}",
-                    current_character, self.line
-                ),
-            }),
-        }
+            // Return ScannerError if couldn't match any valid characters
+            // Since the match statement is wrapped in Ok, we cannot let this evalute to Err variant, must return explicitly instead
+            _ => {
+                return Err(ScannerError {
+                    line: self.line,
+                    description: format!(
+                        "Unexpected character '{}' on line {}",
+                        current_character, self.line
+                    ),
+                });
+            }
+        })
     }
 
     // Returns the String literal between ""

@@ -1,4 +1,3 @@
-use super::error::ScannerError;
 use super::scanner_struct::Scanner;
 
 use crate::token::Token;
@@ -52,8 +51,9 @@ impl Scanner {
         }
     }
 
-    // Simple wrapper around Token::new_none_literal to wrap the Token to fit scan_token's return Type signature
-    pub fn new_none_literal(&self, token_type: TokenType) -> Result<Option<Token>, ScannerError> {
-        Ok(Some(Token::new_none_literal(token_type, self.line)))
+    // Simple wrapper around Token::new_none_literal to simplify none literal token creation
+    // As alot of places reuses this syntax with just different token types
+    pub fn new_none_literal(&self, token_type: TokenType) -> Option<Token> {
+        Some(Token::new_none_literal(token_type, self.line))
     }
 }
