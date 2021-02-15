@@ -203,14 +203,13 @@ impl Parser {
             Ok(Expr::Literal(Literal::Bool(false)))
         } else if self.is_next_token(TokenType::Null) {
             Ok(Expr::Literal(Literal::Null))
-        } else if self.is_next_token_any_of_these(vec![
-            TokenType::Identifier,
-            TokenType::Str,
-            TokenType::Number,
-        ]) {
+        } else if self.is_next_token_any_of_these(vec![TokenType::Str, TokenType::Number]) {
             // Need to clone because self.previous returns immutable ref to the Token, thus we cannot move out the literal
             // Clone first then unwrap, since unwrap consumes the self value
             Ok(Expr::Literal(self.previous().literal.clone().unwrap()))
+        } else if self.is_next_token(TokenType::Identifier) {
+            // @todo Default "distance" is None
+            Ok(Expr::Const(self.previous().clone(), None))
         } else if self.is_next_token(TokenType::LeftParen) {
             let expr = self.expression()?;
 
