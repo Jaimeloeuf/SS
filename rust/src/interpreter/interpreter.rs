@@ -1,4 +1,6 @@
 use super::error::RuntimeError;
+
+use crate::environment::environment::Environment;
 use crate::literal::Literal;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Stmt;
@@ -6,11 +8,13 @@ use crate::token_type::TokenType;
 use crate::value::value::Value;
 
 pub struct Interpreter {
+    env: Environment,
 }
 
 impl Interpreter {
     pub fn interpret(stmts: Vec<Stmt>) -> Option<RuntimeError> {
         let mut interpreter = Interpreter {
+            env: Environment::global(),
         };
 
         // Loop through all Expr/Stmt to evaluate and run them, returning any errors
