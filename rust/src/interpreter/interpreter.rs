@@ -33,26 +33,38 @@ impl Interpreter {
         None
     }
 
-    fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Value, RuntimeError> {
-        match stmt {
-            Stmt::Expr(ref expr) => self.interpret_expr(expr),
+    // Returns a Value Option as not every statement evaluates to a Value
+    fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Option<Value>, RuntimeError> {
+        // Wrap match expression in Ok variant instead of wrapping Value options with Ok variant in every arm
+        // Err option inside match expression cannot evaluate and return implicitly due to the Ok wrapping,
+        // thus it needs to be explicitly returned to break out of this Ok variant wrapping.
+        Ok(match stmt {
+            // @todo Perhaps simplify this by wrapping the whole interpret_expr in a Option<Value> too to dont have to unwrap and rewrap here
+            Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
 
             // @todo Dont rely on println macro
             Stmt::Print(ref expr) => {
-                println!("{}", expr);
-                // @todo Might need to change function signature since this should return None instead of a Value
-                // Using a hack right now, evaluating to a Null
-                Ok(Value::Null)
+                // Interpret expression and unwrap result to print
+                // @todo Use seperate print from interpreter's print method, to make them run independently
+                // @todo Dont just rely on println macro
+                // @todo Right now only works for literal values if not using debug printing
+                println!("{}", self.interpret_expr(expr)?);
+
+                None
             }
 
-            _ => Err(RuntimeError::InternalError(
-                "Failed to interpret statement".to_string(),
-            )),
-        }
+            unmatched_stmt_variant => {
+                return Err(RuntimeError::InternalError(format!(
+                    // @todo Using debug symbol to print as stmt does not implement Display trait yet
+                    "Failed to interpret statement.\nUnimplemented Stmt variant: {:?}",
+                    unmatched_stmt_variant
+                )));
+            }
+        })
     }
 
-    fn interpret_expr(&mut self, stmt: &Expr) -> Result<Value, RuntimeError> {
-        match stmt {
+    fn interpret_expr(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+        match expr {
             // Using *Literal, to get the value from within the variant
             Expr::Literal(literal) => match *literal {
                 Literal::Number(number) => Ok(Value::Number(number)),

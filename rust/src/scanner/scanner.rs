@@ -59,9 +59,9 @@ impl Scanner {
     fn scan_token(&mut self) -> Result<Option<Token>, ScannerError> {
         let current_character: char = self.advance();
 
-        // Wrap match expression in Ok variant instead of wrapping Token options with Ok variant for every arm's token option variant
-        // Err option inside match expression cannot be left to evaluate and be returned implicitly,
-        // it needs to be explicitly returned to break out of this Ok variant wrapping.
+        // Wrap match expression in Ok variant instead of wrapping Token options with Ok variant in every arm
+        // Err option inside match expression cannot evaluate and return implicitly due to the Ok wrapping,
+        // thus it needs to be explicitly returned to break out of this Ok variant wrapping.
         //
         // Minor optimization: Match arms are arranged in order of how frequently that character type is expected
         Ok(match current_character {
