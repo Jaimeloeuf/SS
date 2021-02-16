@@ -4,6 +4,7 @@
 use crate::token::Token;
 use std;
 
+// @todo Specify lifetime for Tokens instead of taking ownership, which requires .clone() of token
 #[derive(Debug)]
 pub enum ParsingError {
     // Static string message are hardcoded compiler error messages

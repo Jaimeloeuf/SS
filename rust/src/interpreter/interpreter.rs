@@ -42,7 +42,25 @@ impl Interpreter {
             // @todo Perhaps simplify this by wrapping the whole interpret_expr in a Option<Value> too to dont have to unwrap and rewrap here
             Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
 
-            // @todo Dont rely on println macro
+            Stmt::Const(ref token, ref expr) => {
+                // Although the token definitely have a literal string variant if parsed correctly,
+                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Which only happens if parser failed to save String literal for Identifier type Token
+                // Reference: https://stackoverflow.com/questions/41573764
+                if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                    self.env
+                        .define(identifier.to_string(), self.interpret_expr(expr)?);
+                    None
+                } else {
+                    // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,
+                    // Because it attempts to print out the string literal which we know is missing, thus print with debug symbol instead
+                    return Err(RuntimeError::InternalError(format!(
+                        "Runtime Error: Unable to set value on const identifier -> {:?}\n{}",
+                        token, "Parsing error: Const identifier missing string literal\n"
+                    )));
+                }
+            }
+
             Stmt::Print(ref expr) => {
                 // Interpret expression and unwrap result to print
                 // @todo Use seperate print from interpreter's print method, to make them run independently
@@ -73,6 +91,38 @@ impl Interpreter {
                 Literal::Bool(bool) => Ok(Value::Bool(bool)),
                 Literal::Null => Ok(Value::Null),
             },
+
+            // Distance is not implemented for now
+            Expr::Const(ref token, ref _distance) => {
+                // Although the token definitely have a literal string variant if parsed correctly,
+                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Which only happens if parser failed to save String literal for Identifier type Token
+                // Reference: https://stackoverflow.com/questions/41573764
+                if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                    // @todo
+                    // Reference: https://stackoverflow.com/questions/30414424
+                    // Should use get_ref here instead of get to avoid cloning the value
+                    // But that would require changing the method's return type
+                    // Should we even move out a Value in the first place? Shouldnt all the values be immutable?
+                    // Or perhaps return a mutable ref from env hashmap and every modification is made directly on the hashmap without needing additional update logic?
+                    match self.env.get(identifier) {
+                        Some(value) => Ok(value),
+                        // @todo When not found, should it be an environment error or runtime error?
+                        // Technically should be Runtime error, because it is caused by the user using a invalid identifier
+                        // Environment errors are reserved for when there is a valid identifier but not found in environment
+                        None => Err(RuntimeError::UndefinedVariable(identifier.clone())),
+                    }
+                } else {
+                    // Unlikely to happen because this will probably be caught by interpret_stmt's Const logic when setting a value
+                    //
+                    // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,
+                    // Because it attempts to print out the string literal which we know is missing, thus print with debug symbol instead
+                    Err(RuntimeError::InternalError(format!(
+                        "Runtime Error: Unable to read value on const identifier -> {:?}\n{}",
+                        token, "Parsing error: Const identifier missing string literal\n"
+                    )))
+                }
+            }
 
             Expr::Grouping(ref expr) => self.interpret_expr(expr),
 

@@ -14,11 +14,3 @@ impl std::fmt::Display for EnvironmentError {
         }
     }
 }
-
-impl std::error::Error for EnvironmentError {
-    fn description(&self) -> &str {
-        match *self {
-            EnvironmentError::UndefinedVariable(_) => "UndefinedVariable",
-        }
-    }
-}

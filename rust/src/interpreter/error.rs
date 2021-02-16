@@ -1,8 +1,19 @@
+use crate::token::Token;
+
+/**
+ * Enum of all possible Runtime Errors
+ * String is used instead of &str, as some of the strings are formatted on the fly using format!()
+ *
+ * @todo Should line number be included here for logging?
+ * @todo Remove debug trait once Display trait is implemented
+ */
 #[derive(Debug)]
 pub enum RuntimeError {
     InternalError(String),
+    // @todo Maybe store, given type, and expected type
+    // @todo String or &str?
     TypeError(String),
-    // UndefinedVariable(Token),
+    UndefinedVariable(String),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
     // DivideNonNumbers(Token),

@@ -1,3 +1,5 @@
+// @todo Why cant we just use the Value enum directly? Why hold a literal enum that evalutaes to a value enum later?
+// @todo Also right now it needs clone, because Token needs this, and Token have the Clone trait derived.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     Number(f64),

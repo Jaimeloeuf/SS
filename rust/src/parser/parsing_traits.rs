@@ -12,7 +12,7 @@ impl Parser {
     pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
         let mut parser = Parser {
             tokens,
-            currentIndex: 0,
+            current_index: 0,
         };
 
         println!("Processing '{}' tokens", parser.tokens.len());

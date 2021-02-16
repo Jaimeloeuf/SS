@@ -5,6 +5,7 @@ use crate::value::value::Value;
 
 #[derive(Debug)]
 pub struct Environment {
+    // @todo Perhaps use a ref to a String instead of this, to avoid cloning the string
     // Values field is private as it should only be accessed via the given getters and setters
     values: HashMap<String, Value>,
 }

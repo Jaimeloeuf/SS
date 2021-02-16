@@ -10,7 +10,7 @@ impl Parser {
     // Returns immutable reference to the current token
     // @todo Maybe dont unwrap here, pass it back, then inside those, we use the ? operator
     pub fn current(&self) -> &Token {
-        self.tokens.get(self.currentIndex).unwrap()
+        self.tokens.get(self.current_index).unwrap()
     }
 
     pub fn check(&self, token_type: TokenType) -> bool {
@@ -23,22 +23,22 @@ impl Parser {
     }
 
     pub fn previous(&self) -> &Token {
-        self.tokens.get(self.currentIndex - 1).unwrap()
+        self.tokens.get(self.current_index - 1).unwrap()
     }
 
-    // Get current token and Increment 'currentIndex' variable of struct.
+    // Get current token and Increment 'current_index' variable of struct.
     pub fn advance(&mut self) -> &Token {
         // Old way of doing it.
         // Only increment the current token counter if not at end yet
         // if !self.is_at_end() {
-        //     self.currentIndex += 1;
+        //     self.current_index += 1;
         // }
         // Get previous token without call to "previous" method to save the extra function call... but LLVM is probs smart enough to optimize this
-        // self.tokens.get(self.currentIndex - 1).unwrap()
+        // self.tokens.get(self.current_index - 1).unwrap()
 
         // Assume caller will check if it is at the end of token vector so no need for extra check here
         // Because when calling advance, you expect 'current' to be advanced and not conditionally advanced if not at end.
-        self.currentIndex += 1;
+        self.current_index += 1;
         self.previous()
     }
 
