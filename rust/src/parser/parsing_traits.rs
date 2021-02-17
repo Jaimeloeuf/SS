@@ -128,7 +128,51 @@ impl Parser {
     /* ==========================  End of statement methods  ========================== */
 
     fn expression(&mut self) -> Result<Expr, ParsingError> {
-        return self.equality();
+        // self.assignment()
+        self.or()
+    }
+
+    // Not supporting assignment first
+    // fn assignment(&mut self) -> Result<Expr, ParsingError> {
+    //     let expr = self.or()?;
+
+    //     if self.is_next_token(TokenType::Equal) {
+    //         let token = self.previous().clone();
+    //         // Recursively calls itself as this is the top level expression parsing method. Can also call expression method but it will just call assignment method
+    //         let value = self.assignment()?;
+
+    //         match expr {
+    //             Expr::Const(token, _) => Ok(Expr::Assign(token, Box::new(value), None)),
+    //             Expr::Get(target, token) => Ok(Expr::Set(target, token, Box::new(value))),
+    //             _ => Err(ParsingError::InvalidAssignmentError(token)),
+    //         }
+    //     } else {
+    //         Ok(expr)
+    //     }
+    // }
+
+    fn or(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.and()?;
+
+        while self.is_next_token(TokenType::Or) {
+            let operator = self.previous().clone();
+            let right = self.and()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.equality()?;
+
+        while self.is_next_token(TokenType::And) {
+            let operator = self.previous().clone();
+            let right = self.equality()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, ParsingError> {
