@@ -1,6 +1,7 @@
 use crate::literal::Literal;
 use crate::token::Token;
 
+// All expressions can be evaluated to a Value enum variant
 // Using box to handle this Recursive type with nested Expression variants
 // #[derive(Debug, Clone)]
 #[derive(Debug)]
@@ -8,10 +9,18 @@ pub enum Expr {
     Literal(Literal),
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
+
     // @todo Use Literal or Value variants directly?
     Unary(Token, Box<Expr>),
+
+    // Expressions that saves other expressions/values into the runtime environment identified by a Const's identifier
+    // Evaluates to the value
     Const(Token, Option<usize>),
+
+    // Expressions that assign other expressions/values to a variable
     Assign(Token, Box<Expr>, Option<usize>),
+
+    // Logical And/Or boolean operations
     Logical(Box<Expr>, Token, Box<Expr>),
     Call(Box<Expr>, Vec<Expr>, Token),
     Get(Box<Expr>, Token),

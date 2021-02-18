@@ -80,6 +80,7 @@ impl Parser {
             self.consume(TokenType::Semicolon, "Expect ';' after const declaration")?;
             Ok(Stmt::Const(name, initial_value))
         } else {
+            // @todo Should we allow unassigned? But const.... cannot reassign already... so this should only be done for variables if any
             // Err if missing Equal token
             Err(ParsingError::UnexpectedTokenError(
                 self.current().clone(),
@@ -272,10 +273,14 @@ impl Parser {
             // Check if there is a ")" to close the expression
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             Ok(Expr::Grouping(Box::new(expr)))
+        } else if self.is_at_end() {
+            // Copied over from rlox
+            // Not sure if this case will ever happen but just an extra safeguard for Unexpected Eof tokens
+            Err(ParsingError::UnexpectedEofError(self.current().clone()))
         } else {
             // I dont think we should use self.current here
             Err(ParsingError::UnexpectedTokenError(
-                (*self.current()).clone(),
+                self.current().clone(),
                 "Invalid token found while parsing expression",
             ))
         }
