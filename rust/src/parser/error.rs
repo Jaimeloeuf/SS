@@ -13,8 +13,8 @@ pub enum ParsingError {
     InvalidAssignmentError(Token),
     TooManyArgumentsError,
     TooManyParametersError,
-    // Static string message are hardcoded compiler error messages
-    InternalError(&'static str),
+    // Static string message are hardcoded parser error messages
+    InternalError(usize, &'static str),
 }
 
 impl std::fmt::Display for ParsingError {
@@ -31,7 +31,9 @@ impl std::fmt::Display for ParsingError {
             ParsingError::InvalidAssignmentError(ref token) => {
                 write!(f, "[line {}] Invalid assignment target", token.line)
             }
-            ParsingError::InternalError(ref message) => write!(f, "Internal error: {}", message),
+            ParsingError::InternalError(line, ref message) => {
+                write!(f, "[line {}] Internal error: {}", line, message)
+            }
             ParsingError::TooManyArgumentsError => {
                 f.write_str("Too many arguments, max number is 8")
             }

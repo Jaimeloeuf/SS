@@ -128,8 +128,7 @@ impl Parser {
     /* ==========================  End of statement methods  ========================== */
 
     fn expression(&mut self) -> Result<Expr, ParsingError> {
-        // self.assignment()
-        self.or()
+        self.assignment()
     }
 
     // Not supporting assignment first
@@ -150,6 +149,19 @@ impl Parser {
     //         Ok(expr)
     //     }
     // }
+    // Temporary assignment method that Errors out when assignment is found
+    fn assignment(&mut self) -> Result<Expr, ParsingError> {
+        let expr = self.or()?;
+
+        if self.is_next_token(TokenType::Equal) {
+            Err(ParsingError::InternalError(
+                self.current().line,
+                "Assignments are not supported yet",
+            ))
+        } else {
+            Ok(expr)
+        }
+    }
 
     fn or(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.and()?;
