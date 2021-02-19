@@ -42,6 +42,7 @@ impl Interpreter {
             // @todo Perhaps simplify this by wrapping the whole interpret_expr in a Option<Value> too to dont have to unwrap and rewrap here
             Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
 
+            // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
