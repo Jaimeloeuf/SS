@@ -100,11 +100,11 @@ impl Parser {
         // Using advance_and_call to call advance method before calling method to eat the matched token
         match &self.current().token_type {
             TokenType::Print => self.advance_and_call(Parser::print_statement),
-            // TokenType::LeftBrace => self.advance_and_call(Parser::leftbrace_statement()),
-            // TokenType::If => self.advance_and_call(Parser::if_statement()),
-            // TokenType::While => self.advance_and_call(Parser::while_statement()),
-            // TokenType::For => self.advance_and_call(Parser::for_statement()),
-            // TokenType::Return => self.advance_and_call(Parser::return_statement()),
+            TokenType::LeftBrace => self.advance_and_call(Parser::block_statement),
+            // TokenType::If => self.advance_and_call(Parser::if_statement),
+            // TokenType::While => self.advance_and_call(Parser::while_statement),
+            // TokenType::For => self.advance_and_call(Parser::for_statement),
+            // TokenType::Return => self.advance_and_call(Parser::return_statement),
             _ => self.expression_statement(),
         }
     }
@@ -118,6 +118,18 @@ impl Parser {
         //     format!("Expect ';' after value {}", expr),
         // )?;
         Ok(Stmt::Print(expr))
+    }
+
+    fn block_statement(&mut self) -> Result<Stmt, ParsingError> {
+        let mut statements: Vec<Stmt> = Vec::<Stmt>::new();
+
+        // Parse statements 1 by 1 till either end of block statement or Eof
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
+        Ok(Stmt::Block(statements))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParsingError> {
