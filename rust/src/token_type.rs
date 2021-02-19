@@ -34,11 +34,9 @@ pub enum TokenType {
   Less,
   LessEqual,
 
-  // TO replace these with || and &&
+  // Logical operators
   And,
   Or,
-
-  // Add in binary operators
 
   // Literals.
   Identifier,

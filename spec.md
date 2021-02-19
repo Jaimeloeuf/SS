@@ -264,18 +264,15 @@ const Array<Number> myArray = [1, 2, 3, 4]
 
 ## Operators
 ### logical
-When executing expressions with logical operations "and" + "or" short circuting will be applied.
-- not
-- !
-- and
-- &&
-- or
-- ||
-- (expr) ? (true expr) : (false expr)
-    - Ternary operator
+When executing expressions with logical operations "and" + "or" short circuting will be applied.  
+Instead of following C style logical operators like && and ||, which are written like that because C also support bitwise operators like & and |, SS will not be supporting bitwise operations now, thus the syntax is kept easier with using keywords instead of special operators.
+- ```not```
+- ```and```
+- ```or```
+- Ternary operator ```(expr) ? (true expr) : (false expr)```
 
-### binary
-- ~
+### Binary / Bitwise
+<!-- - ~
     - Negate
 - &
     - AND
@@ -284,7 +281,11 @@ When executing expressions with logical operations "and" + "or" short circuting 
 - ^
     - XOR
 - << / >>
-    - Bitwise shift operators
+    - Bitwise shift operators -->
+- Will not support binary/bitwise operators to keep the language simpler.  
+- Yes some computation will be faster with bitwise operations, but then again, this language is not designed for speed. It is designed for Simplicity / Readability / Maintainability in mind.  
+- Also this will allow the language to target more implementations that may not support it like certain VMs.  
+- This also removes the need for a special format for different number types like binary and hexadecimal, with formats like 0b1100 and 0xA36F that are common with other languages that implement binary operations. Allowing simpler implementations.
 
 ### Math
 - +
@@ -540,7 +541,19 @@ function factoryFunction(<T> constructorArgs) {
         - Both only 1 piece of code running at any given point (Tp) in time T
         - So only 1 executing at once, but overall across T time, more than 1 can execute
             - This is so that when 1 piece of code need to wait for e.g. the network, another CPU bound task can execute.
-
+- Main scenarios for asynchronous programming
+    - I/O operations
+        - Making a network call
+        - Talking to a database
+        - File IO
+        - Waiting for user input
+        - A synchronous program that performs an I/O operation will come to a halt until the operation finishes. A more efficient program would instead perform the operation and continue executing other code while the operation is pending.
+        - Say you have a program that reads some user input, makes some computation and then sends the result via email. When sending an email, you have to send some data out to the network and then wait for the receiving server to respond. Time invested by waiting for the server to respond is time wasted that would be of much better use if the program continued computing.
+    - Performing multiple operations in parallel
+        - When you need to do different operations in parallel, for example, making a database call, web service call and any calculations, then we can use asynchrony.
+    - Long-running event-driven requests
+        - This is the idea where you have a request that comes in, and the request goes to sleep for some time waiting for some other event to take place when that event takes place, you want the request to continue and then send a response to client.
+        - In this case, when request comes in, then thread is assigned to that request and as request goes to sleep, then thread is sent back to threadpool and as the task completes, then it generates the event and picks a thread from thread pool for sending response (the thread sent and picked from thread pool might or might not be the same.
 - There are different approaches to implementing each of the 2 purposes above.
     - But the primary purpose that is more common is point (2)
 
@@ -725,3 +738,4 @@ Allow us to print diff things like variables to strings to functions...
 
 ## Preferences
 - Use camelCase for value and function names
+- Tabs over spaces, because it is quicker to tokenize in simple scanner implementations
