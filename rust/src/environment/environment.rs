@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
@@ -9,12 +10,12 @@ pub struct Environment {
     // @todo Perhaps use a ref to a String instead of this, to avoid cloning the string
     // @todo Values field is private as it should only be accessed via the given getters and setters
     pub values: HashMap<String, Value>,
-    pub enclosing: Option<Rc<Environment>>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
     // Requires a reference to the enclosing environment, global environment will be the grand parent, and first to enclose on a scope
-    pub fn new(enclosing: Option<Rc<Environment>>) -> Environment {
+    pub fn new(enclosing: Option<Rc<RefCell<Environment>>>) -> Environment {
         Environment {
             values: HashMap::<String, Value>::new(),
             enclosing,
@@ -58,7 +59,7 @@ impl Environment {
             // @todo Not sure if this is right, but we return a Clone Value every time so that the original value still stays in the hashmap
             Some(value) => Some(value.clone()),
             None => match &self.enclosing {
-                Some(enclosing) => enclosing.get(key),
+                Some(enclosing) => enclosing.borrow().get(key),
                 None => None,
             },
         }

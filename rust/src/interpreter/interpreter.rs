@@ -8,19 +8,21 @@ use crate::token_type::TokenType;
 use crate::value::value::Value;
 
 pub struct Interpreter {
-    env: Environment,
+    env: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn interpret(stmts: Vec<Stmt>) -> Option<RuntimeError> {
         let mut interpreter = Interpreter {
-            env: Environment::global(),
+            // Why did rlox clone the globals here?
+            env: Rc::new(RefCell::new(Environment::global())),
         };
 
         // Loop through all Expr/Stmt to evaluate and run them, returning any errors
         for stmt in stmts.iter() {
             match interpreter.interpret_stmt(stmt) {
-                Ok(value) => println!("Evaluated to {:?}", value),
+                // This value is technically only meaningful when using the repl/toplevel
+                Ok(value) => {}
                 Err(err) => {
                     // @todo Use this without the debug symbol using Display trait
                     // @todo Delete this println, and let method caller handle the error
@@ -50,6 +52,7 @@ impl Interpreter {
                 // Reference: https://stackoverflow.com/questions/41573764
                 if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
                     self.env
+                        .borrow_mut()
                         .define(identifier.to_string(), self.interpret_expr(expr)?);
                     None
                 } else {
@@ -93,6 +96,7 @@ impl Interpreter {
                 Literal::Null => Ok(Value::Null),
             },
 
+            // A Const expression evaluates to the value stored in the environment identified by the Const's identifier
             // Distance is not implemented for now
             Expr::Const(ref token, ref _distance) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
@@ -106,7 +110,7 @@ impl Interpreter {
                     // But that would require changing the method's return type
                     // Should we even move out a Value in the first place? Shouldnt all the values be immutable?
                     // Or perhaps return a mutable ref from env hashmap and every modification is made directly on the hashmap without needing additional update logic?
-                    match self.env.get(identifier) {
+                    match self.env.borrow().get(identifier) {
                         Some(value) => Ok(value),
                         // @todo When not found, should it be an environment error or runtime error?
                         // Technically should be Runtime error, because it is caused by the user using a invalid identifier
@@ -174,6 +178,7 @@ impl Interpreter {
                                 Ok(Value::String(left_string + &right_string))
                             }
                             _ => Err(RuntimeError::TypeError(
+                                // @todo Show types used
                                 // "Invalid types used for addition!",
                                 "Invalid types used for addition!".to_string(),
                             )),
