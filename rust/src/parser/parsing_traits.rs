@@ -104,7 +104,7 @@ impl Parser {
             // TokenType::If => self.advance_and_call(Parser::if_statement),
             // TokenType::While => self.advance_and_call(Parser::while_statement),
             // TokenType::For => self.advance_and_call(Parser::for_statement),
-            // TokenType::Return => self.advance_and_call(Parser::return_statement),
+            TokenType::Return => self.advance_and_call(Parser::return_statement),
             _ => self.expression_statement(),
         }
     }
@@ -130,6 +130,21 @@ impl Parser {
 
         self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
         Ok(Stmt::Block(statements))
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt, ParsingError> {
+        // @todo Why need to clone previous? Does Stmt::Return really need the token?
+        let keyword = self.previous().clone();
+
+        // Return value can either be an expression or Null if nothing is specified
+        let value = if !self.check(TokenType::Semicolon) {
+            self.expression()?
+        } else {
+            Expr::Literal(Literal::Null)
+        };
+
+        self.consume(TokenType::Semicolon, "Expect `;` after return value.")?;
+        Ok(Stmt::Return(keyword, Box::new(value)))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParsingError> {
