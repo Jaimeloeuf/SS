@@ -1,4 +1,6 @@
 use super::error::RuntimeError;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::environment::environment::Environment;
 use crate::literal::Literal;
@@ -43,6 +45,10 @@ impl Interpreter {
         Ok(match stmt {
             // @todo Perhaps simplify this by wrapping the whole interpret_expr in a Option<Value> too to dont have to unwrap and rewrap here
             Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
+
+            // @todo Does return stmt really need to store the token?
+            // Return statment is just like Stmt::Expr where it just returns the evaluated expression
+            Stmt::Return(_, ref expr) => Some(self.interpret_expr(expr)?),
 
             // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
