@@ -14,6 +14,7 @@ pub enum RuntimeError {
     // @todo String or &str?
     TypeError(String),
     UndefinedVariable(String),
+    ConditionTypeError(String),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
     // DivideNonNumbers(Token),

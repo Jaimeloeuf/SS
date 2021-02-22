@@ -136,6 +136,7 @@ impl Parser {
     // while self.is_next_token(TokenType::ElseIf) {
     //     let else_branch = self.statement()?;
     // }
+    // @todo Optimize by skipping blocks like "if (false)"
     fn if_statement(&mut self) -> Result<Stmt, ParsingError> {
         self.consume(TokenType::LeftParen, "Expect `(` after 'if'")?;
         let condition = self.expression()?;

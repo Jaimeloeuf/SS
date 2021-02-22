@@ -85,6 +85,32 @@ impl Interpreter {
             // Return statment is just like Stmt::Expr where it just returns the evaluated expression
             Stmt::Return(_, ref expr) => Some(self.interpret_expr(expr)?),
 
+            // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
+            Stmt::If(ref condition, ref true_branch, ref else_branch) => {
+                // If/Else version, that does not check if condition is evaluated to a None Bool value
+                // if let Value::Bool(true) = self.interpret_expr(condition)? {
+                //     self.interpret_stmt(true_branch)?
+                // } else if let Some(ref else_branch) = **else_branch {
+                //     self.interpret_stmt(else_branch)?
+                // } else {
+                //     None
+                // }
+                self.interpret_stmt(match self.interpret_expr(condition)? {
+                    Value::Bool(true) => true_branch,
+                    // Only return else_branch if any, else end function
+                    Value::Bool(false) => match else_branch {
+                        Some(ref else_branch) => else_branch,
+                        _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
+                    },
+                    // Throws error if condition does not evaluates to a Value of Bool type
+                    invalid_condition_type => return Err(RuntimeError::ConditionTypeError(format!(
+                        "{}\nCondition evaluated to type and value of: {:?}",
+                        "Invalid condition value type, only Boolean values can be used as conditionals!",
+                        invalid_condition_type
+                    ))),
+                })?
+            }
+
             // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
