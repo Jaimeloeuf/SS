@@ -10,12 +10,16 @@ pub enum Stmt {
     Expr(Expr),
     Const(Token, Expr),
     // Var(Token, Expr),
-    // Block(Vec<Stmt>),
-    // If(Expr, Box<Stmt>, Box<Option<Stmt>>),
+    Block(Vec<Stmt>),
+
+    // Rlox did If(Expr, Box<Stmt>, Box<Option<Stmt>>), instead
+    // But Option on the outer layer was easier to unwrap in the interpreter
+    If(Expr, Box<Stmt>, Option<Box<Stmt>>),
+
     // While(Expr, Box<Stmt>),
     // Func(Token, Vec<Token>, Box<Stmt>),
     // Class(Token, Option<Expr>, Vec<Stmt>),
 
     // Return stmt is a special stmt variant that will be evaluated to a Value variant
-    // Return(Token, Box<Expr>),
+    Return(Token, Box<Expr>),
 }

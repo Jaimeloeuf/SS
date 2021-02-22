@@ -101,7 +101,7 @@ impl Parser {
         match &self.current().token_type {
             TokenType::Print => self.advance_and_call(Parser::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Parser::block_statement),
-            // TokenType::If => self.advance_and_call(Parser::if_statement),
+            TokenType::If => self.advance_and_call(Parser::if_statement),
             // TokenType::While => self.advance_and_call(Parser::while_statement),
             // TokenType::For => self.advance_and_call(Parser::for_statement),
             TokenType::Return => self.advance_and_call(Parser::return_statement),
@@ -130,6 +130,28 @@ impl Parser {
 
         self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
         Ok(Stmt::Block(statements))
+    }
+
+    // @todo Support else if
+    // while self.is_next_token(TokenType::ElseIf) {
+    //     let else_branch = self.statement()?;
+    // }
+    fn if_statement(&mut self) -> Result<Stmt, ParsingError> {
+        self.consume(TokenType::LeftParen, "Expect `(` after 'if'")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect `)` after 'if' condition")?;
+
+        let true_branch = self.statement()?;
+
+        // Only parse for an else branch if there is a Else token
+        // Wrap in an Option variant as thats what the Stmt variant expects
+        let else_branch = if self.is_next_token(TokenType::Else) {
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+
+        Ok(Stmt::If(condition, Box::new(true_branch), else_branch))
     }
 
     fn return_statement(&mut self) -> Result<Stmt, ParsingError> {
