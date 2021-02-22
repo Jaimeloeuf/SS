@@ -92,9 +92,26 @@ impl Interpreter {
                 // Which only happens if parser failed to save String literal for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
                 if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                    /*
+                        self.env
+                            .borrow_mut()
+                            .define(identifier.to_string(), self.interpret_expr(expr)?);
+
+                        Cannot compress code like above, because when running call to define method,
+                        interpret_expr is ran first, and if the expr is a Expr::Const or something that accesses env,
+                        with a borrow() or borrow_mut() then there will be a borrow error and panic.
+                        Although it isn't very intuitive, since we expect self.interpret_expr(expr)? to run to completion
+                        before control is handed over to the define method call, it will not work if chained.
+
+                        // The above code will cause SS code on the Next line to fail with a
+                        // thread 'main' panicked at 'already mutably borrowed: BorrowError', src\interpreter\interpreter.rs
+                        const a = 1;
+                        const b = a + 2; // Fails when we try to access a value from env to assign to a new key in env
+                    */
+                    let expression = self.interpret_expr(expr)?;
                     self.env
                         .borrow_mut()
-                        .define(identifier.to_string(), self.interpret_expr(expr)?);
+                        .define(identifier.to_string(), expression);
                     None
                 } else {
                     // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,

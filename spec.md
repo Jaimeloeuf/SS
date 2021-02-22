@@ -327,10 +327,13 @@ Note:
 ## Scope and rules
 - lexical/static scoping
 - Block scope
-{
-    
-}
-- Function / conditionals (IfElse) /Loop scopes are all block scopes
+    - Used to group a bunch of statement together to share the same local scope.
+    ```
+    {
+        // Code here
+    }
+    ```
+- Functions, conditionals and loop are all block scopes
 - variable inheritance in scope
 - child scope can always access things in the outer scope
     - however parent scope cannot access things in child scope
