@@ -264,12 +264,18 @@ const Array<Number> myArray = [1, 2, 3, 4]
 
 ## Operators
 ### logical
-When executing expressions with logical operations "and" + "or" short circuting will be applied.  
-Instead of following C style logical operators like && and ||, which are written like that because C also support bitwise operators like & and |, SS will not be supporting bitwise operations now, thus the syntax is kept easier with using keywords instead of special operators.
-- ```not```
-- ```and```
-- ```or```
-- Ternary operator ```(expr) ? (true expr) : (false expr)```
+- Operators
+    - ```not```
+    - ```and```
+    - ```or```
+    - Ternary operator ```(expr) ? (true expr) : (false expr)```
+
+- When executing expressions with logical operations "and" + "or" short circuting will be applied.  
+    - "and"
+        - If the left hand expression evalutes to ```true```, then the right hand expression WILL be evaluated, and if both is ```true```, then the whole expression will evaluate to ```true```, else ```false```
+            - ***\*Note\**** that some scripting languages returns the evaluated value of the last expression if the whole expression evalutes to ```true``` and that allows for shorter code, 'nicer' syntax and certain hackery in some cases, but firstly they make the code less readable, and since SS will [not support truthy and falsey values](#Conditions), doing so causes logical conditionals to fail since an actual Boolean value is expected.
+        - If the left hand expression evalutes to ```false```, then the right hand expression WILL NOT be evaluated, and the whole expression will evaluate to false
+- Instead of following C style logical operators like && and ||, which are written like that because C also support bitwise operators like & and |, SS will not be supporting bitwise operations now, thus the syntax is kept easier with using keywords instead of special operators.
 
 ### Binary / Bitwise
 <!-- - ~
@@ -369,6 +375,12 @@ if (condition) {
     
 }
 ```
+### Conditional / ternary operator
+The Conditional operator gives you the ability to conditionally execute/return expressions, and treat the whole thing as a single expression
+```js
+const expression = booleanCondition ? trueExpression : falseExpression;
+```
+### switch
 
 
 ## Loops
@@ -389,6 +401,7 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
     - How do u "print" or stringify it different types like arrays?
     - Must be implemented by the runtime?
 - String concat is not supported through + operator overloading
+- Memory allocation is entirely up to the implementation heap
 
 
 ## Functions
@@ -585,7 +598,10 @@ For now, no kernel thread support, rather user level thread via thread libraries
 
 
 ## Modules & Libraries
-A standard way for splitting up code for shaaring and modularity.
+A standard way for splitting up code for sharing and modularity.  
+The goal is to provide AN EXTREMELY SIMPLE way of dealing with modules to users. It should be designed for zero cognitive load, as module systems and modularity is a huge source of stress in other languages from C's plaster solution with preprocessor and linking, to python's terrible library module setup, to JS's node_modules dependency graph issue and compatibility issues between ES and Common JS modules.
+
+[A good explaination of how ES modules and Common JS modules work in JavaScript.](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) This will be the basis of SS module design for now.
 
 - Modules
     - Every new file is a module. Module --> alias for "file"
