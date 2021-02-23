@@ -102,7 +102,7 @@ impl Parser {
             TokenType::Print => self.advance_and_call(Parser::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Parser::block_statement),
             TokenType::If => self.advance_and_call(Parser::if_statement),
-            // TokenType::While => self.advance_and_call(Parser::while_statement),
+            TokenType::While => self.advance_and_call(Parser::while_statement),
             // TokenType::For => self.advance_and_call(Parser::for_statement),
             TokenType::Return => self.advance_and_call(Parser::return_statement),
             _ => self.expression_statement(),
@@ -153,6 +153,15 @@ impl Parser {
         };
 
         Ok(Stmt::If(condition, Box::new(true_branch), else_branch))
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt, ParsingError> {
+        self.consume(TokenType::LeftParen, "Expect `(` after 'while'")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect `)` after 'while' condition")?;
+
+        let loop_statement_body = self.statement()?;
+        Ok(Stmt::While(condition, Box::new(loop_statement_body)))
     }
 
     fn return_statement(&mut self) -> Result<Stmt, ParsingError> {

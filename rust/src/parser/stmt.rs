@@ -16,7 +16,7 @@ pub enum Stmt {
     // But Option on the outer layer was easier to unwrap in the interpreter
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
 
-    // While(Expr, Box<Stmt>),
+    While(Expr, Box<Stmt>),
     // Func(Token, Vec<Token>, Box<Stmt>),
     // Class(Token, Option<Expr>, Vec<Stmt>),
 
