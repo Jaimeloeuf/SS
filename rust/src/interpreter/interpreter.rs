@@ -103,6 +103,7 @@ impl Interpreter {
                         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
                     },
                     // Throws error if condition does not evaluates to a Value of Bool type
+                    // This is because SS will not support truthy and falesy values, so none Bool values cannot cast to Bool trues and falses
                     invalid_condition_type => return Err(RuntimeError::ConditionTypeError(format!(
                         "{}\nCondition evaluated to type and value of: {:?}",
                         "Invalid condition value type, only Boolean values can be used as conditionals!",
@@ -243,6 +244,7 @@ impl Interpreter {
                 }
             }
 
+            // Binary expression with an operator and 2 operands
             Expr::Binary(ref left, ref operator, ref right) => {
                 // This evaluates the Binary expression from left to right
                 // In certain cases, we might want to change this, to support bool short circuiting
@@ -367,6 +369,56 @@ impl Interpreter {
                         "Invalid binary operator: {}",
                         operator
                     ))),
+                }
+            }
+
+            // Support for truthy operations, with returning values
+            // Expr::Logical(ref left, ref operator, ref right) => {
+            //     let left_value = self.interpret_expr(left)?;
+            //
+            //     if operator.token_type == TokenType::Or {
+            //         if left_value.is_truthy() {
+            //             return Ok(left_value);
+            //         }
+            //     } else if operator.token_type == TokenType::And {
+            //         if !left_value.is_truthy() {
+            //             return Ok(Value::Bool(false));
+            //         }
+            //     } else {
+            //         return Err(RuntimeError::InternalError(format!(
+            //             "Parsing Error: Invalid Token Type for logical expr -> {:?}",
+            //             operator.token_type
+            //         )));
+            //     }
+            //     self.interpret_expr(right)
+            // }
+            // Strict boolean operator evaluation, without truthy operations, evaluates to a Bool Value
+            Expr::Logical(ref left_expr, ref operator, ref right_expr) => {
+                let left_value = self.interpret_expr(left_expr)?;
+
+                if operator.token_type == TokenType::Or {
+                    // If left value is boolean true, ignore right expression and short circuit to true
+                    // Else, interpret right expression and use is_bool_true method to return boolean value
+                    Ok(Value::Bool(if left_value.is_bool_true() {
+                        true
+                    } else {
+                        self.interpret_expr(right_expr)?.is_bool_true()
+                    }))
+                } else if operator.token_type == TokenType::And {
+                    // If left value is boolean false, ignore right expression and short circuit to false
+                    // Else, interpret right expression and use is_bool_true method to return boolean value
+                    Ok(Value::Bool(if left_value.is_bool_true() {
+                        self.interpret_expr(right_expr)?.is_bool_true()
+                    } else {
+                        false
+                    }))
+                } else {
+                    // Unlikely to happen, but if somehow a logical expression does not have a valid token_type,
+                    // Then it is an internal error caused by the parser
+                    Err(RuntimeError::InternalError(format!(
+                        "Parsing Error: Invalid Token Type for logical expr -> {:?}",
+                        operator.token_type
+                    )))
                 }
             }
 

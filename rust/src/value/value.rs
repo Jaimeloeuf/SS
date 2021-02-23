@@ -11,6 +11,27 @@ pub enum Value {
     // Instance(Rc<RefCell<LoxInstance>>),
 }
 
+impl Value {
+    // Strict boolean value check, checks both Value Type, and boolean value of Bool Type
+    pub fn is_bool_true(&self) -> bool {
+        // Only match boolean value types, all else evaluates to false
+        match *self {
+            Value::Bool(b) => b,
+            _ => false,
+        }
+    }
+
+    // Boolean cast to test for truthy and falesy values
+    // Not used right now as not sure if the language should support this
+    // pub fn is_truthy(&self) -> bool {
+    //     match *self {
+    //         Value::Bool(b) => b,
+    //         Value::Null => false,
+    //         _ => true,
+    //     }
+    // }
+}
+
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // Use ref to make sure the values are only borrowed and not moved

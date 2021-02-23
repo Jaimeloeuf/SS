@@ -23,7 +23,7 @@ impl Parser {
         // On each loop, we scan a single token.
         while !parser.is_at_end() {
             // Get statement and based on output, push to either one of the vectors
-            // Calling declaration parsing method, as declarations have the @todo lowest or highest? precedence in the syntax grammar
+            // Calling declaration parsing method, as declarations have the lowest precedence in the syntax grammar
             match parser.declaration() {
                 Ok(stmt) => statements.push(stmt),
                 // Ok(stmt) => {
@@ -214,6 +214,7 @@ impl Parser {
         }
     }
 
+    // 'or' have a lower precedence than 'and'
     fn or(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.and()?;
 
