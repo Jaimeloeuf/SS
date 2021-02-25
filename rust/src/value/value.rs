@@ -30,7 +30,7 @@ impl Value {
         match *self {
             Value::Bool(b) => Ok(b),
             _ => Err(RuntimeError::TypeError(format!(
-                "Expected Bool! Invalid type and value: {}\n{}",
+                "Expected Bool but found type and value: {:?}\n{}",
                 self, error_string
             ))),
         }

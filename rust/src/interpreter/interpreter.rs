@@ -85,35 +85,41 @@ impl Interpreter {
 
             // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
             Stmt::If(ref condition, ref true_branch, ref else_branch) => {
-                // If/Else version, that does not check if condition is evaluated to a None Bool value
-                // if let Value::Bool(true) = self.interpret_expr(condition)? {
-                //     self.interpret_stmt(true_branch)?
-                // } else if let Some(ref else_branch) = **else_branch {
-                //     self.interpret_stmt(else_branch)?
-                // } else {
-                //     None
-                // }
-                self.interpret_stmt(match self.interpret_expr(condition)? {
-                    Value::Bool(true) => true_branch,
+                // If/Else version using bool_or_err method on Value
+                self.interpret_stmt(if self.interpret_expr(condition)?.bool_or_err(
+                    "Invalid condition value type, only Boolean values can be used as conditionals!"
+                )? {
+                    true_branch
+                } else {
                     // Only return else_branch if any, else end function
-                    Value::Bool(false) => match else_branch {
+                    match else_branch {
                         Some(ref else_branch) => else_branch,
                         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
-                    },
-                    // Throws error if condition does not evaluates to a Value of Bool type
-                    // This is because SS will not support truthy and falesy values, so none Bool values cannot cast to Bool trues and falses
-                    invalid_condition_type => return Err(RuntimeError::ConditionTypeError(format!(
-                        "{}\nCondition evaluated to type and value of: {:?}",
-                        "Invalid condition value type, only Boolean values can be used as conditionals!",
-                        invalid_condition_type
-                    ))),
+                    }
                 })?
+                // Using pattern matching instead of checking with built in .bool_or_err() method,
+                // to use a more specific RuntimeError for invalid condition types instead of TypeError
+                // self.interpret_stmt(match self.interpret_expr(condition)? {
+                //     Value::Bool(true) => true_branch,
+                //     // Only return else_branch if any, else end function
+                //     Value::Bool(false) => match else_branch {
+                //         Some(ref else_branch) => else_branch,
+                //         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
+                //     },
+                //     // Throws error if condition does not evaluates to a Value of Bool type
+                //     // This is because SS will not support truthy and falesy values, so none Bool values cannot cast to Bool trues and falses
+                //     invalid_condition_type => return Err(RuntimeError::ConditionTypeError(format!(
+                //         "{}\nCondition evaluated to type and value of: {:?}",
+                //         "Invalid condition value type, only Boolean values can be used as conditionals!",
+                //         invalid_condition_type
+                //     ))),
+                // })?
             }
 
             Stmt::While(ref expr, ref loop_body) => {
                 while self
                     .interpret_expr(expr)?
-                    .bool_or_err(format!("Expected Boolean from While loop expression"))?
+                    .bool_or_err("Expected Boolean from While loop expression")?
                 {
                     // Execute stmt 1 by 1 and unwrap them with ? to allow any errors to stop execution and bubble up
                     self.interpret_stmt(loop_body)?;
@@ -408,19 +414,25 @@ impl Interpreter {
                 if operator.token_type == TokenType::Or {
                     // If left value is boolean true, ignore right expression and short circuit to true
                     // Else, interpret right expression and use is_bool_true method to return boolean value
-                    Ok(Value::Bool(if left_value.is_bool_true() {
-                        true
-                    } else {
-                        self.interpret_expr(right_expr)?.is_bool_true()
-                    }))
+                    Ok(Value::Bool(
+                        if left_value.bool_or_err("Logical operations only work with Bool Types")? {
+                            true
+                        } else {
+                            self.interpret_expr(right_expr)?
+                                .bool_or_err("Logical operations only work with Bool Types")?
+                        },
+                    ))
                 } else if operator.token_type == TokenType::And {
                     // If left value is boolean false, ignore right expression and short circuit to false
                     // Else, interpret right expression and use is_bool_true method to return boolean value
-                    Ok(Value::Bool(if left_value.is_bool_true() {
-                        self.interpret_expr(right_expr)?.is_bool_true()
-                    } else {
-                        false
-                    }))
+                    Ok(Value::Bool(
+                        if left_value.bool_or_err("Logical operations only work with Bool Types")? {
+                            self.interpret_expr(right_expr)?
+                                .bool_or_err("Logical operations only work with Bool Types")?
+                        } else {
+                            false
+                        },
+                    ))
                 } else {
                     // Unlikely to happen, but if somehow a logical expression does not have a valid token_type,
                     // Then it is an internal error caused by the parser
