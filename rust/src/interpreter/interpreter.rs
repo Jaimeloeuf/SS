@@ -24,13 +24,11 @@ impl Interpreter {
         for stmt in stmts.iter() {
             match interpreter.interpret_stmt(stmt) {
                 // This value is technically only meaningful when using the repl/toplevel
+                // Ok(value) => println!("Evaluated to {:?}", value),
                 Ok(value) => {}
-                Err(err) => {
-                    // @todo Use this without the debug symbol using Display trait
-                    // @todo Delete this println, and let method caller handle the error
-                    println!("Error! {:?}", err);
-                    return Some(err);
-                }
+
+                // Interpreter stop interpreting code once there is any runtime error
+                Err(err) => return Some(err),
             }
         }
 

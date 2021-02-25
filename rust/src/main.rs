@@ -31,6 +31,7 @@ fn main() {
 
     read_file(&filename);
 
+    // @todo To also ran before running the interpreter
     println!("Completed in: {:?}", start_of_main.elapsed());
 }
 
@@ -69,15 +70,19 @@ fn read_file(filename: &String) {
                 println!("{}\n", error);
             }
         } else if let Ok(ast) = abstract_syntax_tree {
+            // @todo Should be named statements instead of ast
             println!("AST generated");
 
-            for stmt in ast.iter() {
-                println!("{:?}", stmt);
-            }
-            println!();
+            // for stmt in ast.iter() {
+            //     println!("{:?}", stmt);
+            // }
+            // println!();
 
-            // Return errors if any?
-            // Should be name statements instead of ast
-            Interpreter::interpret(ast);
+            // @todo Return errors if any?
+            // @todo Interpreter can return a code, which will be used as the program exit code of the interpreter
+            if let Some(err) = Interpreter::interpret(ast) {
+                println!("{}", err);
+            }
         }
     }
+}
