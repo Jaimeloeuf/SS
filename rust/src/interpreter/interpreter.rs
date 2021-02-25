@@ -110,6 +110,17 @@ impl Interpreter {
                 })?
             }
 
+            Stmt::While(ref expr, ref loop_body) => {
+                while self
+                    .interpret_expr(expr)?
+                    .bool_or_err(format!("Expected Boolean from While loop expression"))?
+                {
+                    // Execute stmt 1 by 1 and unwrap them with ? to allow any errors to stop execution and bubble up
+                    self.interpret_stmt(loop_body)?;
+                }
+                None
+            }
+
             // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
