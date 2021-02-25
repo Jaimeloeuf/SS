@@ -1,4 +1,5 @@
 // Enum with all the possible variants of a Value object in SS as a dynamically typed language
+use crate::interpreter::error::RuntimeError;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
@@ -13,16 +14,31 @@ pub enum Value {
 
 impl Value {
     // Strict boolean value check, checks both Value Type, and boolean value of Bool Type
-    pub fn is_bool_true(&self) -> bool {
+    // Will return a RuntimeError if Value Type is not boolean
+    pub fn bool(&self) -> Result<bool, RuntimeError> {
         // Only match boolean value types, all else evaluates to false
         match *self {
-            Value::Bool(b) => b,
-            _ => false,
+            Value::Bool(b) => Ok(b),
+            _ => Err(RuntimeError::TypeError(format!("Expected Bool!"))),
+        }
+    }
+    // Strict boolean value check, checks both Value Type, and boolean value of Bool Type
+    // Will return a RuntimeError if Value Type is not boolean
+    // Allow caller to pass in String to use in runtime error
+    pub fn bool_or_err(&self, error_string: String) -> Result<bool, RuntimeError> {
+        // Only match boolean value types, all else evaluates to false
+        match *self {
+            Value::Bool(b) => Ok(b),
+            _ => Err(RuntimeError::TypeError(format!(
+                "Expected Bool! Invalid type and value: {}\n{}",
+                self, error_string
+            ))),
         }
     }
 
     // Boolean cast to test for truthy and falesy values
     // Not used right now as not sure if the language should support this
+    // Only Bool(false) and Null evaluates to False while everything else evaluates to True
     // pub fn is_truthy(&self) -> bool {
     //     match *self {
     //         Value::Bool(b) => b,
