@@ -209,7 +209,7 @@ impl Interpreter {
                         // @todo When not found, should it be an environment error or runtime error?
                         // Technically should be Runtime error, because it is caused by the user using a invalid identifier
                         // Environment errors are reserved for when there is a valid identifier but not found in environment
-                        None => Err(RuntimeError::UndefinedVariable(identifier.clone())),
+                        None => Err(RuntimeError::UndefinedIdentifier(identifier.clone())),
                     }
                 } else {
                     // Unlikely to happen because this will probably be caught by interpret_stmt's Const logic when setting a value

@@ -9,12 +9,25 @@ use crate::token::Token;
  */
 #[derive(Debug)]
 pub enum RuntimeError {
+    // Split it up, add a internal parsing error
+    // Internal error should be like generic unrepeating errors
+    // But alot of checks are for internal errors caused by parser
     InternalError(String),
+
     // @todo Maybe store, given type, and expected type
     // @todo String or &str?
+    // Cast error?
+    // Add type found, by passing in the Value type?
     TypeError(String),
-    UndefinedVariable(String),
+
+    // Basically a specific type of TypeError, where a bool is expected for a condition
+    // Conditions can be If conditionals to loop continuation conditions
     ConditionTypeError(String),
+
+    // Undefined values and variables, 1 for const and 1 for variables
+    // @todo Undefined variable will not be used since it will always be parsed as Expr::Const for now, thus always UndefinedIdentifier
+    UndefinedIdentifier(String),
+    UndefinedVariable(String),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
     // DivideNonNumbers(Token),
@@ -34,9 +47,17 @@ pub enum RuntimeError {
 
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        // @todo Perhaps wrap this, and below add stack trace or at least file and line number where error occurred
         match self {
             RuntimeError::InternalError(ref message) => {
                 write!(f, "Internal interpreter error: {}", message)
+            }
+
+            RuntimeError::TypeError(ref message) => write!(f, "{}", message),
+            RuntimeError::ConditionTypeError(ref message) => write!(f, "{}", message),
+
+            RuntimeError::UndefinedIdentifier(ref identifier) => {
+                write!(f, "ReferenceError: Cannot access value of identifier '{}' before initialization", identifier)
             }
 
             // If unimplemented yet print with debug symbol to prevent infinite recursive loop to calling the display trait

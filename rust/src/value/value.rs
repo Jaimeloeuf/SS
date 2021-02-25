@@ -25,7 +25,7 @@ impl Value {
     // Strict boolean value check, checks both Value Type, and boolean value of Bool Type
     // Will return a RuntimeError if Value Type is not boolean
     // Allow caller to pass in String to use in runtime error
-    pub fn bool_or_err(&self, error_string: String) -> Result<bool, RuntimeError> {
+    pub fn bool_or_err(&self, error_string: &str) -> Result<bool, RuntimeError> {
         // Only match boolean value types, all else evaluates to false
         match *self {
             Value::Bool(b) => Ok(b),
@@ -33,6 +33,17 @@ impl Value {
                 "Expected Bool! Invalid type and value: {}\n{}",
                 self, error_string
             ))),
+        }
+    }
+    // Strict boolean value check, checks both Value Type, and boolean value of Bool Type
+    // Will return a RuntimeError if Value Type is not boolean
+    // Allow caller to pass in a RuntimeError to be returned if bool check failed
+    // @todo The problem with this is that the caller wont know what is the Value type since it is probably chained to interpret_expr()?
+    pub fn bool_or(&self, err: RuntimeError) -> Result<bool, RuntimeError> {
+        // Only match boolean value types, all else evaluates to false
+        match *self {
+            Value::Bool(b) => Ok(b),
+            _ => Err(err),
         }
     }
 
