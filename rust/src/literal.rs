@@ -13,9 +13,9 @@ impl std::fmt::Display for Literal {
         // Use ref to make sure the values are only borrowed and not moved
         match self {
             Literal::Number(ref number) => write!(f, "{}", number),
-            Literal::String(ref string) => write!(f, "{}", string),
+            Literal::String(ref string) => write!(f, "'{}'", string),
             Literal::Bool(ref boolean) => write!(f, "{}", boolean),
-            Literal::Null => write!(f, "Null"),
+            Literal::Null => write!(f, "NULL"),
         }
     }
 }

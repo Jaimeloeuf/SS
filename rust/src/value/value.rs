@@ -37,9 +37,9 @@ impl std::fmt::Display for Value {
         // Use ref to make sure the values are only borrowed and not moved
         match self {
             Value::Number(ref number) => write!(f, "{}", number),
-            Value::String(ref string) => write!(f, "{}", string),
+            Value::String(ref string) => write!(f, "'{}'", string),
             Value::Bool(ref boolean) => write!(f, "{}", boolean),
-            Value::Null => write!(f, "Null"),
+            Value::Null => write!(f, "NULL"),
         }
     }
 }

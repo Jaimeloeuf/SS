@@ -160,8 +160,8 @@ impl Parser {
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expect `)` after 'while' condition")?;
 
-        let loop_statement_body = self.statement()?;
-        Ok(Stmt::While(condition, Box::new(loop_statement_body)))
+        let loop_body = self.statement()?;
+        Ok(Stmt::While(condition, Box::new(loop_body)))
     }
 
     fn return_statement(&mut self) -> Result<Stmt, ParsingError> {
