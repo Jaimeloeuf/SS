@@ -89,7 +89,18 @@ impl Interpreter {
             // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
             Stmt::If(ref condition, ref true_branch, ref else_branch) => {
                 // If/Else version using bool_or_err method on Value
-                self.interpret_stmt(if self.interpret_expr(condition)?.bool_or_err(
+                // self.interpret_stmt(if self.interpret_expr(condition)?.bool_or_err(
+                //     "Invalid condition value type, only Boolean values can be used as conditionals!"
+                // )? {
+                //     true_branch
+                // } else {
+                //     // Only return else_branch if any, else end function
+                //     match else_branch {
+                //         Some(ref else_branch) => else_branch,
+                //         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
+                //     }
+                // })?
+                let branch = if self.interpret_expr(condition)?.bool_or_err(
                     "Invalid condition value type, only Boolean values can be used as conditionals!"
                 )? {
                     true_branch
@@ -99,7 +110,8 @@ impl Interpreter {
                         Some(ref else_branch) => else_branch,
                         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
                     }
-                })?
+                };
+                self.interpret_stmt(branch)?
                 // Using pattern matching instead of checking with built in .bool_or_err() method,
                 // to use a more specific RuntimeError for invalid condition types instead of TypeError
                 // self.interpret_stmt(match self.interpret_expr(condition)? {
@@ -188,7 +200,8 @@ impl Interpreter {
         })
     }
 
-    fn interpret_expr(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    // fn interpret_expr(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             // Using *Literal, to get the value from within the variant
             Expr::Literal(literal) => match *literal {
@@ -198,6 +211,26 @@ impl Interpreter {
                 Literal::Bool(bool) => Ok(Value::Bool(bool)),
                 Literal::Null => Ok(Value::Null),
             },
+
+            Expr::Call(ref callee, ref arguments, ref token) => {
+                // Evaluate expression and ensure that the result is a callable function
+                let callable = self.interpret_expr(callee)?.callable()?;
+
+                // Create evaluated arguments list using length of arguements
+                // @todo If supporting variadic functions or what not, then dont use with capacity since can change
+                // @todo And also dont use it if we dont check for arity
+                // @todo Arity should be checked for in parser too right?
+                let mut evaluated_arguments: Vec<Value> = Vec::with_capacity(arguments.len());
+
+                // @todo If following is JS, we will discard the extra arguments. Should we do this?
+                for arg in arguments {
+                    evaluated_arguments.push(self.interpret_expr(arg)?);
+                }
+
+                // Perhaps instead of passing in interpreter to evaluate,
+                // Can this return the code and we evaluate in this context?
+                Ok(callable.call(self, evaluated_arguments)?)
+            }
 
             // A Const expression evaluates to the value stored in the environment identified by the Const's identifier
             // Distance is not implemented for now

@@ -59,6 +59,7 @@ impl Parser {
         // Using advance_and_call to call advance method before calling method to eat the matched token
         match &self.current().token_type {
             TokenType::Const => self.advance_and_call(Parser::const_declaration),
+            TokenType::Function => self.advance_and_call(Parser::function_declaration),
             _ => self.statement(),
         }
     }
@@ -87,6 +88,56 @@ impl Parser {
                 "Expected 'Equal' token for assignment after 'const' keyword",
             ))
         }
+    }
+
+    fn function_declaration(&mut self) -> Result<Stmt, ParsingError> {
+        let name = self.consume(TokenType::Identifier, "Expected name for function")?;
+
+        self.consume(
+            TokenType::LeftParen,
+            format!("Expect '(' after function name '{}'", name),
+        )?;
+
+        // Get the vector of parameters of the function
+        // @todo Maybe use Vec<&Token> instead so dont have to clone every token
+        let parameters: Vec<Token> = if self.check(TokenType::RightParen) {
+            // @todo Is this even neccessary? It would be simpler if just always use the "else block"
+            // If function parameter closed with no parameters, return a Vec with 0 capacity to not allocate any memory
+            Vec::with_capacity(0)
+        } else {
+            // Else create a temporary vector to collect all the parameters before returning it
+            let mut _parameters: Vec<Token> = Vec::new();
+
+            // Do while loop
+            _parameters.push(
+                self.consume(TokenType::Identifier, "Expected parameter name")?
+                    .clone(),
+            );
+            while self.is_next_token(TokenType::Comma) {
+                if _parameters.len() >= 8 {
+                    // @todo The reference interpreter doesn't bail on this error,
+                    // it keeps on parsing but reports it.
+                    // Warning instead?
+                    return Err(ParsingError::TooManyParametersError);
+                }
+
+                // _parameters.push(self.consume(TokenType::Identifier, "Expected parameter name")?)
+                _parameters.push(
+                    self.consume(TokenType::Identifier, "Expected parameter name")?
+                        .clone(),
+                );
+            }
+
+            _parameters
+        };
+
+        self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
+
+        // Wording might just not be function body if we support methods too
+        self.consume(TokenType::LeftBrace, "Expected '{' before function body.")?;
+
+        let body = self.block_statement()?;
+        Ok(Stmt::Func(name.clone(), parameters, Box::new(body)))
     }
 
     /* ==========================  End of declaration methods  ========================== */
