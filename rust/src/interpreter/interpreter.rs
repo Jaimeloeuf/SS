@@ -10,13 +10,16 @@ use crate::token_type::TokenType;
 use crate::value::value::Value;
 
 pub struct Interpreter {
+    // Env tracks the current environment, changing as the interpreter enter and exit local scopes
     env: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
+    // pub fn interpret( stmts: Vec<Stmt>, writer: Rc<RefCell<mut io::Write>>) -> Option<RuntimeError> {
     pub fn interpret(stmts: Vec<Stmt>) -> Option<RuntimeError> {
         let mut interpreter = Interpreter {
             // Why did rlox clone the globals here?
+            // The starting environment will always be the global scope
             env: Rc::new(RefCell::new(Environment::global())),
         };
 

@@ -1,15 +1,35 @@
 // Enum with all the possible variants of a Value object in SS as a dynamically typed language
+use crate::callables::Callable;
 use crate::interpreter::error::RuntimeError;
 
-#[derive(Debug, PartialEq, Clone)]
+use std::rc::Rc;
+
+// #[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
     String(String),
     Bool(bool),
     Null,
-    // Func(Rc<Callable>),
+    Func(Rc<Callable>),
     // Class(Rc<LoxClass>),
     // Instance(Rc<RefCell<LoxInstance>>),
+}
+
+// PartialEq implementation for Value because Value cannot simply inherit this trait because of complex types like Rc<Callable>
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (&Value::Number(number), &Value::Number(other)) => number == other,
+            (&Value::String(ref string), &Value::String(ref other)) => string == other,
+            (&Value::Bool(b), &Value::Bool(other)) => b == other,
+            (&Value::Null, &Value::Null) => true,
+            (&Value::Func(ref f), &Value::Func(ref other)) => Rc::ptr_eq(f, other),
+            // (&Value::Class(ref c), &Value::Class(ref other)) => Rc::ptr_eq(c, other),
+            // (&Value::Instance(ref i), &Value::Instance(ref other)) => Rc::ptr_eq(i, other),
+            _ => false,
+        }
+    }
 }
 
 impl Value {
@@ -57,6 +77,20 @@ impl Value {
     //         _ => true,
     //     }
     // }
+
+    // Method to get callable if Value is a Callable value type, else errors out
+    pub fn callable(&self) -> Result<Rc<Callable>, RuntimeError> {
+        // Only match callable value types, all else errors out
+        match *self {
+            // Why cant I borrow it out instead of clone?
+            Value::Func(ref func) => Ok(Rc::clone(func)),
+            // Value::Class(ref class) => Ok(Rc::clone(class)),
+
+            // @todo How to get the token?
+            // _ => Err(RuntimeError::CallOnNonCallable(token)),
+            _ => Err(RuntimeError::InternalError(format!("Non callable"))),
+        }
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -67,6 +101,9 @@ impl std::fmt::Display for Value {
             Value::String(ref string) => write!(f, "'{}'", string),
             Value::Bool(ref boolean) => write!(f, "{}", boolean),
             Value::Null => write!(f, "NULL"),
+
+            // @todo Maybe for func values, have a field for func name?
+            Value::Func(ref func) => write!(f, "func"),
         }
     }
 }
