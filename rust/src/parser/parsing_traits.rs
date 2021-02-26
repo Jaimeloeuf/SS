@@ -307,8 +307,44 @@ impl Parser {
             let right = self.unary()?;
             Ok(Expr::Unary(operator, Box::new(right)))
         } else {
-            Ok(self.primary()?)
+            self.call()
         }
+    }
+
+    fn call(&mut self) -> Result<Expr, ParsingError> {
+        let mut expr = self.primary()?;
+
+        loop {
+            // Only continue to treat this as a function call if there is an open Left Parenthesis which indicates a "call"
+            if self.is_next_token(TokenType::LeftParen) {
+                // @todo Might inline the function later
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(expr)
+    }
+
+    // Refactored out function to handle function calls by parsing their arguements
+    fn finish_call(&mut self, callee: Expr) -> Result<Expr, ParsingError> {
+        let mut arguments: Vec<Expr> = Vec::new();
+
+        if !self.check(TokenType::RightParen) {
+            // @todo Might want to limit arguement size, based on spec, which can be a problem for VM implementations.
+            // "Do while loop"
+            arguments.push(self.expression()?);
+            while self.is_next_token(TokenType::Comma) {
+                arguments.push(self.expression()?);
+            }
+        }
+
+        // @todo Is there a need for the returned parenthesis?
+        // Check if there is a ")" to close the function call
+        let parenthesis = self.consume(TokenType::RightParen, "Expect ')' after arguements.")?;
+
+        Ok(Expr::Call(Box::new(callee), arguments, parenthesis.clone()))
     }
 
     fn primary(&mut self) -> Result<Expr, ParsingError> {

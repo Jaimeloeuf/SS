@@ -1,6 +1,8 @@
 use crate::literal::Literal;
 use crate::token::Token;
 
+// @todo Add lifetimes to make Literal a ref instead of owning it, so that we dont have to clone it in parsing_trait
+// Right now all the operators are cloned tokens, that are passed in here...
 // All expressions can be evaluated to a Value enum variant
 // Using box to handle this Recursive type with nested Expression variants
 // #[derive(Debug, Clone)]
@@ -22,7 +24,10 @@ pub enum Expr {
 
     // Logical And/Or boolean operations
     Logical(Box<Expr>, Token, Box<Expr>),
+
+    // Function calls are also expressions that evaluates to a Value
     Call(Box<Expr>, Vec<Expr>, Token),
+
     Get(Box<Expr>, Token),
     Set(Box<Expr>, Token, Box<Expr>),
     This(Token, Option<usize>),
