@@ -41,24 +41,43 @@ impl Interpreter {
 
     // Utility method
     // Used by both Stmt::Block and Value::Function
+    // Caller to MOVE in a new environment
+    // @todo Remove use of self, then change to interpreter or something, then move this into its own module/file?
     pub fn interpret_block(
         &mut self,
         statements: &Vec<Stmt>,
-        environment: RefCell<Environment>,
+        environment: Environment,
     ) -> Result<Option<Value>, RuntimeError> {
-        let mut return_value = None;
-        let parent_env = self.env.clone();
-        self.env = Rc::new(environment);
+        // Get a new Rc<Environment> pointing to the same Environment memory allocation
+        // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
+        let parent_env = Rc::clone(&self.env);
 
+        // Set the new environment directly onto the struct, so other methods can access it directly
+        // @todo Can be better written, by changing all the methods to take current scope as function arguement,
+        // @todo instead of saving current environment temporarily and attaching the new environment to self.
+        self.env = Rc::new(RefCell::new(environment));
+
+        let mut return_value = None;
         for ref stmt in statements {
+            // @todo Deal with the errors better to drop the memory of env. Will this be done automatically?
             return_value = self.interpret_stmt(stmt)?;
 
-            if return_value.is_some() {
+            // Break out of execution once return statement is executed
+            if let Stmt::Return(ref _token, ref _expr) = stmt {
                 break;
             }
+
+            // If we allowed implicit returns
+            // if "stmt is last stmt of block" && return_value.is_some() {
+            //     break;
+            // }
         }
 
+        // Reset parent environment back onto the struct once block completes execution
+        // The newly created current environment for this block will be dropped once function exits
         self.env = parent_env;
+
+        // Return the return value of the block if there is any
         Ok(return_value)
     }
 
@@ -76,37 +95,10 @@ impl Interpreter {
 
             // Block statement, groups statements together in the same scope for execution
             Stmt::Block(ref statements) => {
-                let parent_env = Rc::clone(&self.env);
-
                 // Create new environment/scope for current block with existing environment/scope as the parent/enclosing environment
                 let current_env = Environment::new(Some(Rc::clone(&self.env)));
-                // Set the new environment directly onto the struct, so other methods can access it directly
-                // @todo Can be better written, by changing all the methods to take current scope as function arguement,
-                // @todo instead of saving current environment temporarily and attaching the new environment to self.
-                self.env = Rc::new(RefCell::new(current_env));
 
-                let mut return_value = None;
-                for ref stmt in statements {
-                    // @todo Deal with the errors better to drop the memory of env. Will this be done automatically?
-                    return_value = self.interpret_stmt(stmt)?;
-
-                    // Break out of execution once return statement is executed
-                    if let Stmt::Return(ref _token, ref _expr) = stmt {
-                        break;
-                    }
-
-                    // @todo If we allowed implicit returns
-                    // if "stmt is last stmt of block" && return_value.is_some() {
-                    //     break;
-                    // }
-                }
-
-                // Reset parent environment back onto the struct once block completes execution
-                // The newly created current environment for this block will be dropped once function exits
-                self.env = parent_env;
-
-                // Return the return value of the block if there is any
-                return_value
+                return self.interpret_block(statements, current_env);
             }
 
             // @todo Does return stmt really need to store the token?

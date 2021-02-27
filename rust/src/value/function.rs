@@ -92,7 +92,7 @@ impl Callable for Function {
             environment.define(parameter_name.clone(), arguements.remove(0))
         }
 
-        match interpreter.interpret_block(body, RefCell::new(environment))? {
+        match interpreter.interpret_block(body, environment)? {
             Some(result) => Ok(result),
             None => Ok(Value::Null),
         }
