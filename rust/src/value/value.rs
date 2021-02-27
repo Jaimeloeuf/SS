@@ -11,6 +11,10 @@ pub enum Value {
     String(String),
     Bool(bool),
     Null,
+
+    // Why Rc<Callable> instead of Rc<Function>?
+    // Because native functions simply impl Callable trait while, user functions are Function Structs that implement the Callable trait
+    // We want to use a single interface for both function types, thus we use the common denominator between them, the Callable trait
     Func(Rc<Callable>),
     // Class(Rc<LoxClass>),
     // Instance(Rc<RefCell<LoxInstance>>),
@@ -102,8 +106,7 @@ impl std::fmt::Display for Value {
             Value::Bool(ref boolean) => write!(f, "{}", boolean),
             Value::Null => write!(f, "NULL"),
 
-            // @todo Maybe for func values, have a field for func name?
-            Value::Func(ref func) => write!(f, "func"),
+            Value::Func(ref func) => write!(f, "function-{}", func.to_string()),
         }
     }
 }

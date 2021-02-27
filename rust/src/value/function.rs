@@ -1,9 +1,11 @@
 // Enum with all the possible variants of a Value object in SS as a dynamically typed language
+
 use crate::callables::Callable;
 use crate::environment::environment::Environment;
 use crate::interpreter::error::RuntimeError;
 use crate::literal::Literal;
 use crate::parser::stmt::Stmt;
+use crate::token_type::TokenType;
 use crate::Interpreter;
 
 use super::value::Value;
@@ -28,6 +30,31 @@ impl Function {
 }
 
 impl Callable for Function {
+    fn to_string(&self) -> String {
+        let name_token = match &self.declaration {
+            Stmt::Func(ref name_token, _, _) => name_token,
+            unmatched_stmt_variant => {
+                // @todo Remove use of debug printing once stmt implements Display trait
+                // return Err(RuntimeError::InternalError(format!(
+                //     "Function must be Stmt::Func, found: {:?}",
+                //     unmatched_stmt_variant,
+                // )));
+                panic!(format!(
+                    "Function must be Stmt::Func, found: {:?}",
+                    unmatched_stmt_variant,
+                ))
+            }
+        };
+
+        match name_token.literal.as_ref().unwrap() {
+            Literal::String(ref string) if name_token.token_type == TokenType::Identifier => {
+                // Maybe instead of 'user' as function type, use 'ss' to indicate function is defined in SS
+                format!("<user> {}", string.to_string())
+            }
+            _ => panic!("Function token missing string identifier...?!?"),
+        }
+    }
+
     fn arity(&self) -> usize {
         0
     }
@@ -96,11 +123,5 @@ impl Callable for Function {
             Some(result) => Ok(result),
             None => Ok(Value::Null),
         }
-    }
-}
-
-impl std::fmt::Display for Function {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "func {:?}", self)
     }
 }
