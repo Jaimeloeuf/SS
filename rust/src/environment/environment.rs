@@ -1,3 +1,4 @@
+use crate::callables::native;
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
@@ -29,10 +30,10 @@ impl Environment {
 
         // Rust Reference: https://doc.rust-lang.org/std/prelude/index.html
         // Define prelude (bunch of things auto imported and available at toplevel)
-        // env.define(
-        //     "clock".to_string(),
-        //     Value::Func(Rc::new(native::ClockFunc::new())),
-        // );
+        env.define(
+            "clock".to_string(),
+            Value::Func(Rc::new(native::ClockFunc::new())),
+        );
 
         env
     }
@@ -50,6 +51,11 @@ impl Environment {
     // Getter methods
     // get methods moves out a clone of the value object, so caller can do whatever it wants with it
     // get_ref methods moves out the immutable reference to the value object in the hashmap, mainly used for accessing constant values
+
+    // @todo
+    // Update this whole thing to be mutable, so like we always return a reference to the value object
+    // But depending on whether we call get or get_mut() we get different kind of references
+    // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.get_mut
 
     // Basic access methods that return values wrapped in option variant
     pub fn get(&self, key: &String) -> Option<Value> {

@@ -7,6 +7,7 @@ use crate::literal::Literal;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Stmt;
 use crate::token_type::TokenType;
+use crate::value::value;
 use crate::value::value::Value;
 
 pub struct Interpreter {
@@ -36,6 +37,29 @@ impl Interpreter {
         }
 
         None
+    }
+
+    // Utility method
+    // Used by both Stmt::Block and Value::Function
+    pub fn interpret_block(
+        &mut self,
+        statements: &Vec<Stmt>,
+        environment: RefCell<Environment>,
+    ) -> Result<Option<Value>, RuntimeError> {
+        let mut return_value = None;
+        let parent_env = self.env.clone();
+        self.env = Rc::new(environment);
+
+        for ref stmt in statements {
+            return_value = self.interpret_stmt(stmt)?;
+
+            if return_value.is_some() {
+                break;
+            }
+        }
+
+        self.env = parent_env;
+        Ok(return_value)
     }
 
     // Returns a Value Option as not every statement evaluates to a Value
