@@ -7,7 +7,7 @@ use crate::literal::Literal;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Stmt;
 use crate::token_type::TokenType;
-use crate::value::value;
+use crate::value::function::Function;
 use crate::value::value::Value;
 
 pub struct Interpreter {
@@ -68,6 +68,9 @@ impl Interpreter {
         // Err option inside match expression cannot evaluate and return implicitly due to the Ok wrapping,
         // thus it needs to be explicitly returned to break out of this Ok variant wrapping.
         Ok(match stmt {
+            // If a plain expr is being interpreted, should we skip it if not in REPL?
+            // It is only useful, if the expression contains a function call or something, that contains side effects,
+            // But for other expressions, they can technically be skipped...
             // @todo Perhaps simplify this by wrapping the whole interpret_expr in a Option<Value> too to dont have to unwrap and rewrap here
             Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
 

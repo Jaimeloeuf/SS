@@ -28,6 +28,8 @@ pub enum RuntimeError {
     // @todo Undefined variable will not be used since it will always be parsed as Expr::Const for now, thus always UndefinedIdentifier
     UndefinedIdentifier(String),
     UndefinedVariable(String),
+
+    CallOnNonCallable(Token),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
     // DivideNonNumbers(Token),
@@ -38,7 +40,6 @@ pub enum RuntimeError {
     // LessNonNumbers(Token),
     // LessEqualNonNumbers(Token),
     // DivideByZeroError(Token),
-    // CallOnNonCallable(Token),
     // WrongArity(Token, usize, usize),
     // InvalidGetTarget(Token),
     // UndefinedProperty(Token),
@@ -58,6 +59,10 @@ impl std::fmt::Display for RuntimeError {
 
             RuntimeError::UndefinedIdentifier(ref identifier) => {
                 write!(f, "ReferenceError: Cannot access value of identifier '{}' before initialization", identifier)
+            }
+
+            RuntimeError::CallOnNonCallable(ref token) => {
+                write!(f, "[line {}] Attempted to call non-callable: {}", token.line, token)
             }
 
             // If unimplemented yet print with debug symbol to prevent infinite recursive loop to calling the display trait
@@ -115,9 +120,6 @@ impl std::fmt::Display for RuntimeError {
             //     "[line {}] Undefined variable `{}`",
             //     token.line, token.lexeme
             // ),
-            // RuntimeError::CallOnNonCallable(ref token) => {
-            //     write!(f, "[line {}] Attempted to call on non-callable", token.line)
-            // }
             // RuntimeError::WrongArity(ref token, actual, expected) => write!(
             //     f,
             //     "[line {}] Function arity error, expected {} arguments but got {}",

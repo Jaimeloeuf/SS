@@ -66,7 +66,7 @@ impl Parser {
 
     fn const_declaration(&mut self) -> Result<Stmt, ParsingError> {
         let name = self.consume(TokenType::Identifier, "Expected name for constant")?;
-        // @todo Fails if clone is not done here
+        // @todo Will fail without this clone???? cannot even clone later????
         let name = name.clone();
 
         // Implementation with Nulls
@@ -92,10 +92,13 @@ impl Parser {
 
     fn function_declaration(&mut self) -> Result<Stmt, ParsingError> {
         let name = self.consume(TokenType::Identifier, "Expected name for function")?;
+        let name = name.clone();
 
         self.consume(
             TokenType::LeftParen,
-            format!("Expect '(' after function name '{}'", name),
+            // "Expect '(' after function name'",
+            // Makes String into &'static str by LEAKING THE MEMORY!!! --> https://stackoverflow.com/a/30527289/13137262
+            Box::leak(format!("Expect '(' after function name '{}'", name).into_boxed_str()),
         )?;
 
         // Get the vector of parameters of the function

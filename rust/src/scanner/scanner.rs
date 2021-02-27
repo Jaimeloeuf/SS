@@ -115,6 +115,7 @@ impl Scanner {
             '>' if self.conditional_advance('=') => self.new_none_literal(TokenType::GreaterEqual),
             '>' => self.new_none_literal(TokenType::Greater),
 
+            // @todo Token types for binary operators?
             // |
 
             // Inline Comment, a comment that goes until the end of the line.

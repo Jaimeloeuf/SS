@@ -17,7 +17,8 @@ pub enum Stmt {
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
 
     While(Expr, Box<Stmt>),
-    // Func(Token, Vec<Token>, Box<Stmt>),
+
+    Func(Token, Vec<Token>, Box<Stmt>),
     // Class(Token, Option<Expr>, Vec<Stmt>),
 
     // Return stmt is a special stmt variant that will be evaluated to a Value variant

@@ -2,8 +2,6 @@
 use crate::callables::Callable;
 use crate::interpreter::error::RuntimeError;
 
-use super::function::Function;
-
 use std::rc::Rc;
 
 // #[derive(Debug, PartialEq, Clone)]
