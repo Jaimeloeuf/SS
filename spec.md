@@ -6,42 +6,39 @@
 Like all other languages, here is a concise introduction to SS.
 > SimpleScript is a Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
 
-idiot n beginner proof language
-prevent me from saying im so dumb when i wastedays trying to figure smth out because it is not intuitive
-simple, flexible and idiot proof n practical
-
-One of the goals of this language is to prioritize or optimize for reading code rather than writing code.  
-Code is assumed to be read more often than written, thus it should be easy to read and understand, even if it means sacrificing implicit assumptions unlike other programming languages.  
-In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable.
-
 
 ## Features and Goals
-- Can be both intepreted and compiled AOT into an executable
-    - And obviously they should work the exact same way, just one faster and native to the platform
-    - If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
-    - We also need to take care of cross compilation techniques.
+Goal is to build a idiot/beginner proof language, because I keep saying "I'm so dumb" when I waste days trying to figure stuff out because the languages that I work with is not intuitive / not what you see is what you get. So I want to build a new language that is Simple, Flexible and Idiot proof while staying practical.  
+
+The main priority of this language is to optimize for reading code more than writing code.  
+Code is assumed to be read more often than written, thus it should be easy to read, understand and reason about even if it means sacrificing some implicit assumptions made in other programming languages.  
+In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable and having a language syntax that makes its semantic clear and non-ambiguous.  
+
+Inspirations include Javascript / Typescript / Go / Rust.
+
 - Focus on explicit representation of ideas via code. Instead of like JS where there are alot of assumptions/quirks/implicit behaviours/magic
+- Application programming language, where memory management is abstracted away
+    - See [Memory section](#memory)
+- Hardware independent
+    If I write the code on a 64bit x86 platform, it should perform the SAME exact way on a 32bit RISC platform.
+- Implementation independent
+    - The language should be one that can be implemented in any programming language and can be runned in any format from AOT binary executables to direct interpretation
+    - And obviously they should work the exact same way, just one faster and native to the platform
+    - @todo If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
+    - @todo We also need to take care of cross compilation techniques.
+- Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
 - Multi Paradigm
     - Procedural
     - Functional
     - Reactive (Some form of this, most likely by introducing a event loop implementation in the standard library)
     - Metaprogramming
-- Expressive and extensible using metaprogramming concepts
-- Inspiration
-    - Javascript / Typescript / Rust / 
-- Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
 - Statically typed
     - Need to know the type at Compile time if compiled
     - The code is always "compiled" first into an IR that can be parsed later on
         - So even when interpreted, Types can be enforced, kinda like TS
 - Immutable
     - no data can be changed once created.
-- Application programming language, where memory management is abstracted away
-    - See [Memory section](#memory)
-- OS independent
-- Implementation independent (e.g. can be implemented in any programming language and can be runned in any format from AOT binary executables to interpretation)
-
-
+- Expressive and extensible using metaprogramming concepts
 
 
 ## Implementation details
@@ -99,9 +96,8 @@ Block comments
     This is a comment
 */
 ```
-If I write the code on a 64bit x86 platform, it should perform the SAME exact way on a 32bit RISC platform.
 
-## Data** types and structures and Value declaration
+## Data types and structures and Value declaration
 - No variables
 - All values are constants (IMMUTABLE)
     - Note that there is no way of declaring variables, you can only create new constants
@@ -113,6 +109,9 @@ If I write the code on a 64bit x86 platform, it should perform the SAME exact wa
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
 - Types on the left hand side like TS and other languages that support Type inference.
+- ? Will there be runtime checks? e.g. accessing values on the array pass its bounds?
+    - Will this be a runtime or compile time check? can static analysis work on this?
+    - E.g. In Go lang, there are constants, and these do not need to have any type declaration, it is implicit so since my whole language is constants, then... do we really need to have types? Unless we introduce variables, since procedural paradigm is basically impossible without variables...
 
 ### Primitives
 <!-- consider using this type of int format instead? -->
@@ -380,7 +379,9 @@ The Conditional operator gives you the ability to conditionally execute/return e
 ```js
 const expression = booleanCondition ? trueExpression : falseExpression;
 ```
-### switch
+### Switch
+- ? Should we support rust type of advance pattern matching? Pretty useful but might be quite difficult for beginners
+    - This needs enums too right?
 
 
 ## Loops
@@ -426,8 +427,11 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
     ```
 - IIFEs are supported, and used mainly to enclose all the data and logic into its self enclosing scope
 - Arrow functions are supported as lambdas / anonymous functions
+- Function arguements will be evaluated 1 by 1 in order from right to left before they are passed to the function.
+    - The arguments will be evaluated in a strict order to make it easier to read, reason and prove the execution order and control flows. This differs from other languages like Scheme and C where the spec does not specify, giving compilers the freedom to reorder for efficiency.
+        - what you see is what you get
 - TBD:
-    - should functions be hoisted? or cannot be accessed after definition
+    - should functions be hoisted? Or cannot be accessed before definition
     - overloading?
     - Should there be implicit returns for functions? Does that mean we need to support undefined?
     - Named function arguments like in python? Removes the need for overloading and undefined function inputs to pass in a argument later in the sequence
@@ -441,6 +445,10 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
         - like JS provide arguement value?
         - or like JS Rest parameters, using fn(...Args)
         - but if using rest parameters, how do you garuntee the type?
+        - When using variadic functions, the code must explicitly identify the function as variadic
+    - For non variadic function, should it be a runtime error to pass it argument list of different length?
+        - Should arity check be done at runtime or compile/parsing time?
+        - If more arguements then parameter list, the arguements after that will be ignored and not be evaluated?
     - default function arguements like JS.
     - If a function that returns something is called and the caller does not use the return value,
         - Should it be considered as an error?
@@ -655,6 +663,7 @@ What is always available in the global scope without any import
 Default import essentially
 - console
 - debugger // Keyword, not default import
+    - @todo Include a section for this in the spec
 
     
 
@@ -707,6 +716,7 @@ Allow us to print diff things like variables to strings to functions...
     - SS requires Explicit variable declaration to make it clearer on scoping rules, can only access after defined and in the same scope or deeper scopes.
 - One variable per declaration to make things more readable and explicit
     - const x, y = 1, 2; // Not supported by the language
+    - const x = 1, y = 2; // Not supported by the language
     - const x = 1; const y = 2; // Use this on 2 lines
 
 
