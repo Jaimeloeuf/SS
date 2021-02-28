@@ -122,9 +122,12 @@ impl Callable for Function {
             environment.define(parameter_name.clone(), arguements.remove(0))
         }
 
-        match interpreter.interpret_block(body, environment)? {
-            Some(result) => Ok(result),
-            None => Ok(Value::Null),
-        }
+        // The interpret_block method is shared with the Stmt::Block arm of interpret_stmt, and so the method
+        // have a return Type signature of interpret_stmt method, of Option<Value> because not all Stmt evaluate to a Value
+        // Therefore, we have to unwrap it here first before returning, and using Value::Null as the default return value
+        Ok(match interpreter.interpret_block(body, environment)? {
+            Some(result) => result,
+            None => Value::Null,
+        })
     }
 }

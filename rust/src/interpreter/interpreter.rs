@@ -102,6 +102,8 @@ impl Interpreter {
                 // Create new environment/scope for current block with existing environment/scope as the parent/enclosing environment
                 let current_env = Environment::new(Some(Rc::clone(&self.env)));
 
+                // Since interpret_block shares the same return Type signature as interpret_stmt
+                // Return directly to break out of this 'match expression' in Ok variant
                 return self.interpret_block(statements, current_env);
             }
 
@@ -244,7 +246,9 @@ impl Interpreter {
         })
     }
 
-    // fn interpret_expr(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    // Mutable ref to self needed because we are passing interpreter into the call method of callable trait
+    // and since the call method calls the interpret_block method which modifies the interpreter struct,
+    // a mutable ref to the interpreter struct is needed.
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             // Using *Literal, to get the value from within the variant
@@ -273,7 +277,7 @@ impl Interpreter {
 
                 // Perhaps instead of passing in interpreter to evaluate,
                 // Can this return the code and we evaluate in this context?
-                Ok(callable.call(self, evaluated_arguments)?)
+                callable.call(self, evaluated_arguments)
             }
 
             // A Const expression evaluates to the value stored in the environment identified by the Const's identifier

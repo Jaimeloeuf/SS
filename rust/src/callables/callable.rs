@@ -9,6 +9,9 @@ use crate::value::value::Value;
 pub trait Callable: std::fmt::Debug {
     fn arity(&self) -> usize;
 
+    // Call method will be called by Expr::Call arm of interpret_expr method of interpreter
+    // Since function calls are expressions, they are expected to ALWAYS evaluate to a Value
+    // Thus there is no Option wrapping for Value and this method shares the return Type signature of interpret_expr
     fn call(
         &self,
         interpreter: &mut Interpreter,
