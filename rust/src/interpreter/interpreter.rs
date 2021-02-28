@@ -81,7 +81,11 @@ impl Interpreter {
         Ok(return_value)
     }
 
-    // Returns a Value Option as not every statement evaluates to a Value
+    // Expects ref to a Stmt rather than a Stmt, because sometimes we want caller to keep ownership of the Stmt value,
+    // even after calling interpret_stmt to call interpret_stmt multiple times with the same Stmt.
+    // Examples include the body of a loop and body of a function.
+    //
+    // Returns a Value Option because not every statement evaluates to a Value
     fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Option<Value>, RuntimeError> {
         // Wrap match expression in Ok variant instead of wrapping Value options with Ok variant in every arm
         // Err option inside match expression cannot evaluate and return implicitly due to the Ok wrapping,
@@ -99,6 +103,27 @@ impl Interpreter {
                 let current_env = Environment::new(Some(Rc::clone(&self.env)));
 
                 return self.interpret_block(statements, current_env);
+            }
+
+            // Function definition/declaration statements
+            // Create a new Value of Function type insert it into the environment
+            Stmt::Func(ref name_token, _, _) => {
+                // @todo
+                // Change match to use match *stmt instead of stmt
+                // Change to Rc wraped instead of cloning like this, to minimize memory used and data duplication
+                let func = Value::Func(Rc::new(Function::new(stmt.clone())));
+
+                let function_name = match name_token.literal.as_ref().unwrap() {
+                    Literal::String(ref string) => string,
+                    _ => {
+                        return Err(RuntimeError::InternalError(format!(
+                            "Parsing error: Function token missing string literal"
+                        )))
+                    }
+                };
+
+                self.env.borrow_mut().define(function_name.clone(), func);
+                None
             }
 
             // @todo Does return stmt really need to store the token?
