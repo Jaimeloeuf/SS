@@ -5,8 +5,8 @@ use crate::token::Token;
 // Right now all the operators are cloned tokens, that are passed in here...
 // All expressions can be evaluated to a Value enum variant
 // Using box to handle this Recursive type with nested Expression variants
-// #[derive(Debug, Clone)]
-#[derive(Debug)]
+// Inherit Clone trait because Stmt enum contains this enum variants, and Stmt enum needs to inherit Clone trait for now.
+#[derive(Debug, Clone)]
 pub enum Expr {
     Literal(Literal),
     Binary(Box<Expr>, Token, Box<Expr>),

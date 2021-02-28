@@ -14,6 +14,9 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+// Function struct will not implement Display trait, instead it will impl the to_string method of the Callable trait
+// And Value will implement a Display trait for Value::Func using the to_string method of Callables
+
 #[derive(Debug)]
 pub struct Function {
     declaration: Stmt,
