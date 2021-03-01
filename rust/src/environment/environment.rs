@@ -9,9 +9,10 @@ use crate::value::value::Value;
 #[derive(Debug)]
 pub struct Environment {
     // @todo Perhaps use a ref to a String instead of this, to avoid cloning the string
-    // @todo Values field is private as it should only be accessed via the given getters and setters
-    pub values: HashMap<String, Value>,
-    pub enclosing: Option<Rc<RefCell<Environment>>>,
+    // @todo Perhaps use a Rc<Value> instead of this, to avoid cloning the Value everytime we read
+    // Values field is private as it should only be accessed via the given getters and setters
+    values: HashMap<String, Value>,
+    enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
@@ -57,12 +58,23 @@ impl Environment {
     // But depending on whether we call get or get_mut() we get different kind of references
     // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.get_mut
 
+    // @todo Temporary method used by interpret to check if Value identifier already exists in current scope
+    // @todo Will be removed once this class of errors is handled by the scanner/parser
+    // Checks if Value identifier is already used in current scope only.
+    pub fn in_current_scope(&self, key: &String) -> bool {
+        match self.values.get(key) {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
     // Basic access methods that return values wrapped in option variant
     pub fn get(&self, key: &String) -> Option<Value> {
         // Get value from values hashmap, if not found, recursively get value from the enclosing environment/scope till global environment
         // @todo Optimize by iteratively walking up the scope chain instead of recursively
         match self.values.get(key) {
             // @todo Not sure if this is right, but we return a Clone Value every time so that the original value still stays in the hashmap
+            // @todo Values should be Rc<Value> instead so we can just Rc::clone() it instead of doing a full clone
             Some(value) => Some(value.clone()),
             None => match &self.enclosing {
                 Some(enclosing) => enclosing.borrow().get(key),

@@ -64,6 +64,9 @@ impl Parser {
         }
     }
 
+    // @todo
+    // Check if name already exists... which means I need to check the scope....
+    // Too diff to do in this parser right now.... will think of something else later on.
     fn const_declaration(&mut self) -> Result<Stmt, ParsingError> {
         let name = self.consume(TokenType::Identifier, "Expected name for constant")?;
         // @todo Will fail without this clone???? cannot even clone later????

@@ -45,6 +45,6 @@ impl Callable for ClockFunc {
         _interpreter: &mut Interpreter,
         _arguments: Vec<Value>,
     ) -> Result<Value, RuntimeError> {
-        Ok(Value::Number(get_current_time() as f64))
+        Ok(Value::Number(get_current_time()))
     }
 }

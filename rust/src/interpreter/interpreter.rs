@@ -195,6 +195,12 @@ impl Interpreter {
                 // Which only happens if parser failed to save String literal for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
                 if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                    // @todo This should be done in scanner/parser and not be a RuntimeError
+                    // Check if the Const identifier has already been used in current scope
+                    if self.env.borrow().in_current_scope(identifier) {
+                        return Err(RuntimeError::ValueAlreadyDefined(identifier.clone()));
+                    }
+
                     /*
                         self.env
                             .borrow_mut()

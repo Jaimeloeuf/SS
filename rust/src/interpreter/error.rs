@@ -29,6 +29,11 @@ pub enum RuntimeError {
     UndefinedIdentifier(String),
     UndefinedVariable(String),
 
+    // @todo Should be a SyntaxError or ParsingError instead, basically should not be RuntimeError as this error should be found before runtime
+    // When a Const has already been defined in the current environment/scope a new one should not be allowed.
+    ValueAlreadyDefined(String),
+
+    // Tried using a none callable Value type as a function identifier and calling it as a function
     CallOnNonCallable(Token),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
@@ -59,6 +64,10 @@ impl std::fmt::Display for RuntimeError {
 
             RuntimeError::UndefinedIdentifier(ref identifier) => {
                 write!(f, "ReferenceError: Cannot access value of identifier '{}' before initialization", identifier)
+            }
+
+            RuntimeError::ValueAlreadyDefined(ref identifier) => {
+                write!(f, "ReferenceError: Identifier '{}' already used in current scope!", identifier)
             }
 
             RuntimeError::CallOnNonCallable(ref token) => {
