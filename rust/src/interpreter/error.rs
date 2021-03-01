@@ -34,7 +34,9 @@ pub enum RuntimeError {
     ValueAlreadyDefined(String),
 
     // Tried using a none callable Value type as a function identifier and calling it as a function
-    CallOnNonCallable(Token),
+    // usize holds the line number of the call site
+    // String is the string representation of Value object that the user tried to call
+    CallOnNonCallable(usize, String),
     // NegateNonNumberError(Token),
     // SubtractNonNumbers(Token),
     // DivideNonNumbers(Token),
@@ -70,8 +72,8 @@ impl std::fmt::Display for RuntimeError {
                 write!(f, "ReferenceError: Identifier '{}' already used in current scope!", identifier)
             }
 
-            RuntimeError::CallOnNonCallable(ref token) => {
-                write!(f, "[line {}] Attempted to call non-callable: {}", token.line, token)
+            RuntimeError::CallOnNonCallable(ref line_number, ref value) => {
+                write!(f, "[line {}] Attempted to call non-callable: {}", line_number, value)
             }
 
             // If unimplemented yet print with debug symbol to prevent infinite recursive loop to calling the display trait

@@ -268,7 +268,7 @@ impl Interpreter {
 
             Expr::Call(ref callee, ref arguments, ref token) => {
                 // Evaluate expression and ensure that the result is a callable function
-                let callable = self.interpret_expr(callee)?.callable()?;
+                let callable = self.interpret_expr(callee)?.callable(token.line)?;
 
                 // Create evaluated arguments list using length of arguements
                 // @todo If supporting variadic functions or what not, then dont use with capacity since can change

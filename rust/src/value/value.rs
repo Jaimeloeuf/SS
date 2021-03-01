@@ -83,16 +83,17 @@ impl Value {
     // }
 
     // Method to get callable if Value is a Callable value type, else errors out
-    pub fn callable(&self) -> Result<Rc<Callable>, RuntimeError> {
+    // Takes line number of the token, which will be used by the RuntimeError if this fails
+    pub fn callable(&self, line_number: usize) -> Result<Rc<Callable>, RuntimeError> {
         // Only match callable value types, all else errors out
         match *self {
             // Why cant I borrow it out instead of clone?
             Value::Func(ref func) => Ok(Rc::clone(func)),
             // Value::Class(ref class) => Ok(Rc::clone(class)),
-
-            // @todo How to get the token?
-            // _ => Err(RuntimeError::CallOnNonCallable(token)),
-            _ => Err(RuntimeError::InternalError(format!("Non callable"))),
+            _ => Err(RuntimeError::CallOnNonCallable(
+                line_number,
+                format!("{}", self), // Pass in String representation of Value using display trait to format it
+            )),
         }
     }
 }
