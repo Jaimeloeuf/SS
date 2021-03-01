@@ -36,8 +36,8 @@ impl Callable for ClockFunc {
         self
     }
 
-    fn arity(&self) -> usize {
-        0
+    fn arity(&self) -> Result<usize, RuntimeError> {
+        Ok(0)
     }
 
     fn call(

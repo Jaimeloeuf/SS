@@ -7,7 +7,7 @@ use crate::value::value::Value;
 // Using trait as a common denominator to be implemented by both native functions and user defined functions
 // So that we can deal with functions using the same interface regardless of whether they are native or user defined functions.
 pub trait Callable: std::fmt::Debug {
-    fn arity(&self) -> usize;
+    fn arity(&self) -> Result<usize, RuntimeError>;
 
     // Call method will be called by Expr::Call arm of interpret_expr method of interpreter
     // Since function calls are expressions, they are expected to ALWAYS evaluate to a Value

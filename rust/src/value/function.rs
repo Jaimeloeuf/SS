@@ -58,8 +58,16 @@ impl Callable for Function {
         }
     }
 
-    fn arity(&self) -> usize {
-        0
+    fn arity(&self) -> Result<usize, RuntimeError> {
+        match &self.declaration {
+            Stmt::Func(_, ref parameters, _) => Ok(parameters.len()),
+            unmatched_stmt_variant => {
+                Err(RuntimeError::InternalError(format!(
+                    "Function must be Stmt::Func, found: {:?}", // @todo Remove use of debug printing once stmt implements Display trait
+                    unmatched_stmt_variant,
+                )))
+            }
+        }
     }
 
     // @todo Read https://stackoverflow.com/a/33687996/275442
