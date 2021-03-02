@@ -52,7 +52,7 @@ impl Callable for Function {
         match name_token.literal.as_ref().unwrap() {
             Literal::String(ref string) if name_token.token_type == TokenType::Identifier => {
                 // Maybe instead of 'user' as function type, use 'ss' to indicate function is defined in SS
-                format!("<user> {}", string.to_string())
+                format!("user {}", string.to_string())
             }
             _ => panic!("Function token missing string identifier...?!?"),
         }

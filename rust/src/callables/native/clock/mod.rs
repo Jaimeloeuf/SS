@@ -29,7 +29,7 @@ impl ClockFunc {
 
 impl Callable for ClockFunc {
     fn to_string(&self) -> String {
-        format!("<native> clock")
+        format!("native clock")
     }
 
     fn as_any(&self) -> &Any {

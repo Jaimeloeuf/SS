@@ -113,7 +113,7 @@ impl std::fmt::Display for Value {
             Value::Null => write!(f, "NULL"),
             Value::Return(ref value) => write!(f, "SS internal return value -> {}", value),
 
-            Value::Func(ref func) => write!(f, "function-{}", func.to_string()),
+            Value::Func(ref func) => write!(f, "<function-{}>", func.to_string()),
         }
     }
 }
