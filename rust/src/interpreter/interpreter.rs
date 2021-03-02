@@ -57,17 +57,49 @@ impl Interpreter {
         // @todo instead of saving current environment temporarily and attaching the new environment to self.
         self.env = Rc::new(RefCell::new(environment));
 
-        let mut return_value = None;
+        // Execute the statements in the block 1 by 1 until either all executed or an return stmt is executed
+        let mut return_value: Option<Value> = None;
         for ref stmt in statements {
+            /*
+                Right now interpret_stmt returns a Value for these statement variants:
+                - return --> Returns value of the evaluated expression on the right
+                - expr --> stmt::expr calls interpret_expr which always return a Value, meaning ANY expr::{expr_type} causes a return value
+                - block
+                - if --> since this is basically conditional block statement
+            */
             // @todo Deal with the errors better to drop the memory of env. Will this be done automatically?
             return_value = self.interpret_stmt(stmt)?;
 
-            // Break out of execution once return statement is executed
-            if let Stmt::Return(ref _token, ref _expr) = stmt {
-                break;
+            // If the current statement evaluated to a Value
+            if return_value.is_some() {
+                // If the current statement is a return statement, its value will be a Value::Return variant
+                // The Value::Return variant tells us a return statement was executed, and also holds the return value
+                if let Stmt::Return(ref _token, ref _expr) = stmt {
+                    println!("returning --> {:?}\n", return_value);
+
+                    // Break out of this loop of statements, in this Block statement
+                    // To stop executing code in this block statement
+                    //
+                    // When this ends, the parent block statement will know what to do, by looking at the return_value and its type
+                    // If the return value is of Value::Return, then it will also stop its executing its current loop
+                    break;
+                }
+
+                // If interpret_stmt returned a Value::Return variant, it means that
+                // The last statement must had a nested return, it can't be a return statement since the previous 'if' already checks for it.
+                // So for nested returns, stop executing stmts, delete current scope and continue bubbling return value up
+                // Value::Return variant will be bubbled up all the way to Function's call method, where it first called interpret_block
+                // Inside the call method, it will unwrap actual return value out from Value::Return and pass it back to interpret_expr!
+                //
+                // Using _ as we just need to match for this pattern, and dont want to move out the value inside
+                if let Some(Value::Return(_)) = return_value {
+                    break;
+                }
             }
 
-            // If we allowed implicit returns
+            // If we allowed implicit returns...
+            // We shouldnt make last statement be the implicit return,
+            // Only if last statement is an expression can it be an implicit return...
             // if "stmt is last stmt of block" && return_value.is_some() {
             //     break;
             // }
@@ -129,8 +161,11 @@ impl Interpreter {
             }
 
             // @todo Does return stmt really need to store the token?
-            // Return statment is just like Stmt::Expr where it just returns the evaluated expression
-            Stmt::Return(_, ref expr) => Some(self.interpret_expr(expr)?),
+            // Return statement calls intepret_expr to interpret the expression on its right.
+            // Wrap the value of the evaluated expression, inside the special Value::Return variant
+            // So as to differentiate this from a normal expression statement value.
+            // So the interpreter can stop further execution and just return it to the interpreter method that called it
+            Stmt::Return(_, ref expr) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
 
             // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
             Stmt::If(ref condition, ref true_branch, ref else_branch) => {
@@ -266,6 +301,14 @@ impl Interpreter {
                 Literal::Null => Ok(Value::Null),
             },
 
+            // Expr::Call is a function call, which is an expression that evaluates to whatever the function returns
+            // Checks to ensure the expression is a callable object
+            // Evaluate and store all the arguments
+            // Use callable.call and pass in the arguements
+            //
+            // This only takes care of checking the function expression callable part and arguments,
+            // Calling/invoking/executing the function including creating a new scope is all taken care of in the call method
+            // Which for user defined functions, is implemented in value::function module's Function struct's call method
             Expr::Call(ref callee, ref arguments, ref token) => {
                 // Evaluate expression and ensure that the result is a callable function
                 let callable = self.interpret_expr(callee)?.callable(token.line)?;
@@ -368,6 +411,8 @@ impl Interpreter {
                                 // Ok(Value::String(format!("{}{}", left_string, right_string)))
                                 Ok(Value::String(left_string + &right_string))
                             }
+                            // Change all unmatched patterns to this pattern, so that we can use it to show the mismatched types
+                            // (left_value, right_value)  => Err(RuntimeError::TypeError(
                             _ => Err(RuntimeError::TypeError(
                                 // @todo Show types used
                                 // "Invalid types used for addition!",

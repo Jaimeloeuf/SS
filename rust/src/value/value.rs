@@ -12,6 +12,11 @@ pub enum Value {
     Bool(bool),
     Null,
 
+    // Special Value variant that should only be used by return arm of interpret_stmt.
+    // To indicate that this internal value should be bubbled up all the way to the nearest function block,
+    // And then be used as the return value of that function call.
+    Return(Box<Value>),
+
     // Why Rc<Callable> instead of Rc<Function>?
     // Because native functions simply impl Callable trait while, user functions are Function Structs that implement the Callable trait
     // We want to use a single interface for both function types, thus we use the common denominator between them, the Callable trait
@@ -106,6 +111,7 @@ impl std::fmt::Display for Value {
             Value::String(ref string) => write!(f, "'{}'", string),
             Value::Bool(ref boolean) => write!(f, "{}", boolean),
             Value::Null => write!(f, "NULL"),
+            Value::Return(ref value) => write!(f, "SS internal return value -> {}", value),
 
             Value::Func(ref func) => write!(f, "function-{}", func.to_string()),
         }

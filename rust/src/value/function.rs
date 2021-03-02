@@ -75,6 +75,7 @@ impl Callable for Function {
         self
     }
 
+    // This method handles the creation of a new environment/scope for the function's code to execute in
     fn call(
         &self,
         interpreter: &mut Interpreter,
@@ -130,12 +131,28 @@ impl Callable for Function {
             environment.define(parameter_name.clone(), arguements.remove(0))
         }
 
-        // The interpret_block method is shared with the Stmt::Block arm of interpret_stmt, and so the method
-        // have a return Type signature of interpret_stmt method, of Option<Value> because not all Stmt evaluate to a Value
-        // Therefore, we have to unwrap it here first before returning, and using Value::Null as the default return value
+        // The interpret_block method is shared with Stmt::Block arm of interpret_stmt, and so it has a return Type of Option<Value>
+        // like interpret_stmt because not all Stmt evaluates to a Value, therefore, we unwrap it here first and do extra processing
+        // before returning, because Callable.call method for using functions as expressions, is expected to always return a value.
+        //
+        // Internally, interpret_block calls interpret_stmt for every single statement in the block
+        // When there is a return statement, the return arm of interpret_stmt returns a value wrapped in the Value::Return variant.
+        // This extra code wrapping interpret_block ensures that function.call of Callable.call trait ALWAYS returns a value,
+        // And the value returned will never be a Value::Return variant
         Ok(match interpreter.interpret_block(body, environment)? {
-            Some(result) => result,
+            Some(result) => match result {
+                Value::Return(value) => *value,
+                _ => Value::Null,
+            },
             None => Value::Null,
         })
+
+        // Cleaner alternative waiting for the 'if let' gaurd RFC to pass --> https://github.com/rust-lang/rust/issues/51114
+        // Ok(match interpreter.interpret_block(body, environment)? {
+        //     Some(result) if let Value::Return(value) = result => *value,
+        //
+        //     // _ instead of None, because we also want to match the case where Some(result) is not of Value::Return type
+        //     _ => Value::Null,
+        // })
     }
 }
