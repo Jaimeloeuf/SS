@@ -1,5 +1,3 @@
-use crate::token::Token;
-
 /**
  * Enum of all possible Runtime Errors
  * String is used instead of &str, as some of the strings are formatted on the fly using format!()
@@ -26,7 +24,7 @@ pub enum RuntimeError {
 
     // Undefined values and variables, 1 for const and 1 for variables
     // @todo Undefined variable will not be used since it will always be parsed as Expr::Const for now, thus always UndefinedIdentifier
-    UndefinedIdentifier(String),
+    UndefinedIdentifier(usize, String),
     UndefinedVariable(String),
 
     // @todo Should be a SyntaxError or ParsingError instead, basically should not be RuntimeError as this error should be found before runtime
@@ -64,8 +62,8 @@ impl std::fmt::Display for RuntimeError {
             RuntimeError::TypeError(ref message) => write!(f, "{}", message),
             RuntimeError::ConditionTypeError(ref message) => write!(f, "{}", message),
 
-            RuntimeError::UndefinedIdentifier(ref identifier) => {
-                write!(f, "ReferenceError: Cannot access value of identifier '{}' before initialization", identifier)
+            RuntimeError::UndefinedIdentifier(ref line_number,identifier) => {
+                write!(f, "[line {}] ReferenceError: Tried to use undefined identifier '{}'", line_number,identifier)
             }
 
             RuntimeError::ValueAlreadyDefined(ref identifier) => {

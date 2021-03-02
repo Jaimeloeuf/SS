@@ -324,13 +324,16 @@ impl Interpreter {
                     evaluated_arguments.push(self.interpret_expr(arg)?);
                 }
 
-                // Perhaps instead of passing in interpreter to evaluate,
-                // Can this return the code and we evaluate in this context?
+                // Call function, either native or user defined using their common denominator, callable trait's call method
                 callable.call(self, evaluated_arguments)
             }
 
             // A Const expression evaluates to the value stored in the environment identified by the Const's identifier
             // Distance is not implemented for now
+            // @todo
+            // Right now, all identifiers are parsed into Expr::Const variants, and the variant name does not adequately describe it
+            // Because all Value identifiers, including Const and function identifiers are all parsed into Expr::Const
+            // So unless we change this to Expr::Identifier or we change the definition of Expr::Const, to one that points to all identifiers
             Expr::Const(ref token, ref _distance) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
@@ -348,7 +351,10 @@ impl Interpreter {
                         // @todo When not found, should it be an environment error or runtime error?
                         // Technically should be Runtime error, because it is caused by the user using a invalid identifier
                         // Environment errors are reserved for when there is a valid identifier but not found in environment
-                        None => Err(RuntimeError::UndefinedIdentifier(identifier.clone())),
+                        None => Err(RuntimeError::UndefinedIdentifier(
+                            token.line,
+                            identifier.clone(),
+                        )),
                     }
                 } else {
                     // Unlikely to happen because this will probably be caught by interpret_stmt's Const logic when setting a value
