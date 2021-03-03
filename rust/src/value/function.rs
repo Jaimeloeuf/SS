@@ -121,22 +121,19 @@ impl Callable for Function {
         // Insert all the arguments into the new environment/scope of the function
         for (index, token) in parameters.iter().enumerate() {
             // Assume literal always exists
-            let parameter_name = match token.literal.as_ref().unwrap() {
-                Literal::String(ref string) => string,
-                _ => {
-                    return Err(RuntimeError::InternalError(format!(
-                        "Function parameter token missing String literal!"
-                    )))
-                }
-            };
-
-            // Use clone since parameter_name String is still in the Literal and arguement Values are still owned by the Vector
-            // environment.define(parameter_name.clone(), arguements[index].clone())
-
-            // If I remove from vec instead of clone, I technically dont even need index anymore
-            // And also this will introduce new issues
-            // Need to check if there are parameters but no arguments, then skip it and pass in Null?
-            environment.define(parameter_name.clone(), arguements.remove(0))
+            if let Literal::String(ref parameter_name) = token.literal.as_ref().unwrap() {
+                // Use clone since parameter_name String is still in the Literal and arguement Values are still owned by the Vector
+                // environment.define(parameter_name.clone(), arguements[index].clone())
+                //
+                // If I remove from vec instead of clone, I technically dont even need index anymore
+                // And also this will introduce new issues
+                // Need to check if there are parameters but no arguments, then skip it and pass in Null?
+                environment.define(parameter_name.clone(), arguements.remove(0))
+            } else {
+                return Err(RuntimeError::InternalError(format!(
+                    "Function parameter token missing String literal!"
+                )));
+            }
         }
 
         // The interpret_block method is shared with Stmt::Block arm of interpret_stmt, and so it has a return Type of Option<Value>
