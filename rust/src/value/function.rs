@@ -20,14 +20,21 @@ use std::rc::Rc;
 #[derive(Debug)]
 pub struct Function {
     declaration: Stmt,
+
+    // This is the env surrounding the function definition...
+    // NOT THE ENV surrounding the function call
     closure: Rc<RefCell<Environment>>,
 }
 
 impl Function {
-    pub fn new(statement: Stmt) -> Function {
+    pub fn new(statement: Stmt, closure: Rc<RefCell<Environment>>) -> Function {
         Function {
             declaration: statement,
-            closure: Rc::new(RefCell::new(Environment::new(None))),
+
+            // @todo Alternative create a new environment/scope on every new value declaration
+            // closure environment/scope is created on function definition, not runtime
+            // So when function is defined with Function::new, freeze closure environment by cloning the current environment
+            closure: Rc::new(RefCell::new((*closure).borrow().clone_env())),
         }
     }
 }
@@ -106,8 +113,9 @@ impl Callable for Function {
             }
         };
 
-        // Set current scope (interpreter.env) as the enclosing scope of the new scope
-        let mut environment = Environment::new(Some(Rc::clone(&interpreter.env)));
+        // Set closure scope as the enclosing scope of the new scope instead of interpreter.env,
+        // Because closure scope values are "fixed" on definition and not execution.
+        let mut environment = Environment::new(Some(Rc::clone(&self.closure)));
 
         // @todo Optimize the loop
         // Insert all the arguments into the new environment/scope of the function

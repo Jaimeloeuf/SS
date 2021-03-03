@@ -75,8 +75,6 @@ impl Interpreter {
                 // If the current statement is a return statement, its value will be a Value::Return variant
                 // The Value::Return variant tells us a return statement was executed, and also holds the return value
                 if let Stmt::Return(ref _token, ref _expr) = stmt {
-                    println!("returning --> {:?}\n", return_value);
-
                     // Break out of this loop of statements, in this Block statement
                     // To stop executing code in this block statement
                     //
@@ -139,13 +137,16 @@ impl Interpreter {
                 return self.interpret_block(statements, current_env);
             }
 
-            // Function definition/declaration statements
-            // Create a new Value of Function type insert it into the environment
+            // Function definition statements
+            // Create a new Value of Function type and insert into environment
             Stmt::Func(ref name_token, _, _) => {
                 // @todo
                 // Change match to use match *stmt instead of stmt
                 // Change to Rc wraped instead of cloning like this, to minimize memory used and data duplication
-                let func = Value::Func(Rc::new(Function::new(stmt.clone())));
+                //
+                // Pass in current environment/scope as the function's closure
+                // closure is defined during function definition
+                let func = Value::Func(Rc::new(Function::new(stmt.clone(), Rc::clone(&self.env))));
 
                 let function_name = match name_token.literal.as_ref().unwrap() {
                     Literal::String(ref string) => string,
@@ -333,7 +334,7 @@ impl Interpreter {
             // @todo
             // Right now, all identifiers are parsed into Expr::Const variants, and the variant name does not adequately describe it
             // Because all Value identifiers, including Const and function identifiers are all parsed into Expr::Const
-            // So unless we change this to Expr::Identifier or we change the definition of Expr::Const, to one that points to all identifiers
+            // So unless we change this to Expr::Identifier / Expr::Value or we change the definition of Expr::Const, to one that points to all identifiers
             Expr::Const(ref token, ref _distance) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
