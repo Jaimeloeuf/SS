@@ -148,17 +148,14 @@ impl Interpreter {
                 // closure is defined during function definition
                 let func = Value::Func(Rc::new(Function::new(stmt.clone(), Rc::clone(&self.env))));
 
-                let function_name = match name_token.literal.as_ref().unwrap() {
-                    Literal::String(ref string) => string,
-                    _ => {
-                        return Err(RuntimeError::InternalError(format!(
-                            "Parsing error: Function token missing string literal"
-                        )))
-                    }
-                };
-
-                self.env.borrow_mut().define(function_name.clone(), func);
-                None
+                if let Some(Literal::String(ref function_name)) = name_token.literal {
+                    self.env.borrow_mut().define(function_name.clone(), func);
+                    None
+                } else {
+                    return Err(RuntimeError::InternalError(format!(
+                        "Parsing error: Function token missing string literal"
+                    )));
+                }
             }
 
             // @todo Does return stmt really need to store the token?
@@ -166,6 +163,7 @@ impl Interpreter {
             // Wrap the value of the evaluated expression, inside the special Value::Return variant
             // So as to differentiate this from a normal expression statement value.
             // So the interpreter can stop further execution and just return it to the interpreter method that called it
+            // 'return;' will be auto parsed to 'return Value::Null;' by parser
             Stmt::Return(_, ref expr) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
 
             // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
