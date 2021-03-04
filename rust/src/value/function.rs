@@ -121,7 +121,7 @@ impl Callable for Function {
         // Insert all the arguments into the new environment/scope of the function
         for (index, token) in parameters.iter().enumerate() {
             // Assume literal always exists
-            if let Literal::String(ref parameter_name) = token.literal.as_ref().unwrap() {
+            if let Some(Literal::String(ref parameter_name)) = token.literal {
                 // Use clone since parameter_name String is still in the Literal and arguement Values are still owned by the Vector
                 // environment.define(parameter_name.clone(), arguements[index].clone())
                 //

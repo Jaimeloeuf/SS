@@ -338,7 +338,7 @@ impl Interpreter {
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
                 // Which only happens if parser failed to save String literal for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                if let Some(Literal::String(ref identifier)) = token.literal {
                     // @todo
                     // Reference: https://stackoverflow.com/questions/30414424
                     // Should use get_ref here instead of get to avoid cloning the value
