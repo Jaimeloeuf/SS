@@ -21,12 +21,6 @@ use self::default::get_current_time;
 #[derive(Debug)]
 pub struct ClockFunc {}
 
-impl ClockFunc {
-    pub fn new() -> ClockFunc {
-        ClockFunc {}
-    }
-}
-
 impl Callable for ClockFunc {
     fn to_string(&self) -> String {
         format!("native clock")

@@ -47,7 +47,7 @@ impl Environment {
         // Define prelude (bunch of things auto imported and available at toplevel)
         env.define(
             "clock".to_string(),
-            Value::Func(Rc::new(native::ClockFunc::new())),
+            Value::Func(Rc::new(native::ClockFunc {})),
         );
 
         env
