@@ -9,6 +9,7 @@ mod interpreter;
 mod keywords;
 mod literal;
 mod parser;
+mod resolver;
 mod scanner;
 mod token;
 mod token_type;
@@ -16,6 +17,7 @@ mod value;
 
 use interpreter::interpreter::Interpreter;
 use parser::parser_struct::Parser;
+use resolver::resolver::Resolver;
 use scanner::scanner_struct::Scanner;
 
 fn main() {
@@ -78,6 +80,15 @@ fn read_file(filename: &String) {
             //     println!("{:?}", stmt);
             // }
             // println!();
+
+            // What about the return value...
+            // Mut was used to modify Expr::Const distance value
+            // let mut resolver = Resolver::resolve(&mut ast);
+            let mut resolver = Resolver::resolve(&ast);
+            if let Err(e) = resolver {
+                println!("{}", e);
+                panic!("Resolver failed");
+            }
 
             // @todo Return errors if any?
             // @todo Interpreter can return a code, which will be used as the program exit code of the interpreter
