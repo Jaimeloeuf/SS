@@ -25,3 +25,35 @@ pub enum Stmt {
     // Return stmt is a special stmt variant that will be evaluated to a Value variant
     Return(Token, Box<Expr>),
 }
+
+// Temporary display trait for debugging
+impl std::fmt::Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Stmt::Expr(ref expr) => write!(f, "{}", expr),
+            Stmt::Print(ref expr) => write!(f, "(print {})", expr),
+            Stmt::Const(ref token, ref expr) => {
+                write!(f, "(const {} {})", token.literal.as_ref().unwrap(), expr)
+            }
+            Stmt::Block(ref statments) => write!(f, "(do {:?})", statments),
+            Stmt::If(ref expr, ref if_branch, ref else_branch) => {
+                write!(f, "(if {} {} {:?})", expr, if_branch, else_branch)
+            }
+            Stmt::While(ref expr, ref stmt) => write!(f, "(loop {} {})", expr, stmt),
+            Stmt::Func(ref token, ref parameters, ref body) => {
+                write!(
+                    f,
+                    "(funcall {} {:?} {})",
+                    token.literal.as_ref().unwrap(),
+                    parameters,
+                    body
+                )
+            }
+            Stmt::Return(_, ref expr) => {
+                write!(f, "(return {})", expr)
+            }
+
+            _ => write!(f, "Unimplemented display trait for Stmt::{:?}", self),
+        }
+    }
+}
