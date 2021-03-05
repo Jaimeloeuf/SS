@@ -6,8 +6,11 @@ use crate::token_type::TokenType;
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
-    // pub lexeme: String, // Ref or new string?
     pub literal: Option<Literal>,
+
+    // Lexeme is stored as a string ONLY for identifier type tokens,
+    // As this is reused very often and it is tedious to extract from Option<Literal::String> type every single time
+    pub lexeme: Option<String>,
     pub line: usize,
 }
 
@@ -17,6 +20,7 @@ impl Token {
         Token {
             token_type,
             literal: None,
+            lexeme: None,
             line,
         }
     }
@@ -25,14 +29,17 @@ impl Token {
         Token {
             token_type,
             literal: None,
+            lexeme: None,
             line,
         }
     }
 
+    // Saves lexeme without Literal::String wrapping too for easier access later
     pub fn new_identifier(lexeme: String, line: usize) -> Token {
         Token {
             token_type: TokenType::Identifier,
-            literal: Some(Literal::String(lexeme)),
+            literal: Some(Literal::String(lexeme.clone())),
+            lexeme: Some(lexeme),
             line,
         }
     }
@@ -41,6 +48,7 @@ impl Token {
         Token {
             token_type: TokenType::Str,
             literal: Some(Literal::String(lexeme)),
+            lexeme: None,
             line,
         }
     }
@@ -50,6 +58,7 @@ impl Token {
             token_type: TokenType::Number,
             // Treating all numbers as f64 type for now
             literal: Some(Literal::Number(lexeme.parse::<f64>().unwrap())),
+            lexeme: None,
             line,
         }
     }
