@@ -88,7 +88,7 @@ impl Resolver {
         }
     }
 
-    // Unified function to do this
+    // Unified function to
     // self.scope(Action::Declare, token)?;
     // self.scope(Action::Define, token)?;
     // self.scope(Action::DeclareAndDefine, token)?;

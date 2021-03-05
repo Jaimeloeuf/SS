@@ -139,7 +139,10 @@ impl Resolver {
 
             // @todo
             ref unmatched_expr_variant => panic!("oops"),
-        }
+        };
+
+        Ok(())
+    }
     }
 
     // fn resolve_local(&self, lexeme: String) -> Option<usize> {
