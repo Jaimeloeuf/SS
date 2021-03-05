@@ -51,7 +51,7 @@ impl Resolver {
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
     fn resolve_statement(&mut self, stmt: &Stmt) -> Result<(), ResolvingError> {
         Ok(match *stmt {
-            Stmt::Expr(ref expr) => self.resolve_expression(expr),
+            Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
                 self.resolve_ast(stmts)?;
@@ -59,7 +59,7 @@ impl Resolver {
             }
             Stmt::Const(ref token, ref expr) => {
                 self.declare(token)?;
-                self.resolve_expression(expr);
+                self.resolve_expression(expr)?;
                 self.define(token);
             }
             Stmt::Func(ref token, ref params, ref body) => {
@@ -68,13 +68,13 @@ impl Resolver {
                 self.resolve_function(params, body)?;
             }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
-                self.resolve_expression(condition);
+                self.resolve_expression(condition)?;
                 self.resolve_statement(then_branch)?;
                 if let Some(ref else_branch) = else_branch {
                     self.resolve_statement(else_branch)?;
                 }
             }
-            Stmt::Print(ref expr) => self.resolve_expression(expr),
+            Stmt::Print(ref expr) => self.resolve_expression(expr)?,
             Stmt::Return(ref token, ref expr) => {
                 // If not in any function
                 // Not in block
@@ -82,10 +82,10 @@ impl Resolver {
                     return Err(ResolvingError::ToplevelReturn(token.clone()));
                 }
 
-                self.resolve_expression(expr);
+                self.resolve_expression(expr)?;
             }
             Stmt::While(ref condition, ref body) => {
-                self.resolve_expression(condition);
+                self.resolve_expression(condition)?;
                 self.resolve_statement(body)?;
             }
 
@@ -94,7 +94,7 @@ impl Resolver {
         })
     }
 
-    fn resolve_expression(&self, expr: &Expr) {
+    fn resolve_expression(&self, expr: &Expr) -> Result<(), ResolvingError> {
         match *expr {
             // @todo!!!
             Expr::Const(ref token, ref distance) => {
@@ -110,36 +110,30 @@ impl Resolver {
                 // *distance = self.resolve_local(token.lexeme.as_ref().unwrap().clone());
             }
             Expr::Binary(ref left, _, ref right) => {
-                self.resolve_expression(left);
-                self.resolve_expression(right);
+                self.resolve_expression(left)?;
+                self.resolve_expression(right)?;
             }
             Expr::Call(ref callee, ref arguments, _) => {
-                self.resolve_expression(callee);
+                self.resolve_expression(callee)?;
 
                 for ref arg in arguments {
-                    self.resolve_expression(arg);
+                    self.resolve_expression(arg)?;
                 }
             }
             Expr::Grouping(ref expr) => {
-                self.resolve_expression(expr);
+                self.resolve_expression(expr)?;
             }
             Expr::Literal(_) => {}
             Expr::Logical(ref left, _, ref right) => {
-                self.resolve_expression(left);
-                self.resolve_expression(right);
+                self.resolve_expression(left)?;
+                self.resolve_expression(right)?;
             }
             Expr::Unary(_, ref expr) => {
-                self.resolve_expression(expr);
+                self.resolve_expression(expr)?;
             }
-            Expr::Get(ref target, _) => {
-                self.resolve_expression(target);
-            }
-            Expr::Set(ref target, _, ref value) => {
-                self.resolve_expression(target);
-                self.resolve_expression(value);
-            }
+            //     self.resolve_expression(target)?;
             // Expr::Assign(ref token, ref  expr, ref  distance) => {
-            //     self.resolve_expression(expr);
+            //     self.resolve_expression(expr)?;
             //     *distance = self.resolve_local(token.lexeme.clone());
             // }
 
