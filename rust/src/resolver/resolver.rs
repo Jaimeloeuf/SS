@@ -96,18 +96,8 @@ impl Resolver {
 
     fn resolve_expression(&self, expr: &Expr) -> Result<(), ResolvingError> {
         match *expr {
-            // @todo!!!
-            Expr::Const(ref token, ref distance) => {
-                if let Some(scope) = self.scopes.last() {
-                    if let Some(is_var_available) = scope.get(token.lexeme.as_ref().unwrap()) {
-                        if !is_var_available {
-                            // @todo Error
-                        }
-                    }
-                }
-
-                // Instead of saving onto the AST, what about we save into a side table?
-                // *distance = self.resolve_local(token.lexeme.as_ref().unwrap().clone());
+            Expr::Const(ref token, ref distance_value_in_ast_node) => {
+                let distance = self.resolve_local(token)?;
             }
             Expr::Binary(ref left, _, ref right) => {
                 self.resolve_expression(left)?;
@@ -131,7 +121,13 @@ impl Resolver {
             Expr::Unary(_, ref expr) => {
                 self.resolve_expression(expr)?;
             }
+            // Expr::Get(ref target, _) => {
             //     self.resolve_expression(target)?;
+            // }
+            // Expr::Set(ref target, _, ref value) => {
+            //     self.resolve_expression(target)?;
+            //     self.resolve_expression(value)?;
+            // }
             // Expr::Assign(ref token, ref  expr, ref  distance) => {
             //     self.resolve_expression(expr)?;
             //     *distance = self.resolve_local(token.lexeme.clone());
@@ -143,16 +139,24 @@ impl Resolver {
 
         Ok(())
     }
-    }
 
-    // fn resolve_local(&self, lexeme: String) -> Option<usize> {
-    //     for (i, scope) in self.scopes.iter().rev().enumerate() {
-    //         if scope.contains_key(&lexeme) {
-    //             return Some(i);
-    //         }
-    //     }
-    //     None
-    // }
+    // Returns the Number of scope to traverse up to find the identifier's definition
+    // E.g. 0 means defined in the same scope and 2, means defined 2 scopes above current scope.
+    //
+    // This will go up through all the scopes looking for the identifier's "declaration"
+    // If the definition is still not found after reaching the global scope, return an Undefined Identifier error
+    fn resolve_local(&self, token: &Token) -> Result<usize, ResolvingError> {
+        let identifier = token.lexeme.as_ref().unwrap().clone();
+
+        for (i, scope) in self.scopes.iter().rev().enumerate() {
+            if scope.contains_key(&identifier) {
+                return Ok(i);
+            }
+        }
+
+        // If identifier is not found in all scopes (even in global scope) then it is undefined.
+        Err(ResolvingError::UndefinedIdentifier(token.clone()))
+    }
 
     fn resolve_function(
         &mut self,
