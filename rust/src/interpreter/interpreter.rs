@@ -140,15 +140,16 @@ impl Interpreter {
             // Function definition statements
             // Create a new Value of Function type and insert into environment
             Stmt::Func(ref name_token, _, _) => {
-                // @todo
-                // Change match to use match *stmt instead of stmt
-                // Change to Rc wraped instead of cloning like this, to minimize memory used and data duplication
-                //
-                // Pass in current environment/scope as the function's closure
-                // closure is defined during function definition
-                let func = Value::Func(Rc::new(Function::new(stmt.clone(), Rc::clone(&self.env))));
-
                 if let Some(Literal::String(ref function_name)) = name_token.literal {
+                    // @todo
+                    // Change match to use match *stmt instead of stmt
+                    // Change to Rc wraped instead of cloning like this, to minimize memory used and data duplication
+                    //
+                    // Pass in current environment/scope as the function's closure
+                    // closure is defined during function definition
+                    let func =
+                        Value::Func(Rc::new(Function::new(stmt.clone(), Rc::clone(&self.env))));
+
                     self.env.borrow_mut().define(function_name.clone(), func);
                     None
                 } else {
