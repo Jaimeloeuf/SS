@@ -71,11 +71,6 @@ impl Callable for Function {
         }
     }
 
-    // @todo Read https://stackoverflow.com/a/33687996/275442
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
     // This method handles the creation of a new environment/scope for the function's code to execute in
     fn call(
         &self,

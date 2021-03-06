@@ -26,10 +26,6 @@ impl Callable for ClockFunc {
         format!("native clock")
     }
 
-    fn as_any(&self) -> &Any {
-        self
-    }
-
     fn arity(&self) -> Result<usize, RuntimeError> {
         Ok(0)
     }

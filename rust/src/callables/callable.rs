@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use crate::interpreter::error::RuntimeError;
 use crate::interpreter::interpreter::Interpreter;
 use crate::value::value::Value;
@@ -18,8 +16,11 @@ pub trait Callable: std::fmt::Debug {
         values: Vec<Value>,
     ) -> Result<Value, RuntimeError>;
 
-    // @todo Read https://stackoverflow.com/a/33687996/275442
-    fn as_any(&self) -> &Any;
+    // Used for type downcasting... not needed for now
+    // Read https://stackoverflow.com/a/33687996/275442
+    // fn as_any(&self) -> &dyn Any {
+    //     self
+    // }
 
     // Panic for now since technically this is an internal error with the implementation
     fn to_string(&self) -> String {
