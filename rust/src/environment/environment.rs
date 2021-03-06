@@ -102,9 +102,11 @@ impl Environment {
     }
 
     fn get_scope(&self, distance: usize) -> Rc<RefCell<Environment>> {
-        let mut environment = self.enclosing.unwrap().clone();
+        let mut environment = Rc::clone(self.enclosing.as_ref().unwrap());
         for _ in 1..distance {
-            environment = environment.borrow().enclosing.unwrap().clone();
+            // Split into 2 lines to satisfy borrow checker rules.
+            let parent_env = Rc::clone(environment.borrow().enclosing.as_ref().unwrap());
+            environment = parent_env;
         }
         environment
     }
