@@ -156,7 +156,12 @@ impl Interpreter {
             // Function definition statements
             // Create a new Value of Function type and insert into environment
             Stmt::Func(ref name_token, _, _) => {
-                if let Some(Literal::String(ref function_name)) = name_token.literal {
+                // Although the token definitely have a string lexeme if scanned correctly,
+                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Which only happens if scanner failed to save String lexeme for Identifier type Token
+                // Reference: https://stackoverflow.com/questions/41573764
+                // Since this is a token of Identifier type, we can use the lexeme directly
+                if let Some(ref function_name) = name_token.lexeme {
                     //
                     // Pass in current environment/scope as the function's closure
                     // closure is defined during function definition
@@ -248,11 +253,12 @@ impl Interpreter {
 
             // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
-                // Although the token definitely have a literal string variant if parsed correctly,
+                // Although the token definitely have a string lexeme if scanned correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
-                // Which only happens if parser failed to save String literal for Identifier type Token
+                // Which only happens if scanner failed to save String lexeme for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                if let Some(Literal::String(ref identifier)) = token.literal {
+                // Since this is a token of Identifier type, we can use the lexeme directly
+                if let Some(ref identifier) = token.lexeme {
                     // @todo This should be done in scanner/parser and not be a RuntimeError
                     // Check if the Const identifier has already been used in current scope
                     if self.env.borrow().in_current_scope(identifier) {
@@ -319,6 +325,7 @@ impl Interpreter {
             Expr::Literal(literal) => match *literal {
                 Literal::Number(number) => Ok(Value::Number(number)),
                 // Use a ref here to prevent moving it, and clone the string
+                // @todo Move this instead of cloning it
                 Literal::String(ref string) => Ok(Value::String(string.clone())),
                 Literal::Bool(bool) => Ok(Value::Bool(bool)),
                 Literal::Null => Ok(Value::Null),
@@ -358,11 +365,12 @@ impl Interpreter {
             // Because all Value identifiers, including Const and function identifiers are all parsed into Expr::Const
             // So unless we change this to Expr::Identifier / Expr::Value or we change the definition of Expr::Const, to one that points to all identifiers
             Expr::Const(ref token, ref distance) => {
-                // Although the token definitely have a literal string variant if parsed correctly,
+                // Although the token definitely have a string lexeme if scanned correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
-                // Which only happens if parser failed to save String literal for Identifier type Token
+                // Which only happens if scanner failed to save String lexeme for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                if let Some(Literal::String(ref identifier)) = token.literal {
+                // Since this is a token of Identifier type, we can use the lexeme directly
+                if let Some(ref identifier) = token.lexeme {
                     // @todo
                     // Reference: https://stackoverflow.com/questions/30414424
                     // Should use get_ref here instead of get to avoid cloning the value

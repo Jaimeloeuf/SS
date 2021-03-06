@@ -1,9 +1,7 @@
 use crate::callables::Callable;
 use crate::environment::environment::Environment;
 use crate::interpreter::error::RuntimeError;
-use crate::literal::Literal;
 use crate::parser::stmt::Stmt;
-use crate::token_type::TokenType;
 use crate::Interpreter;
 
 use super::value::Value;
@@ -53,12 +51,11 @@ impl Callable for Function {
             }
         };
 
-        match name_token.literal.as_ref().unwrap() {
-            Literal::String(ref string) if name_token.token_type == TokenType::Identifier => {
-                // Maybe instead of 'user' as function type, use 'ss' to indicate function is defined in SS
-                format!("user {}", string.to_string())
-            }
-            _ => panic!("Function token missing string identifier...?!?"),
+        if let Some(function_identifier) = name_token.lexeme.as_ref() {
+            // Maybe instead of 'user' as function type, use 'ss' to indicate function is defined in SS
+            format!("user {}", function_identifier.to_string())
+        } else {
+            panic!("InternalError: Function token missing string identifier...?!?")
         }
     }
 
@@ -117,8 +114,7 @@ impl Callable for Function {
         // @todo Optimize the loop
         // Insert all the arguments into the new environment/scope of the function
         for (index, token) in parameters.iter().enumerate() {
-            // Assume literal always exists
-            if let Some(Literal::String(ref parameter_name)) = token.literal {
+            if let Some(ref parameter_name) = token.lexeme {
                 // Use clone since parameter_name String is still in the Literal and arguement Values are still owned by the Vector
                 // environment.define(parameter_name.clone(), arguements[index].clone())
                 //

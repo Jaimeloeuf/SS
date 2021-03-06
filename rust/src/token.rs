@@ -6,6 +6,8 @@ use crate::token_type::TokenType;
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
+
+    // Only create and store literal for Literal values (String/Number/Bool/Null)
     pub literal: Option<Literal>,
 
     // Lexeme is stored as a string ONLY for identifier type tokens,
@@ -34,11 +36,10 @@ impl Token {
         }
     }
 
-    // Saves lexeme without Literal::String wrapping too for easier access later
     pub fn new_identifier(lexeme: String, line: usize) -> Token {
         Token {
             token_type: TokenType::Identifier,
-            literal: Some(Literal::String(lexeme.clone())),
+            literal: None,
             lexeme: Some(lexeme),
             line,
         }
@@ -82,15 +83,18 @@ impl Token {
 // Implement the Display trait for Token directly, instead of using a to_string method on Token and requiring the caller to call it to print
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        if self.literal.is_none() {
-            write!(f, "{:?}", self.token_type)
-        } else {
-            match self.literal.as_ref().unwrap() {
-                // Special way to print string literals belong to "String" token type and not a Identifier
-                Literal::String(ref string) if self.token_type != TokenType::Identifier => {
-                    write!(f, "String '{}'", string)
-                }
+        if let Some(ref literal) = self.literal {
+            match literal {
+                // Special way to print string literals of "String" token type
+                Literal::String(ref string) => write!(f, "String '{}'", string),
                 none_string => write!(f, "{:?} {}", self.token_type, none_string),
+            }
+        } else {
+            // If there is a lexeme, it means this token is an identifier
+            if let Some(ref lexeme) = self.lexeme {
+                write!(f, "{:?} - {}", self.token_type, lexeme)
+            } else {
+                write!(f, "{:?}", self.token_type)
             }
         }
     }

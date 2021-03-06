@@ -35,9 +35,6 @@ impl Resolver {
         // Get lexeme as identifier from token
         let identifier = token.lexeme.as_ref().unwrap();
 
-        // Get string value as identifier from token's Literal::String
-        // let Literal::String(ref identifier) = token.literal.as_ref().unwrap();
-
         if scope.contains_key(identifier) {
             Err(ResolvingError::IdentifierAlreadyUsed(
                 token.clone(),
@@ -58,9 +55,6 @@ impl Resolver {
         // Get lexeme as identifier from token
         let identifier = token.lexeme.as_ref().unwrap();
 
-        // Get string value as identifier from token's Literal::String
-        // let Literal::String(ref identifier) = token.literal.as_ref().unwrap();
-
         // Indicate initializer resolved
         scope.insert(identifier.clone(), true);
     }
@@ -72,9 +66,6 @@ impl Resolver {
 
         // Get lexeme as identifier from token
         let identifier = token.lexeme.as_ref().unwrap();
-
-        // Get string value as identifier from token's Literal::String
-        // let Literal::String(ref identifier) = token.literal.as_ref().unwrap();
 
         if scope.contains_key(identifier) {
             Err(ResolvingError::IdentifierAlreadyUsed(
@@ -100,9 +91,6 @@ impl Resolver {
 
     //     // Get lexeme as identifier from token
     //     let identifier = token.lexeme.as_ref().unwrap();
-
-    //     // Get string value as identifier from token's Literal::String
-    //     // let Literal::String(ref identifier) = token.literal.as_ref().unwrap();
 
     //     Ok(match action {
     //         Action::Define => {
