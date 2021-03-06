@@ -24,20 +24,6 @@ impl Environment {
         }
     }
 
-    // Method to clone itself
-    // Temporarily used to freeze environment/scope for closures to prevent changing closure's values
-    pub fn clone_env(&self) -> Environment {
-        Environment {
-            // Use the Clone-implementation on HashMap to deep clone it
-            values: self.values.clone(),
-            // enclosing: env.enclosing,
-            enclosing: match self.enclosing {
-                Some(ref inner_env) => Some(Rc::clone(inner_env)),
-                None => None,
-            },
-        }
-    }
-
     // Create the global environment / prelude
     pub fn global() -> Environment {
         // Since global environment is the top level scope, there is no enclosing environment

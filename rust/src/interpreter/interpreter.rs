@@ -117,6 +117,9 @@ impl Interpreter {
     //
     // Returns a Value Option because not every statement evaluates to a Value
     fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<Option<Value>, RuntimeError> {
+        // @todo Change match to use match *stmt instead of stmt
+        // @todo Or change to Rc wraps instead of cloning, to minimize memory used and data duplication
+        //
         // Wrap match expression in Ok variant instead of wrapping Value options with Ok variant in every arm
         // Err option inside match expression cannot evaluate and return implicitly due to the Ok wrapping,
         // thus it needs to be explicitly returned to break out of this Ok variant wrapping.
@@ -141,12 +144,19 @@ impl Interpreter {
             // Create a new Value of Function type and insert into environment
             Stmt::Func(ref name_token, _, _) => {
                 if let Some(Literal::String(ref function_name)) = name_token.literal {
-                    // @todo
-                    // Change match to use match *stmt instead of stmt
-                    // Change to Rc wraped instead of cloning like this, to minimize memory used and data duplication
                     //
                     // Pass in current environment/scope as the function's closure
                     // closure is defined during function definition
+                    // Current environment is passed to Function's constructor as its closure (closures created at function definition)
+                    //
+                    // Closure environment is defined now, before function itself is saved into the environment,
+                    // But the function can still call itself recursively because the function holds a reference to the environment,
+                    // Which in the next line is modified to save the function itself.
+                    //
+                    // At the same time this does not cause certain reference issues/bugs where a local identifier mess up access
+                    // Because the resolver pass already assigned a scope distance to every single identifier,
+                    // So even if current environment is modified, the same identifier will still be used, using scope distance value stored in the AST
+                    // Reference: https://craftinginterpreters.com/resolving-and-binding.html#static-scope
                     let func =
                         Value::Func(Rc::new(Function::new(stmt.clone(), Rc::clone(&self.env))));
 

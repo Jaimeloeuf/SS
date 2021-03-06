@@ -1,5 +1,3 @@
-// Enum with all the possible variants of a Value object in SS as a dynamically typed language
-
 use crate::callables::Callable;
 use crate::environment::environment::Environment;
 use crate::interpreter::error::RuntimeError;
@@ -21,8 +19,7 @@ use std::rc::Rc;
 pub struct Function {
     declaration: Stmt,
 
-    // This is the env surrounding the function definition...
-    // NOT THE ENV surrounding the function call
+    // This is the env surrounding the function definition NOT THE ENV surrounding the function call
     closure: Rc<RefCell<Environment>>,
 }
 
@@ -31,10 +28,10 @@ impl Function {
         Function {
             declaration: statement,
 
-            // @todo Alternative create a new environment/scope on every new value declaration
-            // closure environment/scope is created on function definition, not runtime
-            // So when function is defined with Function::new, freeze closure environment by cloning the current environment
-            closure: Rc::new(RefCell::new((*closure).borrow().clone_env())),
+            // Right now closure is simply a pointer to the environment when Function created,
+            // and identifiers are accessed with scope distance value so we dont need to freeze this environment to prevent modification
+            // Alternative is to either freeze current environment at runtime, or create a new environment on every value declaration
+            closure,
         }
     }
 }
