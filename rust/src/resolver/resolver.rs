@@ -97,7 +97,7 @@ impl Resolver {
     fn resolve_expression(&self, expr: &Expr) -> Result<(), ResolvingError> {
         match *expr {
             Expr::Const(ref token, ref distance_value_in_ast_node) => {
-                let distance = self.resolve_local(token)?;
+                let distance = self.resolve_identifier_distance(token)?;
             }
             Expr::Binary(ref left, _, ref right) => {
                 self.resolve_expression(left)?;
@@ -130,7 +130,7 @@ impl Resolver {
             // }
             // Expr::Assign(ref token, ref  expr, ref  distance) => {
             //     self.resolve_expression(expr)?;
-            //     *distance = self.resolve_local(token.lexeme.clone());
+            //     *distance = self.resolve_identifier_distance(token.lexeme.clone());
             // }
 
             // @todo
@@ -145,8 +145,14 @@ impl Resolver {
     //
     // This will go up through all the scopes looking for the identifier's "declaration"
     // If the definition is still not found after reaching the global scope, return an Undefined Identifier error
-    fn resolve_local(&self, token: &Token) -> Result<usize, ResolvingError> {
+    fn resolve_identifier_distance(&self, token: &Token) -> Result<usize, ResolvingError> {
         let identifier = token.lexeme.as_ref().unwrap().clone();
+
+        // Simple optimization, as identifiers are usually defined in the same scope more often than not
+        // Ok to unwrap, as 'scopes' vector will never be empty in this method as global scope only deleted in resolver::resolve()
+        if self.scopes.last().unwrap().contains_key(&identifier) {
+            return Ok(0);
+        }
 
         for (i, scope) in self.scopes.iter().rev().enumerate() {
             if scope.contains_key(&identifier) {
