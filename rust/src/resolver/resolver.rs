@@ -76,10 +76,9 @@ impl Resolver {
             }
             Stmt::Print(ref expr) => self.resolve_expression(expr)?,
             Stmt::Return(ref token, ref expr) => {
-                // If not in any function
-                // Not in block
+                // If not in any function, return statements are not allowed
                 if !self.in_function {
-                    return Err(ResolvingError::ToplevelReturn(token.clone()));
+                    return Err(ResolvingError::ReturnOutsideFunction(token.clone()));
                 }
 
                 self.resolve_expression(expr)?;

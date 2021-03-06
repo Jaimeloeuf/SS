@@ -4,7 +4,7 @@ use crate::token::Token;
 pub enum ResolvingError {
     UndefinedIdentifier(Token),
     IdentifierAlreadyUsed(Token, String),
-    ToplevelReturn(Token),
+    ReturnOutsideFunction(Token),
 }
 
 impl std::fmt::Display for ResolvingError {
@@ -21,7 +21,7 @@ impl std::fmt::Display for ResolvingError {
                 "[line {}] Identifier '{}' cannot be reused, identifiers must be unique",
                 token.line, identifier
             ),
-            ResolvingError::ToplevelReturn(ref token) => write!(
+            ResolvingError::ReturnOutsideFunction(ref token) => write!(
                 f,
                 "[line {}] Cannot use `return` outside a function",
                 token.line

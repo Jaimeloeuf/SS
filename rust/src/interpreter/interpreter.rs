@@ -93,11 +93,24 @@ impl Interpreter {
                 if let Some(Value::Return(_)) = return_value {
                     break;
                 }
+
+                // return_value = None;
+                // If it is not a return value set return value to None if we want it to be cleaner.
+                // Because whatever is set in 'return_value' will be returned, and will be effectively treated as the return value of a block statement
+                //
+                // BUT, since we do not allow any return statement outside of function body, and error out in the resolver if there it,
+                // Technically situations like this will not arise, so it is fine to skip resetting the value to None.
+                // Optimizing it by skipping the assignment for clearing it as we simply wont use any value returned.
             }
 
             // If we allowed implicit returns...
             // We shouldnt make last statement be the implicit return,
             // Only if last statement is an expression can it be an implicit return...
+            //
+            // Should probably only allow this in single line anonymous functions ->  [1, 2, 3].map(x => x * 2);
+            // But can we possibly just make that syntatic sugar and desugar it to be map(function(x) { return x * 2; })
+            // In this case, if we desugar it, we still dont actually need implicit returns
+            //
             // if "stmt is last stmt of block" && return_value.is_some() {
             //     break;
             // }
@@ -239,7 +252,7 @@ impl Interpreter {
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
                 // Which only happens if parser failed to save String literal for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                if let Literal::String(ref identifier) = token.literal.as_ref().unwrap() {
+                if let Some(Literal::String(ref identifier)) = token.literal {
                     // @todo This should be done in scanner/parser and not be a RuntimeError
                     // Check if the Const identifier has already been used in current scope
                     if self.env.borrow().in_current_scope(identifier) {
