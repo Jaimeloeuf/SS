@@ -83,18 +83,44 @@ impl Environment {
     }
 
     // Basic access methods that return values wrapped in option variant
-    pub fn get(&self, key: &String) -> Option<Value> {
-        // Get value from values hashmap, if not found, recursively get value from the enclosing environment/scope till global environment
-        // @todo Optimize by iteratively walking up the scope chain instead of recursively
+    // pub fn get(&self, key: &String) -> Option<Value> {
+    //     // Get value from values hashmap, if not found, recursively get value from the enclosing environment/scope till global environment
+    //     // @todo Optimize by iteratively walking up the scope chain instead of recursively
+    //     match self.values.get(key) {
+    //         // @todo Not sure if this is right, but we return a Clone Value every time so that the original value still stays in the hashmap
+    //         // @todo Values should be Rc<Value> instead so we can just Rc::clone() it instead of doing a full clone
+    //         Some(value) => Some(value.clone()),
+    //         None => match &self.enclosing {
+    //             Some(enclosing) => enclosing.borrow().get(key),
+    //             None => None,
+    //         },
+    //     }
+    // }
+
+    // Private method used by 'get' to get value from within current environment/scope
+    fn get_from_current_env(&self, key: &String) -> Result<Value, EnvironmentError> {
         match self.values.get(key) {
-            // @todo Not sure if this is right, but we return a Clone Value every time so that the original value still stays in the hashmap
-            // @todo Values should be Rc<Value> instead so we can just Rc::clone() it instead of doing a full clone
-            Some(value) => Some(value.clone()),
-            None => match &self.enclosing {
-                Some(enclosing) => enclosing.borrow().get(key),
-                None => None,
-            },
+            Some(value) => Ok(value.clone()),
+            None => Err(EnvironmentError::UndefinedVariable(key.clone())),
         }
+    }
+
+    pub fn get(&self, key: &String, distance: usize) -> Result<Value, EnvironmentError> {
+        if distance == 0 {
+            // If identifier is in current scope as assigned by the resolver
+            self.get_from_current_env(key)
+        } else {
+            // Else get environment identifier is defined in to get value
+            self.get_scope(distance).borrow().get_from_current_env(key)
+        }
+    }
+
+    fn get_scope(&self, distance: usize) -> Rc<RefCell<Environment>> {
+        let mut environment = self.enclosing.unwrap().clone();
+        for _ in 1..distance {
+            environment = environment.borrow().enclosing.unwrap().clone();
+        }
+        environment
     }
 
     // Basic access methods that return values wrapped in option variant

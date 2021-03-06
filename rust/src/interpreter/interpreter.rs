@@ -334,7 +334,7 @@ impl Interpreter {
             // Right now, all identifiers are parsed into Expr::Const variants, and the variant name does not adequately describe it
             // Because all Value identifiers, including Const and function identifiers are all parsed into Expr::Const
             // So unless we change this to Expr::Identifier / Expr::Value or we change the definition of Expr::Const, to one that points to all identifiers
-            Expr::Const(ref token, ref _distance) => {
+            Expr::Const(ref token, ref distance) => {
                 // Although the token definitely have a literal string variant if parsed correctly,
                 // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
                 // Which only happens if parser failed to save String literal for Identifier type Token
@@ -346,12 +346,13 @@ impl Interpreter {
                     // But that would require changing the method's return type
                     // Should we even move out a Value in the first place? Shouldnt all the values be immutable?
                     // Or perhaps return a mutable ref from env hashmap and every modification is made directly on the hashmap without needing additional update logic?
-                    match self.env.borrow().get(identifier) {
-                        Some(value) => Ok(value),
+                    match self.env.borrow().get(identifier, *distance) {
+                        Ok(value) => Ok(value),
                         // @todo When not found, should it be an environment error or runtime error?
                         // Technically should be Runtime error, because it is caused by the user using a invalid identifier
                         // Environment errors are reserved for when there is a valid identifier but not found in environment
-                        None => Err(RuntimeError::UndefinedIdentifier(
+                        // Transform the error to RuntimeError --> This should be an internal problem right?
+                        Err(e) => Err(RuntimeError::UndefinedIdentifier(
                             token.line,
                             identifier.clone(),
                         )),
