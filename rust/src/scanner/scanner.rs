@@ -120,8 +120,9 @@ impl Scanner {
 
             // Inline Comment, a comment that goes until the end of the line.
             '/' if self.conditional_advance('/') => {
+                // @todo Need a faster way to do this as too slow now
                 while self.peek() != '\n' && !self.is_at_end() {
-                    self.advance();
+                    self.current += 1;
                 }
 
                 /* Optimization:
@@ -134,7 +135,7 @@ impl Scanner {
                    since we cannot increment line number before the caller of this function saves the token with the current line number
                 */
                 if self.peek() == '\n' {
-                    self.advance();
+                    self.current += 1;
                     self.line += 1;
                 }
 
@@ -150,9 +151,9 @@ impl Scanner {
                     }
                 }
 
-                // Advance 2 more times to eat the ending star and slash characters.
-                self.advance();
-                self.advance();
+                // Advance current character pointer 2 more times to eat the ending star and slash characters.
+                self.current += 1;
+                self.current += 1;
 
                 /* Optimization:
                    Technically this is not needed, because if the next character is a new line,
@@ -164,7 +165,7 @@ impl Scanner {
                    since we cannot increment line number before the caller of this function saves the token with the current line number
                 */
                 if self.peek() == '\n' {
-                    self.advance();
+                    self.current += 1;
                     self.line += 1;
                 }
 
@@ -203,7 +204,7 @@ impl Scanner {
                 self.line += 1;
             }
 
-            self.advance();
+            self.current += 1;
         }
 
         // @todo Throw error here, something like SS.error(line, "Unterminated string.");
@@ -212,8 +213,8 @@ impl Scanner {
             return "".to_string(); // @todo Fix this... I need this to return smth, but shouldnt cos this should just error out
         }
 
-        // The closing double quote "
-        self.advance();
+        // Skip the closing double quote "
+        self.current += 1;
 
         // Trim surrounding quotes and only return the actual string content
         self.source[self.start + 1..self.current - 1].to_string()
@@ -223,16 +224,16 @@ impl Scanner {
     // A new string is created and returned instead of a slice as we do not want to move the characters out from self
     fn number_literal(&mut self) -> String {
         while self.peek().is_ascii_digit() {
-            self.advance();
+            self.current += 1;
         }
 
         // Look for a fractional part "."
         if self.peek() == '.' && self.peek_next().is_ascii_digit() {
             // Consume fractional notation "."
-            self.advance();
+            self.current += 1;
 
             while self.peek().is_ascii_digit() {
-                self.advance();
+                self.current += 1;
             }
         }
 
@@ -246,7 +247,7 @@ impl Scanner {
         // See link for the list of supported alphanumeric characters
         // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
         while self.peek().is_alphanumeric() {
-            self.advance();
+            self.current += 1;
         }
 
         self.source[self.start..self.current].to_string()
