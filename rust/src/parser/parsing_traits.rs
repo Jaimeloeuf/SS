@@ -418,8 +418,8 @@ impl Parser {
             // Clone first then unwrap, since unwrap consumes the self value
             Ok(Expr::Literal(self.previous().literal.clone().unwrap()))
         } else if self.is_next_token(TokenType::Identifier) {
-            // @todo Default "distance" is None
-            Ok(Expr::Const(self.previous().clone(), None))
+            // Default "distance" is 0, as this value will be set by the resolver
+            Ok(Expr::Const(self.previous().clone(), 0))
         } else if self.is_next_token(TokenType::LeftParen) {
             let expr = self.expression()?;
 

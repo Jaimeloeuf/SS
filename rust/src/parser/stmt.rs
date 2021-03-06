@@ -2,6 +2,8 @@ use super::expr::Expr;
 use crate::token::Token;
 
 // Stmts causes side effects or do something, they usually do not evaluate to a Value enum variant
+// Some stmts like Return and Block can evaluate to a Value enum variant
+//
 // Using box to handle this Recursive type with nested Expression variants
 // Inherits Clone trait for now because we want multiple code to own Stmt, so the easiest way right now is to clone it ...
 // Might be able to do away with Clone trait if all use of Stmt is wrapped in Rc in the future

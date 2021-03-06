@@ -17,7 +17,8 @@ pub enum Expr {
 
     // Expressions that saves other expressions/values into the runtime environment identified by a Const's identifier
     // Evaluates to the value
-    Const(Token, Option<usize>),
+    // Const(Token, Option<usize>),
+    Const(Token, usize),
 
     // Expressions that assign other expressions/values to a variable
     Assign(Token, Box<Expr>, Option<usize>),
@@ -27,11 +28,11 @@ pub enum Expr {
 
     // Function calls are also expressions that evaluates to a Value
     Call(Box<Expr>, Vec<Expr>, Token),
-
-    Get(Box<Expr>, Token),
-    Set(Box<Expr>, Token, Box<Expr>),
-    This(Token, Option<usize>),
-    Super(Token, Token, Option<usize>),
+    //
+    // Get(Box<Expr>, Token),
+    // Set(Box<Expr>, Token, Box<Expr>),
+    // This(Token, Option<usize>),
+    // Super(Token, Token, Option<usize>),
 }
 
 // Temporary display trait for debugging
@@ -52,9 +53,9 @@ impl std::fmt::Display for Expr {
             Expr::Call(ref callee, ref arguments, _) => {
                 write!(f, "(call {} {:?})", callee, arguments)
             }
-            Expr::Get(ref expr, ref token) => write!(f, "(get {} {})", token, expr),
-            Expr::Set(ref expr, ref token, _) => write!(f, "(set {} {})", token, expr),
 
+            // Expr::Get(ref expr, ref token) => write!(f, "(get {} {})", token, expr),
+            // Expr::Set(ref expr, ref token, _) => write!(f, "(set {} {})", token, expr),
             // Expr::This(_, _) => write!(f, "this"),
             // Expr::Super(_, ref method, _) => write!(f, "(super {})", method.lexeme),
             _ => write!(f, "Unimplemented display trait for Expr: {:?}", self),
