@@ -168,9 +168,14 @@ impl Resolver {
             return Ok(0);
         }
 
-        for (i, scope) in self.scopes.iter().rev().enumerate() {
+        // Convert scopes vector into Iter type and reverse it to traverse up from local scope all the way to top level global scope
+        // Skip the first scope, which is the local scope since we already check the local scope in the if statement above.
+        // Then enumerate it to get both the scope and the index (which is the number of scopes from current local scope)
+        for (i, ref scope) in self.scopes.iter().rev().skip(1).enumerate() {
             if scope.contains_key(&identifier) {
-                return Ok(i);
+                // Return 'i + 1', instead of 'i', because we skipped the first one, but i still starts from 0
+                // Where scope distance of 0, means current local scope.
+                return Ok(i + 1);
             }
         }
 
