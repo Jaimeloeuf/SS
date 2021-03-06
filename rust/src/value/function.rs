@@ -86,8 +86,8 @@ impl Callable for Function {
         mut arguements: Vec<Value>,
     ) -> Result<Value, RuntimeError> {
         // Destructure out Stmt::Function items to use
-        let (name_token, parameters, body) = match &self.declaration {
-            Stmt::Func(ref name_token, ref parameters, ref body) => (name_token, parameters, body),
+        let (parameters, body) = match &self.declaration {
+            Stmt::Func(_, ref parameters, ref body) => (parameters, body),
             unmatched_stmt_variant => {
                 // @todo Remove use of debug printing once stmt implements Display trait
                 return Err(RuntimeError::InternalError(format!(

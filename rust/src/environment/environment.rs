@@ -87,7 +87,7 @@ impl Environment {
     fn get_from_current_env(&self, key: &String) -> Result<Value, EnvironmentError> {
         match self.values.get(key) {
             Some(value) => Ok(value.clone()),
-            None => Err(EnvironmentError::UndefinedVariable(key.clone())),
+            None => Err(EnvironmentError::UndefinedIdentifier(key.clone())),
         }
     }
 
@@ -124,7 +124,7 @@ impl Environment {
             // None is dealt with here so the caller can chain this
             // Reason is also because the call produces an error type of NoneError if we use the ? operator,
             // so we have to convert it to EnvironmentError to match caller's type signature (RuntimeError)
-            None => Err(EnvironmentError::UndefinedVariable(key.clone())),
+            None => Err(EnvironmentError::UndefinedIdentifier(key.clone())),
         }
     }
 
@@ -136,7 +136,7 @@ impl Environment {
             // None is dealt with here so the caller can chain this
             // Reason is also because the call produces an error type of NoneError if we use the ? operator,
             // so we have to convert it to EnvironmentError to match caller's type signature (RuntimeError)
-            None => Err(EnvironmentError::UndefinedVariable(key.clone())),
+            None => Err(EnvironmentError::UndefinedIdentifier(key.clone())),
         }
     }
 
