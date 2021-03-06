@@ -98,6 +98,20 @@ impl Resolver {
         match *expr {
             Expr::Const(ref token, ref distance_value_in_ast_node) => {
                 let distance = self.resolve_identifier_distance(token)?;
+
+                // @todo UNSAFE WAY used temporarily for testing! See alternatives below
+                unsafe {
+                    let mutable_pointer = distance_value_in_ast_node as *const usize as *mut usize;
+                    *mutable_pointer = distance;
+                }
+                // Alternative 1 is to call resolve_expression with mut reference to the expression
+                // *distance_value_in_ast_node = self.resolve_identifier_distance(token.lexeme.as_ref().unwrap().clone());
+
+                // Alternative 2 is to save distance value into a side table instead of saving directly into the AST node
+                // Problem with this is we cannot have identifiers of the same name, even in different scopes if using identifier string as key
+                // Perhaps use the string and line number? But this will prevent minification....
+                // let identifier = token.lexeme.as_ref().unwrap();
+                // side_table.insert(identifier.clone(), self.resolve_identifier_distance(identifier.clone()));
             }
             Expr::Binary(ref left, _, ref right) => {
                 self.resolve_expression(left)?;
