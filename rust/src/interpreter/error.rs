@@ -62,8 +62,9 @@ impl std::fmt::Display for RuntimeError {
             RuntimeError::TypeError(ref message) => write!(f, "{}", message),
             RuntimeError::ConditionTypeError(ref message) => write!(f, "{}", message),
 
+            // @todo DELETE THIS, should be caught by resolver already?? Would there be cases where this is not caught?
             RuntimeError::UndefinedIdentifier(ref line_number,identifier) => {
-                write!(f, "[line {}] ReferenceError: Tried to use undefined identifier '{}'", line_number,identifier)
+                write!(f, "[line {}] ReferenceError: Tried to use undefined identifier '{}'", line_number, identifier)
             }
 
             RuntimeError::ValueAlreadyDefined(ref identifier) => {

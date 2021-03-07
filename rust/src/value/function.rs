@@ -35,33 +35,33 @@ impl Function {
 
 impl Callable for Function {
     fn to_string(&self) -> String {
-        let name_token = match &self.declaration {
-            Stmt::Func(ref name_token, _, _) => name_token,
-            unmatched_stmt_variant => {
-                // @todo Remove use of debug printing once stmt implements Display trait
-                // return Err(RuntimeError::InternalError(format!(
-                //     "Function must be Stmt::Func, found: {:?}",
-                //     unmatched_stmt_variant,
-                // )));
-                panic!(format!(
-                    "Function must be Stmt::Func, found: {:?}",
-                    unmatched_stmt_variant,
-                ))
+        if let Stmt::Func(ref name_token, _, _) = &self.declaration {
+            if let Some(function_identifier) = name_token.lexeme.as_ref() {
+                // Function type is 'ss' to indicate that the function is defined in SS instead of native code.
+                // So both user defined functions and standard library in SS will both be in this category
+                format!("ss: {}", function_identifier.to_string())
+            } else {
+                panic!("InternalError: Function token missing string identifier...?!?")
             }
-        };
-
-        if let Some(function_identifier) = name_token.lexeme.as_ref() {
-            // Function type is 'ss' to indicate that the function is defined in SS instead of native code.
-            // So both user defined functions and standard library in SS will both be in this category
-            format!("ss: {}", function_identifier.to_string())
+        } else if let Stmt::AnonymousFunc(_, _) = &self.declaration {
+            format!("ss: [anonymous]")
         } else {
-            panic!("InternalError: Function token missing string identifier...?!?")
+            // @todo Remove use of debug printing once stmt implements Display trait
+            // return Err(RuntimeError::InternalError(format!(
+            //     "Function must be Stmt::Func, found: {:?}",
+            //     unmatched_stmt_variant,
+            // )));
+            panic!(format!(
+                "Function must be Stmt::Func, found: {:?}",
+                self.declaration,
+            ))
         }
     }
 
     fn arity(&self) -> Result<usize, RuntimeError> {
         match &self.declaration {
             Stmt::Func(_, ref parameters, _) => Ok(parameters.len()),
+            Stmt::AnonymousFunc(ref parameters, _) => Ok(parameters.len()),
             unmatched_stmt_variant => {
                 Err(RuntimeError::InternalError(format!(
                     "Function must be Stmt::Func, found: {:?}", // @todo Remove use of debug printing once stmt implements Display trait
@@ -80,6 +80,7 @@ impl Callable for Function {
         // Destructure out Stmt::Function items to use
         let (parameters, body) = match &self.declaration {
             Stmt::Func(_, ref parameters, ref body) => (parameters, body),
+            Stmt::AnonymousFunc(ref parameters, ref body) => (parameters, body),
             unmatched_stmt_variant => {
                 // @todo Remove use of debug printing once stmt implements Display trait
                 return Err(RuntimeError::InternalError(format!(

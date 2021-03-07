@@ -358,6 +358,17 @@ impl Interpreter {
                 callable.call(self, evaluated_arguments)
             }
 
+            // Anonymous Functions are stored as an expression,
+            // This expression when evaluated will create a new Function and return it within a Value::Func variant directly.
+            // In essence Anonymous functions are implemented as Expressions that evaluate to a Value::Func type.
+            //
+            // This is usually called by Expr::Call's self.interpret_expr(callee) where it expects a Value::Func
+            // The returned Value::Func is also stored in new function environment when this is used as a function argument
+            Expr::AnonymousFunc(ref stmt) => Ok(Value::Func(Rc::new(Function::new(
+                *stmt.clone(),
+                Rc::clone(&self.env),
+            )))),
+
             // A Const expression evaluates to the value stored in the environment identified by the Const's identifier
             // Distance is not implemented for now
             // @todo

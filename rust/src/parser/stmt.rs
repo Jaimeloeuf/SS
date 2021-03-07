@@ -21,7 +21,11 @@ pub enum Stmt {
 
     While(Expr, Box<Stmt>),
 
+    // The only difference between Func and AnonymousFunc is that AnonymousFunc dont have the name token
+    // AnonymousFunc will be wrapped in the Expr::AnonymousFunc variant since it is treated as an expression
     Func(Token, Vec<Token>, Box<Stmt>),
+    AnonymousFunc(Vec<Token>, Box<Stmt>),
+
     // Class(Token, Option<Expr>, Vec<Stmt>),
 
     // Return stmt is a special stmt variant that will be evaluated to a Value variant
@@ -50,6 +54,9 @@ impl std::fmt::Display for Stmt {
                     parameters,
                     body
                 )
+            }
+            Stmt::AnonymousFunc(ref parameters, ref body) => {
+                write!(f, "(funcall [anonymous] {:?} {})", parameters, body)
             }
             Stmt::Return(_, ref expr) => {
                 write!(f, "(return {})", expr)

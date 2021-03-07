@@ -1,6 +1,8 @@
 use crate::literal::Literal;
 use crate::token::Token;
 
+use super::stmt::Stmt;
+
 // @todo Add lifetimes to make Literal a ref instead of owning it, so that we dont have to clone it in parsing_trait
 // Right now all the operators are cloned tokens, that are passed in here...
 // All expressions can be evaluated to a Value enum variant
@@ -19,6 +21,9 @@ pub enum Expr {
     // Evaluates to the value
     // Const(Token, Option<usize>),
     Const(Token, usize),
+
+    // Expression to wrap around a Stmt::AnonymousFunc variant as anonymous functions are expressions
+    AnonymousFunc(Box<Stmt>),
 
     // Expressions that assign other expressions/values to a variable
     Assign(Token, Box<Expr>, Option<usize>),
@@ -46,6 +51,7 @@ impl std::fmt::Display for Expr {
             Expr::Grouping(ref expr) => write!(f, "(group {})", expr),
             Expr::Unary(ref operator, ref expr) => write!(f, "({} {})", operator, expr),
             Expr::Const(ref token, _) => write!(f, "(Const {})", token),
+            Expr::AnonymousFunc(ref stmt) => write!(f, "(AnonymousFunction {})", stmt),
             Expr::Assign(ref token, ref expr, _) => write!(f, "(assign {} {})", token, expr),
             Expr::Logical(ref left, ref operator, ref right) => {
                 write!(f, "({} {} {})", operator, left, right)

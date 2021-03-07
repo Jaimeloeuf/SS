@@ -67,6 +67,10 @@ impl Resolver {
                 self.declare_and_define(token)?;
                 self.resolve_function(params, body)?;
             }
+            Stmt::AnonymousFunc(ref params, ref body) => {
+                // Unlike Stmt::Func, dont need to declare and define since Anonymous Functions are nameless, and will be bound to a Const identifier
+                self.resolve_function(params, body)?;
+            }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
                 self.resolve_expression(condition)?;
                 self.resolve_statement(then_branch)?;
@@ -93,7 +97,7 @@ impl Resolver {
         })
     }
 
-    fn resolve_expression(&self, expr: &Expr) -> Result<(), ResolvingError> {
+    fn resolve_expression(&mut self, expr: &Expr) -> Result<(), ResolvingError> {
         match *expr {
             Expr::Const(ref token, ref distance_value_in_ast_node) => {
                 let distance = self.resolve_identifier_distance(token)?;
@@ -111,6 +115,10 @@ impl Resolver {
                 // Perhaps use the string and line number? But this will prevent minification....
                 // let identifier = token.lexeme.as_ref().unwrap();
                 // side_table.insert(identifier.clone(), self.resolve_identifier_distance(identifier.clone()));
+            }
+            Expr::AnonymousFunc(ref stmt) => {
+                // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use resolve_statement to handle Stmt::AnonymousFunc
+                self.resolve_statement(stmt)?;
             }
             Expr::Binary(ref left, _, ref right) => {
                 self.resolve_expression(left)?;

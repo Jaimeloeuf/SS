@@ -64,20 +64,10 @@ impl Parser {
         }
     }
 
-    // @todo
-    // Check if name already exists... which means I need to check the scope....
-    // Too diff to do in this parser right now.... will think of something else later on.
     fn const_declaration(&mut self) -> Result<Stmt, ParsingError> {
         let name = self.consume(TokenType::Identifier, "Expected name for constant")?;
         // @todo Will fail without this clone???? cannot even clone later????
         let name = name.clone();
-
-        // Implementation with Nulls
-        // let initial_value = if self.is_next_token(TokenType::Equal) {
-        //     self.expression()?
-        // } else {
-        //     Expr::Literal(Literal::Null)
-        // };
 
         if self.is_next_token(TokenType::Equal) {
             let initial_value = self.expression()?;
@@ -88,7 +78,7 @@ impl Parser {
             // Err if missing Equal token
             Err(ParsingError::UnexpectedTokenError(
                 self.current().clone(),
-                "Expected 'Equal' token for assignment after 'const' keyword",
+                "Expected 'Equal' token for assignment after const keyword's identifier",
             ))
         }
     }
@@ -99,43 +89,13 @@ impl Parser {
 
         self.consume(
             TokenType::LeftParen,
-            // "Expect '(' after function name'",
+            // "Expect '(' after function name",
             // Makes String into &'static str by LEAKING THE MEMORY!!! --> https://stackoverflow.com/a/30527289/13137262
             Box::leak(format!("Expect '(' after function name '{}'", name).into_boxed_str()),
         )?;
 
         // Get the vector of parameters of the function
-        // @todo Maybe use Vec<&Token> instead so dont have to clone every token
-        let parameters: Vec<Token> = if self.check(TokenType::RightParen) {
-            // @todo Is this even neccessary? It would be simpler if just always use the "else block"
-            // If function parameter closed with no parameters, return a Vec with 0 capacity to not allocate any memory
-            Vec::with_capacity(0)
-        } else {
-            // Else create a temporary vector to collect all the parameters before returning it
-            let mut _parameters: Vec<Token> = Vec::new();
-
-            // Do while loop
-            _parameters.push(
-                self.consume(TokenType::Identifier, "Expected parameter name")?
-                    .clone(),
-            );
-            while self.is_next_token(TokenType::Comma) {
-                if _parameters.len() >= 8 {
-                    // @todo The reference interpreter doesn't bail on this error,
-                    // it keeps on parsing but reports it.
-                    // Warning instead?
-                    return Err(ParsingError::TooManyParametersError);
-                }
-
-                // _parameters.push(self.consume(TokenType::Identifier, "Expected parameter name")?)
-                _parameters.push(
-                    self.consume(TokenType::Identifier, "Expected parameter name")?
-                        .clone(),
-                );
-            }
-
-            _parameters
-        };
+        let parameters: Vec<Token> = self.parameters()?;
 
         self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
 
@@ -404,10 +364,15 @@ impl Parser {
         Ok(Expr::Call(Box::new(callee), arguments, parenthesis.clone()))
     }
 
+    // Primary expressions
+    // Check for Identifier then Literal values True/False/Null then Strings/Numbers then Anonymous functions before moving on to grouped expressions
+    // @todo Boolean types can we still be represented using TokenType, so should literal Bool values be used?
     fn primary(&mut self) -> Result<Expr, ParsingError> {
-        // Check for Literal values True/False/Null first before moving on to Identifier/Strings/Numbers and lastly grouped expressions
-        // @todo Boolean types can we still be represented using TokenType, so should literal Bool values be used?
-        if self.is_next_token(TokenType::True) {
+        if self.is_next_token(TokenType::Identifier) {
+            // Default "distance" is 0, as this value will be set by the resolver
+            // @todo Move it out instead of cloning
+            Ok(Expr::Const(self.previous().clone(), 0))
+        } else if self.is_next_token(TokenType::True) {
             Ok(Expr::Literal(Literal::Bool(true)))
         } else if self.is_next_token(TokenType::False) {
             Ok(Expr::Literal(Literal::Bool(false)))
@@ -416,10 +381,30 @@ impl Parser {
         } else if self.is_next_token_any_of_these(vec![TokenType::Str, TokenType::Number]) {
             // Need to clone because self.previous returns immutable ref to the Token, thus we cannot move out the literal
             // Clone first then unwrap, since unwrap consumes the self value
+            // @todo Move the literal value out instead of cloning it
             Ok(Expr::Literal(self.previous().literal.clone().unwrap()))
-        } else if self.is_next_token(TokenType::Identifier) {
-            // Default "distance" is 0, as this value will be set by the resolver
-            Ok(Expr::Const(self.previous().clone(), 0))
+        } else if self.is_next_token(TokenType::Function) {
+            // Anonymous function type 'function() { ... }'
+            self.consume(
+                TokenType::LeftParen,
+                "Expect '(' after function keyword for anonymous functions",
+            )?;
+
+            // Get the vector of parameters of the function
+            let parameters: Vec<Token> = self.parameters()?;
+
+            self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
+            self.consume(
+                TokenType::LeftBrace,
+                "Expect '{' before anonymous function body.",
+            )?;
+
+            // Just like named functions, parse function body as a block statement
+            let body = self.block_statement()?;
+            Ok(Expr::AnonymousFunc(Box::new(Stmt::AnonymousFunc(
+                parameters,
+                Box::new(body),
+            ))))
         } else if self.is_next_token(TokenType::LeftParen) {
             let expr = self.expression()?;
 
@@ -437,6 +422,33 @@ impl Parser {
                 "Invalid token found while parsing expression",
             ))
         }
+    }
+
+    // @todo Maybe use Vec<&Token> instead so dont have to clone every token once lifetime specifiers are added to Stmt
+    // Method to parse function parameters only. Works for all types of functions
+    fn parameters(&mut self) -> Result<Vec<Token>, ParsingError> {
+        // Get the vector of parameters of the function
+        Ok(if self.check(TokenType::RightParen) {
+            // If function parameter closed with no parameters, return a Vec with 0 capacity to not allocate any memory
+            Vec::with_capacity(0)
+        } else {
+            // Else create temporary vector to collect all parameters before returning it
+            let mut parameters: Vec<Token> = Vec::new();
+
+            // Do while loop
+            parameters.push(
+                self.consume(TokenType::Identifier, "Expected parameter name")?
+                    .clone(),
+            );
+            while self.is_next_token(TokenType::Comma) {
+                parameters.push(
+                    self.consume(TokenType::Identifier, "Expected parameter name")?
+                        .clone(),
+                );
+            }
+
+            parameters
+        })
     }
 
     // Synchronize the tokens to approx the next valid token
