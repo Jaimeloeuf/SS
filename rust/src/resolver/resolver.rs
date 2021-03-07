@@ -206,6 +206,8 @@ impl Resolver {
             self.declare_and_define(token)?;
         }
 
+        // Body must be a block statement, even for anonymous arrow functions
+        // arrow functions is just syntatic sugar in this implementation, so they are actually also parsed into block statements
         match body {
             &Stmt::Block(ref stmts) => {
                 for stmt in stmts {
@@ -213,8 +215,11 @@ impl Resolver {
                 }
             }
 
-            // @todo Really? What if we want to support single expression anonymous functions?
-            _ => panic!("Function body can only be Stmt::Block"),
+            _ => {
+                return Err(ResolvingError::InternalError(
+                    "Function body can only be Stmt::Block",
+                ))
+            }
         }
 
         self.end_scope();

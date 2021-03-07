@@ -87,17 +87,11 @@ impl Parser {
         let name = self.consume(TokenType::Identifier, "Expected name for function")?;
         let name = name.clone();
 
-        self.consume(
-            TokenType::LeftParen,
-            // "Expect '(' after function name",
-            // Makes String into &'static str by LEAKING THE MEMORY!!! --> https://stackoverflow.com/a/30527289/13137262
+        // Get the function parameters
+        let parameters: Vec<Token> = self.parameters(
+            // @todo Makes String into &'static str by LEAKING THE MEMORY!!! --> https://stackoverflow.com/a/30527289/13137262
             Box::leak(format!("Expect '(' after function name '{}'", name).into_boxed_str()),
         )?;
-
-        // Get the vector of parameters of the function
-        let parameters: Vec<Token> = self.parameters()?;
-
-        self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
 
         // Wording might just not be function body if we support methods too
         self.consume(TokenType::LeftBrace, "Expected '{' before function body.")?;
@@ -384,19 +378,15 @@ impl Parser {
             // @todo Move the literal value out instead of cloning it
             Ok(Expr::Literal(self.previous().literal.clone().unwrap()))
         } else if self.is_next_token(TokenType::Function) {
-            // Anonymous function type 'function() { ... }'
-            self.consume(
-                TokenType::LeftParen,
-                "Expect '(' after function keyword for anonymous functions",
-            )?;
+            // Parse for Anonymous block function type 'function() { ... }'
 
-            // Get the vector of parameters of the function
-            let parameters: Vec<Token> = self.parameters()?;
+            // Get the function parameters
+            let parameters: Vec<Token> =
+                self.parameters("Expect '(' after function keyword for anonymous functions")?;
 
-            self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
             self.consume(
                 TokenType::LeftBrace,
-                "Expect '{' before anonymous function body.",
+                "Expect '{' before anonymous block function body.",
             )?;
 
             // Just like named functions, parse function body as a block statement
@@ -426,29 +416,43 @@ impl Parser {
 
     // @todo Maybe use Vec<&Token> instead so dont have to clone every token once lifetime specifiers are added to Stmt
     // Method to parse function parameters only. Works for all types of functions
-    fn parameters(&mut self) -> Result<Vec<Token>, ParsingError> {
+    // Caller to pass in error message to display if TokenType::LeftParen is not found at the beginning of expected parameter expression
+    fn parameters(
+        &mut self,
+        missing_left_paren_error: &'static str,
+    ) -> Result<Vec<Token>, ParsingError> {
+        // Use caller provided string as different types of functions will pass in different error messages
+        self.consume(TokenType::LeftParen, missing_left_paren_error)?;
+
         // Get the vector of parameters of the function
-        Ok(if self.check(TokenType::RightParen) {
+        let parameters = if self.check(TokenType::RightParen) {
             // If function parameter closed with no parameters, return a Vec with 0 capacity to not allocate any memory
             Vec::with_capacity(0)
         } else {
             // Else create temporary vector to collect all parameters before returning it
-            let mut parameters: Vec<Token> = Vec::new();
+            let mut _parameters: Vec<Token> = Vec::new();
 
             // Do while loop
-            parameters.push(
+            _parameters.push(
                 self.consume(TokenType::Identifier, "Expected parameter name")?
                     .clone(),
             );
             while self.is_next_token(TokenType::Comma) {
-                parameters.push(
+                _parameters.push(
                     self.consume(TokenType::Identifier, "Expected parameter name")?
                         .clone(),
                 );
             }
 
-            parameters
-        })
+            _parameters
+        };
+
+        self.consume(
+            TokenType::RightParen,
+            "Expect ')' after function parameters.",
+        )?;
+
+        Ok(parameters)
     }
 
     // Synchronize the tokens to approx the next valid token
