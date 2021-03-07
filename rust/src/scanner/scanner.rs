@@ -108,6 +108,7 @@ impl Scanner {
             // For lexeme that can be "chained" / have another char behind it to form a lexeme of 2 chars
             '!' if self.conditional_advance('=') => self.new_none_literal(TokenType::BangEqual),
             '!' => self.new_none_literal(TokenType::Bang),
+            '=' if self.conditional_advance('>') => self.new_none_literal(TokenType::Arrow),
             '=' if self.conditional_advance('=') => self.new_none_literal(TokenType::EqualEqual),
             '=' => self.new_none_literal(TokenType::Equal),
             '<' if self.conditional_advance('=') => self.new_none_literal(TokenType::LessEqual),

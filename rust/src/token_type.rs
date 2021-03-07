@@ -52,6 +52,8 @@ pub enum TokenType {
   Else,
   False,
   Function,
+  Arrow, // =>
+
   For,   // to remove?
   While, // to remove?
   Print, // Shouldnt this be in std:: lib instead?

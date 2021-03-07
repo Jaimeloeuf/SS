@@ -16,7 +16,7 @@ impl std::fmt::Display for ResolvingError {
                 f,
                 "[line {}] Cannot access value of identifier {} before it is defined",
                 token.line,
-                token.literal.as_ref().unwrap()
+                token.lexeme.as_ref().unwrap()
             ),
             ResolvingError::IdentifierAlreadyUsed(ref token, ref identifier) => write!(
                 f,

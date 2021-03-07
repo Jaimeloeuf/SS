@@ -395,12 +395,58 @@ impl Parser {
                 parameters,
                 Box::new(body),
             ))))
-        } else if self.is_next_token(TokenType::LeftParen) {
-            let expr = self.expression()?;
+        } else if self.check(TokenType::LeftParen) {
+            /*
+                This block's condition is self.check instead of self.is_next_token,
+                Because advance method should not be called, see parsing code docs for explaination
 
-            // Check if there is a ")" to close the expression
-            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
-            Ok(Expr::Grouping(Box::new(expr)))
+                This block parses for arrow functions and group expressions, where both starts with the LeftParen
+                First this tries to parse for an arrow function by trying to parse for parameters,
+                If that fails, then try to parse for group expression.
+
+                There are 2 ways to parse for arrow function expressions,
+                First is to try to parse for parameters, and if it failed it means that it is a group expression
+                Second way is to loop until RightParen token, then check if the next token is an arrow token
+                Using the first way here as it is probably more efficient.
+            */
+
+            // Calling parameters without any error message, because if the expression is not parameters,
+            // then it will be treated as a group expression, rather then letting the error bubble up
+            // So there is no need for any error messages, we are using parameters method almost as a
+            // try/catch mechanism, where if tried and not parameters, then try to parse it as group expression.
+            if let Ok(parameters) = self.parameters("") {
+                self.consume(
+                    TokenType::Arrow,
+                    "Expect '=>' after parameters for anonymous arrow function",
+                )?;
+
+                // Arrow functions are single expression anonymous functions, where the single expression is the return value
+                // So since the body is an expression, parse it as an expression before constructing a statement for AnonymousFunc stmt type
+                // This 3 lines essentially desugar '() => expr' into 'function() { return expr; }'
+                // @todo Do something about the previous().clone for return token.. seems wrong.
+                let body = self.expression()?;
+                let return_statement = Stmt::Return(self.previous().clone(), Box::new(body));
+                let block_statement = Stmt::Block(vec![return_statement]);
+
+                Ok(Expr::AnonymousFunc(Box::new(Stmt::AnonymousFunc(
+                    parameters,
+                    Box::new(block_statement),
+                ))))
+            } else {
+                // Advance parser's current token pointer to "consume" the TokenType::LeftParen token
+                // Because unlike other blocks in this method, this ElseIf's condition is self.check instead of self.is_next_token
+                // Unlike self.is_next_token, self.check does not consume the token.
+                // self.check is used here instead of self.is_next_token because if the expression is an arrow function,
+                // we want the LeftParen token to be there when we call self.parameters to parse it.
+                // Thus we have to consume it manually here if the expression is not a parameter, and is a group expression instead
+                //
+                // This is the same as 'self.advance();' just that we dont need the token returned and can optimize away the method call
+                self.current_index += 1;
+
+                let expr = self.expression()?;
+                self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
+                Ok(Expr::Grouping(Box::new(expr)))
+            }
         } else if self.is_at_end() {
             // Copied over from rlox
             // Not sure if this case will ever happen but just an extra safeguard for Unexpected Eof tokens
