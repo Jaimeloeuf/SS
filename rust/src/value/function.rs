@@ -6,7 +6,6 @@ use crate::Interpreter;
 
 use super::value::Value;
 
-use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -52,8 +51,9 @@ impl Callable for Function {
         };
 
         if let Some(function_identifier) = name_token.lexeme.as_ref() {
-            // Maybe instead of 'user' as function type, use 'ss' to indicate function is defined in SS
-            format!("user {}", function_identifier.to_string())
+            // Function type is 'ss' to indicate that the function is defined in SS instead of native code.
+            // So both user defined functions and standard library in SS will both be in this category
+            format!("ss: {}", function_identifier.to_string())
         } else {
             panic!("InternalError: Function token missing string identifier...?!?")
         }

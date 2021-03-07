@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use crate::callables::Callable;
 use crate::interpreter::error::RuntimeError;
 use crate::interpreter::interpreter::Interpreter;
@@ -23,7 +21,7 @@ pub struct ClockFunc {}
 
 impl Callable for ClockFunc {
     fn to_string(&self) -> String {
-        format!("native clock")
+        format!("native: clock")
     }
 
     fn arity(&self) -> Result<usize, RuntimeError> {

@@ -702,7 +702,15 @@ proxy.new(targetObj)
 ## Printing / Logging mechanisms
 Pretty print
 Allow us to print diff things like variables to strings to functions...
-    - e.g. "native code" for native functions
+
+### Functions
+When printing functions, the type of function and the function name will be displayed, where $FUNCTION_NAME is the name of the function.  
+- Native functions, defined by the runtime in any other language
+    - <function-native: $FUNCTION_NAME>
+- Named functions defined in SimpleScript, regardless of whether it is a user defined function or a standard library function.
+    - <function-ss: $FUNCTION_NAME>
+- Anonymous functions defined in SimpleScript, regardless of whether it is a user defined function or a standard library function.
+    - <function-ss: [anonymous]>
 
 
 ## Others
