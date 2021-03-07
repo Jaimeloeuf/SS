@@ -9,11 +9,13 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
   // Single-character tokens.
-  Semicolon,
-  LeftParen,
-  RightParen,
-  LeftBrace,
-  RightBrace,
+  Semicolon,    // ;
+  LeftParen,    // (
+  RightParen,   // )
+  LeftBrace,    // {
+  RightBrace,   // }
+  LeftBracket,  // [
+  RightBracket, // ]
   Comma,
   Dot,
 

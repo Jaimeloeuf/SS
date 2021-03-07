@@ -12,6 +12,9 @@ pub enum Value {
     Bool(bool),
     Null,
 
+    // @todo Implement partial eq method
+    Array(Vec<Value>),
+
     // Special Value variant that should only be used by return arm of interpret_stmt.
     // To indicate that this internal value should be bubbled up all the way to the nearest function block,
     // And then be used as the return value of that function call.

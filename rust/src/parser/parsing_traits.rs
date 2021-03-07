@@ -447,6 +447,30 @@ impl Parser {
                 self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
                 Ok(Expr::Grouping(Box::new(expr)))
             }
+        } else if self.is_next_token(TokenType::LeftBracket) {
+            // Array creation and array element access
+
+            // Get the vector elements in the array
+            let elements = if self.check(TokenType::RightBracket) {
+                // If array closed with no elements, return a Vec with 0 capacity to not allocate any memory
+                Vec::with_capacity(0)
+            } else {
+                // Else create temporary vector to collect all elements before returning it
+                let mut _elements: Vec<Expr> = Vec::new();
+
+                // Do while loop
+                _elements.push(self.expression()?);
+                while self.is_next_token(TokenType::Comma) {
+                    _elements.push(self.expression()?);
+                }
+
+                _elements
+            };
+
+            self.consume(TokenType::RightBracket, "Expect ']' to close the array")?;
+
+            // @todo Use a better token then the closing ]
+            Ok(Expr::Array(self.previous().clone(), elements))
         } else if self.is_at_end() {
             // Copied over from rlox
             // Not sure if this case will ever happen but just an extra safeguard for Unexpected Eof tokens

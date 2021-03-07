@@ -25,8 +25,11 @@ pub enum Expr {
     // Expression to wrap around a Stmt::AnonymousFunc variant as anonymous functions are expressions
     AnonymousFunc(Box<Stmt>),
 
+    // @todo Do we really need the token?
+    Array(Token, Vec<Expr>),
+
     // Expressions that assign other expressions/values to a variable
-    Assign(Token, Box<Expr>, Option<usize>),
+    // Assign(Token, Box<Expr>, Option<usize>),
 
     // Logical And/Or boolean operations
     Logical(Box<Expr>, Token, Box<Expr>),
@@ -52,7 +55,10 @@ impl std::fmt::Display for Expr {
             Expr::Unary(ref operator, ref expr) => write!(f, "({} {})", operator, expr),
             Expr::Const(ref token, _) => write!(f, "(Const {})", token),
             Expr::AnonymousFunc(ref stmt) => write!(f, "(AnonymousFunction {})", stmt),
-            Expr::Assign(ref token, ref expr, _) => write!(f, "(assign {} {})", token, expr),
+            Expr::Array(_, ref elements) => {
+                write!(f, "(arr {:?})", elements) // Perhaps use something better then debug print
+            }
+            // Expr::Assign(ref token, ref expr, _) => write!(f, "(assign {} {})", token, expr),
             Expr::Logical(ref left, ref operator, ref right) => {
                 write!(f, "({} {} {})", operator, left, right)
             }

@@ -97,6 +97,8 @@ impl Scanner {
             '}' => self.new_none_literal(TokenType::RightBrace),
             '(' => self.new_none_literal(TokenType::LeftParen),
             ')' => self.new_none_literal(TokenType::RightParen),
+            '[' => self.new_none_literal(TokenType::LeftBracket),
+            ']' => self.new_none_literal(TokenType::RightBracket),
             ',' => self.new_none_literal(TokenType::Comma),
             '.' => self.new_none_literal(TokenType::Dot),
 

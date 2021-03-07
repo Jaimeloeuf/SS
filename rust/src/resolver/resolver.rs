@@ -135,6 +135,12 @@ impl Resolver {
                 self.resolve_expression(expr)?;
             }
             Expr::Literal(_) => {}
+            Expr::Array(_, ref elements) => {
+                // Resolve for every single element in the array, where all elements are expressions
+                for element in elements {
+                    self.resolve_expression(element)?;
+                }
+            }
             Expr::Logical(ref left, _, ref right) => {
                 self.resolve_expression(left)?;
                 self.resolve_expression(right)?;
