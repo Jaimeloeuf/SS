@@ -31,24 +31,16 @@ pub enum RuntimeError {
     // When a Const has already been defined in the current environment/scope a new one should not be allowed.
     ValueAlreadyDefined(String),
 
+    // @todo Include line info somehow
+    ArrayOutOfBounds(String),
+
     // Tried using a none callable Value type as a function identifier and calling it as a function
     // usize holds the line number of the call site
     // String is the string representation of Value object that the user tried to call
     CallOnNonCallable(usize, String),
-    // NegateNonNumberError(Token),
-    // SubtractNonNumbers(Token),
-    // DivideNonNumbers(Token),
-    // MultiplyNonNumbers(Token),
-    // PlusTypeError(Token),
-    // GreaterNonNumbers(Token),
-    // GreaterEqualNonNumbers(Token),
-    // LessNonNumbers(Token),
-    // LessEqualNonNumbers(Token),
     // DivideByZeroError(Token),
     // WrongArity(Token, usize, usize),
-    // InvalidGetTarget(Token),
     // UndefinedProperty(Token),
-    // InvalidSuperclass(Token),
 }
 
 impl std::fmt::Display for RuntimeError {
@@ -71,60 +63,14 @@ impl std::fmt::Display for RuntimeError {
                 write!(f, "ReferenceError: Identifier '{}' already used in current scope!", identifier)
             }
 
+            RuntimeError::ArrayOutOfBounds(ref message) => write!(f, "{}", message),
+
             RuntimeError::CallOnNonCallable(ref line_number, ref value) => {
                 write!(f, "[line {}] Attempted to call non-callable: {}", line_number, value)
             }
 
             // If unimplemented yet print with debug symbol to prevent infinite recursive loop to calling the display trait
             runtime_error_variant => write!(f, "Internal error with unimplemented formatting:\n{:?}", runtime_error_variant)
-            // RuntimeError::NegateNonNumberError(ref token) => write!(
-            //     f,
-            //     "[line {}] Cannot negate a non-numerical value",
-            //     token.line
-            // ),
-            // RuntimeError::SubtractNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a subtraction must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::DivideNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a division must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::MultiplyNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a multiplication must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::PlusTypeError(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of an addition must be either strings or numbers",
-            //     token.line
-            // ),
-            // RuntimeError::GreaterNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a greater than comparison must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::GreaterEqualNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a greater or equal comparison must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::LessNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a less than comparison must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::LessEqualNonNumbers(ref token) => write!(
-            //     f,
-            //     "[line {}] Both sides of a less or equal comparison must be numbers",
-            //     token.line
-            // ),
-            // RuntimeError::DivideByZeroError(ref token) => {
-            //     write!(f, "[line {}] Cannot divide by zero", token.line)
-            // }
             // RuntimeError::UndefinedVariable(ref token) => write!(
             //     f,
             //     "[line {}] Undefined variable `{}`",
@@ -135,19 +81,9 @@ impl std::fmt::Display for RuntimeError {
             //     "[line {}] Function arity error, expected {} arguments but got {}",
             //     token.line, expected, actual
             // ),
-            // RuntimeError::InvalidGetTarget(ref token) => write!(
-            //     f,
-            //     "[line {}] Only instances have properties, tried to access `{}` in non-instance",
-            //     token.line, token.lexeme
-            // ),
             // RuntimeError::UndefinedProperty(ref token) => write!(
             //     f,
             //     "[line {}] Undefined property `{}`.",
-            //     token.line, token.lexeme
-            // ),
-            // RuntimeError::InvalidSuperclass(ref token) => write!(
-            //     f,
-            //     "[line {}] Invalid parent class for `{}`.",
             //     token.line, token.lexeme
             // ),
         }

@@ -422,10 +422,23 @@ impl Interpreter {
                 if let Value::Array(ref actual_array) = array {
                     // Check that the index is a Value::Number variant
                     if let Value::Number(ref index_number) = index {
-                        // @todo Improve this...
-                        // Since number is always f64 at least for now, we have to convert it into usize before access
-                        // Also since the value cannot be moved out of a vec, the element is cloned out
-                        Ok(actual_array[*index_number as usize].clone())
+                        // Check if index is within bounds
+                        // Doing all this casting right now because we want to check the index before usize casting, which casts neg number to 0
+                        if index_number > &0.0 && index_number < &((actual_array.len() - 1) as f64)
+                        {
+                            // @todo Since number is always f64 at least for now, we have to convert it into usize before access
+                            let index_number = *index_number as usize;
+
+                            // @todo Since value cannot be moved out of vec, element is cloned, alternative is to clone with Rc?
+                            Ok(actual_array[index_number].clone())
+                        } else {
+                            // @todo Find a way to include line number
+                            Err(RuntimeError::ArrayOutOfBounds(format!(
+                                "Array Index Out Of Bounds Error: Expect index to be 0 to {}, found -> {}",
+                                actual_array.len() - 1,
+                                index,
+                            )))
+                        }
                     } else {
                         // @todo Might want to add checks somehow in resolver to prevent this from being a runtime error
                         Err(RuntimeError::TypeError(format!(
