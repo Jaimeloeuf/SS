@@ -411,6 +411,15 @@ impl Interpreter {
                 }
             }
 
+            Expr::Array(_, ref element_expressions) => {
+                // Create elements value vector using length of element expressions
+                let mut elements: Vec<Value> = Vec::with_capacity(element_expressions.len());
+                for element in element_expressions {
+                    elements.push(self.interpret_expr(element)?);
+                }
+                Ok(Value::Array(elements))
+            }
+
             Expr::Grouping(ref expr) => self.interpret_expr(expr),
 
             Expr::Unary(ref token, ref expr) => {

@@ -106,6 +106,7 @@ impl Value {
     }
 }
 
+// Essentially the pretty printer of values
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // Use ref to make sure the values are only borrowed and not moved
@@ -114,9 +115,30 @@ impl std::fmt::Display for Value {
             Value::String(ref string) => write!(f, "'{}'", string),
             Value::Bool(ref boolean) => write!(f, "{}", boolean),
             Value::Null => write!(f, "NULL"),
+
+            // Use external function to print the array to use a loop to construct the final string
+            // Potential problem with long vectors as the it will loop through all before returning the string, hogging memory and block CPU
+            Value::Array(ref elements) => write!(f, "{}", print_array(elements)),
+
             Value::Return(ref value) => write!(f, "SS internal return value -> {}", value),
 
             Value::Func(ref func) => write!(f, "<function-{}>", func.to_string()),
         }
+    }
+}
+
+// Returns string representation of an array of values
+fn print_array(elements: &Vec<Value>) -> String {
+    if elements.len() == 0 {
+        // Special case to prevent 'elements.len() - 1' from panicking when length is 0
+        String::from("[]")
+    } else {
+        let mut string = String::from("[");
+        // Print out all but the last element in the array with a comma and space appended behind
+        for element in elements.iter().take(elements.len() - 1) {
+            string += &format!("{}, ", element);
+        }
+        // Add last element without any commas or space and add the closing bracket
+        string + &format!("{}", elements.last().unwrap()) + &format!("]")
     }
 }
