@@ -411,6 +411,37 @@ impl Interpreter {
                 }
             }
 
+            Expr::ArrayAccess(ref array_identifier_expression, ref index_expression) => {
+                // Evaluate expression into a Value enum variant, that should be Value::Array
+                let array = self.interpret_expr(array_identifier_expression)?;
+
+                // Evaluate expression into a Value enum variant, that should be Value::Number
+                let index = self.interpret_expr(index_expression)?;
+
+                // Check that the array is a Value::Array variant
+                if let Value::Array(ref actual_array) = array {
+                    // Check that the index is a Value::Number variant
+                    if let Value::Number(ref index_number) = index {
+                        // @todo Improve this...
+                        // Since number is always f64 at least for now, we have to convert it into usize before access
+                        // Also since the value cannot be moved out of a vec, the element is cloned out
+                        Ok(actual_array[*index_number as usize].clone())
+                    } else {
+                        // @todo Might want to add checks somehow in resolver to prevent this from being a runtime error
+                        Err(RuntimeError::TypeError(format!(
+                            "Array element access failed, expect index to be of type Value::Number, found -> {:?}",
+                            index,
+                        )))
+                    }
+                } else {
+                    // @todo Might want to add checks somehow in resolver to prevent this from being a runtime error
+                    Err(RuntimeError::TypeError(format!(
+                        "Array element access failed, expect array to be of type Value::Array, found -> {:?}",
+                        array,
+                    )))
+                }
+            }
+
             Expr::Array(_, ref element_expressions) => {
                 // Create elements value vector using length of element expressions
                 let mut elements: Vec<Value> = Vec::with_capacity(element_expressions.len());

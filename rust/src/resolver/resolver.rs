@@ -141,6 +141,10 @@ impl Resolver {
                     self.resolve_expression(element)?;
                 }
             }
+            Expr::ArrayAccess(ref array, ref index_expression) => {
+                self.resolve_expression(array)?;
+                self.resolve_expression(index_expression)?;
+            }
             Expr::Logical(ref left, _, ref right) => {
                 self.resolve_expression(left)?;
                 self.resolve_expression(right)?;

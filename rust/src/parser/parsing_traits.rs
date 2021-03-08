@@ -122,7 +122,7 @@ impl Parser {
 
     fn print_statement(&mut self) -> Result<Stmt, ParsingError> {
         let expr = self.expression()?;
-        self.consume(TokenType::Semicolon, "Expect ';' after value")?;
+        self.consume(TokenType::Semicolon, "Expect ';' after print expression")?;
         // Pass in the expression too to make it easier for user to fix the issue
         // self.consume(
         //     TokenType::Semicolon,
@@ -365,7 +365,24 @@ impl Parser {
         if self.is_next_token(TokenType::Identifier) {
             // Default "distance" is 0, as this value will be set by the resolver
             // @todo Move it out instead of cloning
-            Ok(Expr::Const(self.previous().clone(), 0))
+            let identifier_expression = Expr::Const(self.previous().clone(), 0);
+
+            // Check for LeftBracket to see if user is trying to access elements in an Array
+            if self.is_next_token(TokenType::LeftBracket) {
+                // Parse index as an expression
+                let index_expression = self.expression()?;
+                self.consume(
+                    TokenType::RightBracket,
+                    "Expect ']' after array access index expression",
+                )?;
+
+                Ok(Expr::ArrayAccess(
+                    Box::new(identifier_expression), // identifier_expression is the array_identifier_expression
+                    Box::new(index_expression),
+                ))
+            } else {
+                Ok(identifier_expression)
+            }
         } else if self.is_next_token(TokenType::True) {
             Ok(Expr::Literal(Literal::Bool(true)))
         } else if self.is_next_token(TokenType::False) {
@@ -448,7 +465,7 @@ impl Parser {
                 Ok(Expr::Grouping(Box::new(expr)))
             }
         } else if self.is_next_token(TokenType::LeftBracket) {
-            // Array creation and array element access
+            // Parsing for array definition only, array access parsing is handled as an identifier expression
 
             // Get the vector elements in the array
             let elements = if self.check(TokenType::RightBracket) {

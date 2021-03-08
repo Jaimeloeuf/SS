@@ -27,6 +27,8 @@ pub enum Expr {
 
     // @todo Do we really need the token?
     Array(Token, Vec<Expr>),
+    // First element is a Expr::Const identifier that points to the array, the second is an expression that evaluates to the array index
+    ArrayAccess(Box<Expr>, Box<Expr>),
 
     // Expressions that assign other expressions/values to a variable
     // Assign(Token, Box<Expr>, Option<usize>),
@@ -57,6 +59,9 @@ impl std::fmt::Display for Expr {
             Expr::AnonymousFunc(ref stmt) => write!(f, "(AnonymousFunction {})", stmt),
             Expr::Array(_, ref elements) => {
                 write!(f, "(arr {:?})", elements) // Perhaps use something better then debug print
+            }
+            Expr::ArrayAccess(ref array, ref index) => {
+                write!(f, "(arr-element {} {})", array, index)
             }
             // Expr::Assign(ref token, ref expr, _) => write!(f, "(assign {} {})", token, expr),
             Expr::Logical(ref left, ref operator, ref right) => {

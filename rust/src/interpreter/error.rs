@@ -59,7 +59,7 @@ impl std::fmt::Display for RuntimeError {
                 write!(f, "Internal interpreter error: {}", message)
             }
 
-            RuntimeError::TypeError(ref message) => write!(f, "{}", message),
+            RuntimeError::TypeError(ref message) => write!(f, "Type Error: {}", message),
             RuntimeError::ConditionTypeError(ref message) => write!(f, "{}", message),
 
             // @todo DELETE THIS, should be caught by resolver already?? Would there be cases where this is not caught?
