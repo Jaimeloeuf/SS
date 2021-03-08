@@ -21,8 +21,8 @@ impl Resolver {
     }
 
     // Method to define identifiers used in the global scope
-    pub fn define_globals(&mut self, identifier: Vec<&str>) {
-        for id in identifier {
+    pub fn define_globals(&mut self, identifiers: Vec<&str>) {
+        for id in identifiers {
             self.scopes.last_mut().unwrap().insert(id.to_string(), true);
         }
     }
@@ -36,10 +36,20 @@ impl Resolver {
         let identifier = token.lexeme.as_ref().unwrap();
 
         if scope.contains_key(identifier) {
-            Err(ResolvingError::IdentifierAlreadyUsed(
-                token.clone(),
-                identifier.clone(),
-            ))
+            // Check if there is only 1 scope, meaning in global scope right now
+            // Then check if the identifier is a global identifier introduced by the language runtime
+            // If true, means user tried to reuse global identifier, thus show specific error type
+            // Else it is a identifier reuse error
+            Err(if self.scopes.len() == 1
+                && self
+                    .globals
+                    .iter()
+                    .any(|&global_identifier| global_identifier == identifier)
+            {
+                ResolvingError::IdentifierAlreadyUsedGlobally
+            } else {
+                ResolvingError::IdentifierAlreadyUsed
+            }(token.clone(), identifier.clone()))
         } else {
             // Indicate initializer not resolved
             scope.insert(identifier.clone(), false);

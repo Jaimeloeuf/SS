@@ -16,6 +16,10 @@ pub struct Resolver {
     // Tracker to see if currently in a function or not
     // Used to see if return statements are valid
     in_function: bool,
+
+    // Field holding a vector of global identifiers
+    // Used by declare utility method to check if the identifier is a global identifier to give users a more specific error message
+    pub globals: Vec<&'static str>,
 }
 
 impl Resolver {
@@ -25,12 +29,16 @@ impl Resolver {
         let mut resolver = Resolver {
             scopes: Vec::new(),
             in_function: false,
+
+            // @todo A better way other than hardcoding all identifiers in
+            globals: vec!["clock"],
         };
 
         // Create first new scope for the global scope and insert in identifiers
         resolver.begin_scope();
-        // @todo A better way other than hardcoding all identifiers in
-        resolver.define_globals(vec!["clock"]);
+
+        // @todo Make it better then.. Cloning it because cannot have ref and mut ref to resolver at the same time....
+        resolver.define_globals(resolver.globals.clone());
 
         resolver.resolve_ast(ast)?;
         resolver.end_scope();
