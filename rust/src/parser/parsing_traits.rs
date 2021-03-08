@@ -330,6 +330,18 @@ impl Parser {
             if self.is_next_token(TokenType::LeftParen) {
                 // @todo Might inline the function later
                 expr = self.finish_call(expr)?;
+            } else if self.is_next_token(TokenType::LeftBracket) {
+                // Array access can be chained after function call expression, where the function call is expected to return an array
+                expr = Expr::ArrayAccess(
+                    // function call expression that is expected to return an array
+                    Box::new(expr),
+                    // Parse the index as an expression
+                    Box::new(self.expression()?),
+                );
+                self.consume(
+                    TokenType::RightBracket,
+                    "Expect ']' after array access index expression",
+                )?;
             } else {
                 break;
             }
