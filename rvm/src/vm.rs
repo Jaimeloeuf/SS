@@ -23,6 +23,30 @@ pub enum InterpretResult {
     RuntimeError,
 }
 
+macro_rules! arithmetic_binary_op {
+    // $perator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    // $stack ->  Takes in the identifier for the stack value too
+    ($operator:tt, $stack:ident) => {{
+        let b = $stack.pop();
+        let a = $stack.pop();
+
+        match (a, b) {
+            (Some(Value::Number(a)), Some(Value::Number(b))) => {
+                $stack.push(Value::Number(a $operator b));
+            }
+
+            (a, b)=> {
+                // Unwrap the values directly assuming that they are definitely Some() variants
+                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
+                return Err(RuntimeError::TypeError(format!(
+                    "Invalid operand types {:?} and {:?} used for '{}' arithmetic operation",
+                    a.unwrap(), b.unwrap(), stringify!($operator)
+                )))
+            }
+        }
+    }};
+}
+
 impl VM {
     // pub fn interpret(chunk: Chunk) -> InterpretResult {
     pub fn interpret(mut chunk: Chunk) -> Result<Value, RuntimeError> {
