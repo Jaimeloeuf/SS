@@ -1,8 +1,7 @@
 use crate::error::RuntimeError;
 
-// type Value = f64;
-
-#[derive(Debug)]
+// @todo Deriving clone trait for now before we can have a way to move value out from OpCode without cloning
+#[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
     String(String),
