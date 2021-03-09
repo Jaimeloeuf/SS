@@ -8,6 +8,12 @@ pub enum OpCode {
     RETURN,
     CONSTANT(Value),
 
+    // Arithmetic Binary operators
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+
     // Unary operators
     NEGATE,
 }
