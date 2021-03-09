@@ -1,5 +1,6 @@
 use crate::chunk::Chunk;
 use crate::opcode::OpCode;
+use crate::value::Value;
 
 // pub fn disassemble_chunk(chunk: Chunk, name: &String) {
 pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
@@ -12,7 +13,7 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     }
 }
 
-fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
+pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     // Prints the offset (bytecode index of a chunk) with 0 padding up to 3 digits
     // https://stackoverflow.com/a/41821049
     print!("{:0width$}", offset, width = 3);
@@ -27,10 +28,12 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     match chunk.codes[offset] {
         OpCode::RETURN => simple_instruction("RETURN", &chunk, offset),
         OpCode::CONSTANT => constant_instruction("CONSTANT", &chunk, offset),
+        OpCode::NEGATE => simple_instruction("NEGATE", &chunk, offset),
+        OpCode::ConstantIndex(index) => 0, // Cos expect usize back but Const alr return 2, so this return 0
         // OpCode::ConstantIndex(index) => simple_instruction("ConstantIndex", offset),
         //
         ref instruction => {
-            println!("Unknown opcode {:?}\n", instruction);
+            println!("Unknown opcode {:?}", instruction);
             offset + 1
         }
     }
@@ -55,4 +58,14 @@ fn constant_instruction(name: &str, chunk: &Chunk, offset: usize) -> usize {
     // println!("{} -> {:?}", name, constant);
     println!("{:?} -> {:?}", chunk.codes[offset], constant);
     offset + 2
+}
+
+pub fn print_stack(stack: &Vec<Value>) {
+    print!("Stack [");
+    for stack_value in stack {
+        print!("{:?} -> ", stack_value);
+    }
+    // If i do this then the instructuion formatting will be off when i disassemble it
+    // In VM, where debugging is printing stack then disassembled instruction
+    print!("]\n");
 }

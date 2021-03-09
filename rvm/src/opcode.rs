@@ -8,6 +8,7 @@
 pub enum OpCode {
     RETURN,
     CONSTANT,
+    NEGATE,
 
     ConstantIndex(usize),
 }
