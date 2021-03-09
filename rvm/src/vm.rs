@@ -70,7 +70,8 @@ impl VM {
         // offset is used for disassemble_instruction
         // for ref code in &chunk.codes {
         for (offset, ref code) in chunk.codes.iter().enumerate() {
-            // Add a debug flag for this
+            // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
+            #[cfg(debug_assertions)]
             {
                 debug::print_stack(&stack);
                 debug::disassemble_instruction(&chunk, offset);
