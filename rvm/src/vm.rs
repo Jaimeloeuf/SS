@@ -30,6 +30,12 @@ macro_rules! arithmetic_binary_op {
         let b = $stack.pop();
         let a = $stack.pop();
 
+        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
+        #[cfg(debug_assertions)]
+        if a.is_none() || b.is_none(){
+            panic!(format!("VM Error: Stack missing values for arithmetic binary operation {}", stringify!($operator)));
+        }
+
         match (a, b) {
             (Some(Value::Number(a)), Some(Value::Number(b))) => {
                 $stack.push(Value::Number(a $operator b));
