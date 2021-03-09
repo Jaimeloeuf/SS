@@ -47,20 +47,10 @@ impl VM {
             }
 
             match code {
-                OpCode::ConstantIndex(index) => {
-                    // println!("const --> {:?}", chunk.constants[*index]);
-                    // stack.push(&chunk.constants[*index]);
-                    // chunk.constants[*index]
-                    // @todo BUG here, since we remove, all elements shift to the left.... how????
-                    stack.push(chunk.constants.remove(*index));
-                }
-
-                OpCode::CONSTANT => {
-                    // So in Clox, they access the constant value in this op code by getting next byte as index and calling from const pool
-                    // But here we have a seperate instruction to run and call...
-                    // Perhaps we dont even need the CONSTANT instruction, and combine it directly with ConstantIndex
-                    // Where the index of the constant in constant pool is saved together with the constant instruction
-                }
+                // In Clox, vm access constant value in this op code by getting next byte as index and calling from const pool
+                // But here value is stored in the enum variant, and is accessed directly instead of getting from a const pool
+                // @todo Find a way to take value out from enum instead of cloning value stack.push(value);
+                OpCode::CONSTANT(value) => stack.push(value.clone()),
 
                 OpCode::NEGATE => {
                     let value = stack.pop().unwrap().negate()?;

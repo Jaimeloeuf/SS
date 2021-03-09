@@ -14,15 +14,18 @@ use vm::VM;
 fn main() {
     let mut chunk = Chunk::new();
 
-    chunk.write(OpCode::CONSTANT, 2);
-    chunk.constants.push(Value::Number(1.2));
-    chunk.write(OpCode::ConstantIndex(chunk.constants.len() - 1), 2);
+    chunk.write(OpCode::CONSTANT(Value::Number(1.2)), 2);
     chunk.write(OpCode::NEGATE, 2);
 
-    chunk.write(OpCode::RETURN, 2);
+    chunk.write(OpCode::CONSTANT(Value::Number(1.8)), 3);
+    chunk.write(OpCode::SUBTRACT, 3);
+
+    chunk.write(OpCode::RETURN, 3);
 
     disassemble_chunk(&chunk, "test");
     // println!("{:?}", chunk);
 
-    VM::interpret(chunk);
+    if let Err(e) = VM::interpret(chunk) {
+        println!("{}", e)
+    }
 }

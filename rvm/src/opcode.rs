@@ -1,14 +1,14 @@
-// There are 2 types of OpCodes
-// First type are the instruction OpCodes, that are denoted by their all CAPS spelling
-// Secondly there are special OpCodes, that are variants with additional values like 'ConstantIndex(usize)'
-//
+use crate::value::Value;
+
+// OpCodes variants can optionally contain additional values like 'CONSTANT(Value)' to be executed together with the code
 // Clox differentiate OpCode from Data using OP_ prefix, and also all their data types is just a single byte anyways
 
-#[derive(Debug)]
+// #[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OpCode {
     RETURN,
-    CONSTANT,
-    NEGATE,
+    CONSTANT(Value),
 
-    ConstantIndex(usize),
+    // Unary operators
+    NEGATE,
 }
