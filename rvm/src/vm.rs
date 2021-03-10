@@ -58,6 +58,10 @@ impl VM {
     pub fn interpret(mut chunk: Chunk) -> Result<Value, RuntimeError> {
         // let mut vm = VM {
         //     chunk,
+        //     // From Clox:
+        //     // If we were trying to squeeze every ounce of speed out of our bytecode interpreter,
+        //     // we would store ip in a local variable. It gets modified so often during execution,
+        //     // that we want the compiler to keep it in a register.
         //     ip: 0,
         // };
 
@@ -80,41 +84,13 @@ impl VM {
             match code {
                 // In Clox, vm access constant value in this op code by getting next byte as index and calling from const pool
                 // But here value is stored in the enum variant, and is accessed directly instead of getting from a const pool
-                // @todo Find a way to take value out from enum instead of cloning value stack.push(value);
+                // @todo Find a way to take value out from enum to do `stack.push(value);` instead of cloning value
                 OpCode::CONSTANT(value) => stack.push(value.clone()),
 
-                OpCode::ADD | OpCode::SUBTRACT | OpCode::MULTIPLY | OpCode::DIVIDE => {
-                    let b = stack.pop();
-                    let a = stack.pop();
-
-                    // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
-                    #[cfg(debug_assertions)]
-                    if a.is_none() || b.is_none() {
-                        panic!(format!(
-                            "VM Error: Stack missing values for arithmetic binary operation {:?}",
-                            code
-                        ));
-                    }
-
-                    match (a, b) {
-                        (Some(Value::Number(a)), Some(Value::Number(b))) => match code {
-                            OpCode::ADD => stack.push(Value::Number(a + b)),
-                            OpCode::SUBTRACT => stack.push(Value::Number(a - b)),
-                            OpCode::MULTIPLY => stack.push(Value::Number(a * b)),
-                            OpCode::DIVIDE => stack.push(Value::Number(a / b)),
-                            _ => {} // Will definitely be above patterns because it is already checked in the previous match statement
-                        },
-
-                        (a, b) => {
-                            // Unwrap the values directly assuming that they are definitely Some() variants
-                            // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
-                            return Err(RuntimeError::TypeError(format!(
-                                "Invalid operand types {:?} and {:?} used for '{:?}' arithmetic operation",
-                                a.unwrap(), b.unwrap(), code
-                            )));
-                        }
-                    }
-                }
+                OpCode::ADD => arithmetic_binary_op!(+, stack),
+                OpCode::SUBTRACT => arithmetic_binary_op!(-, stack),
+                OpCode::MULTIPLY => arithmetic_binary_op!(*, stack),
+                OpCode::DIVIDE => arithmetic_binary_op!(/, stack),
 
                 OpCode::NEGATE => {
                     let value = stack.pop().unwrap().negate()?;
@@ -123,11 +99,9 @@ impl VM {
 
                 OpCode::RETURN => {
                     println!("{:?}", stack.pop().unwrap());
-                    // println!("break!");
-                    // return InterpretResult::Ok;
                 }
 
-                ref instruction => println!("VM: Unknown OpCode {:?}\n", instruction),
+                ref instruction => println!("VM Error: Unknown OpCode {:?}\n", instruction),
             }
         }
 
