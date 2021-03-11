@@ -5,6 +5,7 @@ mod chunk;
 mod debug;
 mod error;
 mod opcode;
+mod scanner;
 mod token;
 mod value;
 mod vm;
@@ -12,6 +13,7 @@ mod vm;
 use chunk::Chunk;
 use debug::disassemble_chunk;
 use opcode::OpCode;
+use scanner::Scanner;
 use value::Value;
 use vm::VM;
 
