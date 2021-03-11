@@ -5,6 +5,7 @@ mod chunk;
 mod debug;
 mod error;
 mod opcode;
+mod token;
 mod value;
 mod vm;
 
