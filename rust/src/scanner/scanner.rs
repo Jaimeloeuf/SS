@@ -69,10 +69,16 @@ impl Scanner {
             // Because of how we parse, tabs are preferred over spaces to reduce number of times "scan_tokens" calls "scan_token"
             ' ' | '\r' | '\t' => None,
 
-            // Alphabetic words
             // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
             'a'..='z' | 'A'..='Z' | '_' => {
-                let identifier = self.identifier();
+                // See link for the list of supported alphanumeric characters
+                // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
+                while self.peek().is_alphanumeric() {
+                    self.current += 1;
+                }
+
+                // Get alphanumerical identifier string as a slice of self.source and test if it is a keyword
+                let identifier = &self.source[self.start..self.current];
                 let keyword_token_type = get_token_type_if_keyword(&identifier);
 
                 match keyword_token_type {
