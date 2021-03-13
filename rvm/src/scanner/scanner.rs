@@ -1,4 +1,5 @@
 use super::Scanner;
+use crate::keywords::get_token_type_if_keyword;
 
 use crate::token::token::Token;
 use crate::token::token_type::TokenType;
@@ -46,6 +47,26 @@ impl Scanner {
             self.make_token(TokenType::Eof)
         } else {
             match self.advance() {
+                // Identifiers must START with an alphabet or _, but can contain mix of alphanumeric chars
+                'a'..='z' | 'A'..='Z' | '_' => {
+                    // See list of alphanumerics here https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
+                    while self.peek().is_alphanumeric() {
+                        self.current += 1;
+                    }
+
+                    // Get alphanumerical identifier string as a slice of self.source and test if it is a keyword
+                    let identifier = &self.source[self.start..self.current];
+                    let keyword_token_type = get_token_type_if_keyword(&identifier);
+
+                    match keyword_token_type {
+                        // If it is a keyword, we use that keyword's token type.
+                        Some(token_type) => self.make_token(token_type),
+
+                        // Otherwise, it's a regular user-defined identifier.
+                        None => self.make_token(TokenType::Identifier),
+                    }
+                }
+
                 ';' => self.make_token(TokenType::Semicolon),
                 '{' => self.make_token(TokenType::LeftBrace),
                 '}' => self.make_token(TokenType::RightBrace),
@@ -59,6 +80,7 @@ impl Scanner {
                 '-' => self.make_token(TokenType::Minus),
                 '+' => self.make_token(TokenType::Plus),
                 '*' => self.make_token(TokenType::Star),
+                '/' => self.make_token(TokenType::Slash),
 
                 _ => {
                     // @todo Return a err variant of Result

@@ -4,6 +4,7 @@ use std::fs;
 mod chunk;
 mod debug;
 mod error;
+mod keywords;
 mod opcode;
 mod scanner;
 mod token;

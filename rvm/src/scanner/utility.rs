@@ -5,6 +5,7 @@ use crate::token::token_type::TokenType;
 
 impl Scanner {
     // Method to create token using TokenType and the scanner's positional fields
+    #[inline]
     pub fn make_token(&self, token_type: TokenType) -> Token {
         Token {
             token_type,
@@ -41,13 +42,13 @@ impl Scanner {
     }
 
     // See what is the current character
-    fn peek(&self) -> char {
+    pub fn peek(&self) -> char {
         self.source.chars().nth(self.current).unwrap()
     }
 
     // See what is the next character
     // For look ahead parsing
-    fn peek_next(&self) -> char {
+    pub fn peek_next(&self) -> char {
         // Return null terminator if reached end of source
         if self.is_at_end() {
             '\0'
