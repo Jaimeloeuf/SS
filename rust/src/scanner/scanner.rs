@@ -5,7 +5,7 @@
 use super::error::ScannerError;
 use super::scanner_struct::Scanner;
 
-use crate::keywords::KEYWORDS;
+use crate::keywords::get_token_type_if_keyword;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
@@ -71,18 +71,16 @@ impl Scanner {
 
             // Alphabetic words
             // Identifiers, must START with an alphabet or _, but can contain mix of alphanumeric chars
-            // 'a'..='z' | 'A'..='Z' | '_' => Some(TokenType::Identifier),
             'a'..='z' | 'A'..='Z' | '_' => {
                 let identifier = self.identifier();
-                let keyword_token_type = KEYWORDS.get(&identifier);
+                let keyword_token_type = get_token_type_if_keyword(&identifier);
 
                 match keyword_token_type {
                     // If it is a keyword, we use that keyword's token type.
-                    // @todo How to force move here instead of clone
-                    Some(keyword) => Some(Token::new_keyword(keyword.clone(), self.line)),
+                    Some(token_type) => Some(Token::new_keyword(token_type, self.line)),
 
                     // Otherwise, it's a regular user-defined identifier.
-                    None => Some(Token::new_identifier(identifier, self.line)),
+                    None => Some(Token::new_identifier(identifier.to_string(), self.line)),
                 }
             }
 
@@ -244,15 +242,14 @@ impl Scanner {
         self.source[self.start..self.current].to_string()
     }
 
-    // Get alphanumerical identifier string
-    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
-    fn identifier(&mut self) -> String {
+    // Get alphanumerical identifier string as a slice of self.source
+    fn identifier(&mut self) -> &str {
         // See link for the list of supported alphanumeric characters
         // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
         while self.peek().is_alphanumeric() {
             self.current += 1;
         }
 
-        self.source[self.start..self.current].to_string()
+        &self.source[self.start..self.current]
     }
 }

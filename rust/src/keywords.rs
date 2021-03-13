@@ -1,83 +1,37 @@
 use crate::token_type::TokenType;
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 
-lazy_static! {
-    // String or &String? Since the identifier is a String type, then we pass a immutable ref here to get the TokenType back right?
-    pub static ref KEYWORDS: HashMap<String, TokenType> = {
-        // Should use
-        // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.with_capacity
-        let mut m = HashMap::new();
+// Function to return corresponding TokenType if input string is a keyword
+pub fn get_token_type_if_keyword(word_to_test_that_might_be_keyword: &str) -> Option<TokenType> {
+    match word_to_test_that_might_be_keyword {
+        "and" => Some(TokenType::And),
+        "or" => Some(TokenType::Or),
 
-        // Might not want these
-        m.insert("and".to_string(), TokenType::And);
-        m.insert("or".to_string(), TokenType::Or);
-
-        // Gotta implement this
-        m.insert("switch".to_string(), TokenType::Break);
-        m.insert("break".to_string(), TokenType::Break);
+        // To implement?
+        // "switch" => Some(TokenType::Break),
+        // "break" => Some(TokenType::Break),
 
         // Loops...
-        m.insert("for".to_string(), TokenType::For);
-        m.insert("while".to_string(), TokenType::While);
+        // "for" => Some(TokenType::For),
+        "while" => Some(TokenType::While),
 
         // Function related stuff
-        m.insert("function".to_string(), TokenType::Function);
-        m.insert("return".to_string(), TokenType::Return);
-        // m.insert("async".to_string(), TokenType::Async);
-        // m.insert("pure".to_string(), TokenType::Pure);
+        // "async" => Some(TokenType::Async),
+        // "pure" => Some(TokenType::Pure),
+        "function" => Some(TokenType::Function),
+        "return" => Some(TokenType::Return),
 
-        m.insert("if".to_string(), TokenType::If);
-        m.insert("else".to_string(), TokenType::Else);
+        "if" => Some(TokenType::If),
+        "else" => Some(TokenType::Else),
 
-        // Should these be included...
-        m.insert("print".to_string(), TokenType::Print);
-        m.insert("null".to_string(), TokenType::Null);
+        // @todo Should these be included...
+        "print" => Some(TokenType::Print),
+        "null" => Some(TokenType::Null),
 
-        m.insert("true".to_string(), TokenType::True);
-        m.insert("false".to_string(), TokenType::False);
+        "true" => Some(TokenType::True),
+        "false" => Some(TokenType::False),
 
-        m.insert("const".to_string(), TokenType::Const);
+        "const" => Some(TokenType::Const),
 
-        m
-    };
+        _ => None,
+    }
 }
-
-// // Use a function and match to return instead of a hashmap....
-// // maybe not such a good idea
-// pub fn get_token_type_from_keyword(
-//     word_to_test_that_might_be_keyword: String,
-// ) -> Option<TokenType> {
-//     match word_to_test_that_might_be_keyword.as_str() {
-//         // Might not want these
-//         "and" => Some(TokenType::And),
-//         "or" => Some(TokenType::Or),
-
-//         // Gotta implement this
-//         "switch" => Some(TokenType::Break),
-//         "break" => Some(TokenType::Break),
-
-//         // Loops...
-//         "for" => Some(TokenType::For),
-//         "while" => Some(TokenType::While),
-
-//         // Function related stuff
-//         "function" => Some(TokenType::Function),
-//         "return" => Some(TokenType::Return),
-//         // "async" => Some(TokenType::Async),
-//         // "pure" => Some(TokenType::Pure),
-//         "if" => Some(TokenType::If),
-//         "else" => Some(TokenType::Else),
-
-//         // Should these be included...
-//         "print" => Some(TokenType::Print),
-//         "Null" => Some(TokenType::Null),
-
-//         "true" => Some(TokenType::True),
-//         "false" => Some(TokenType::False),
-
-//         "const" => Some(TokenType::Const),
-
-//         _ => None,
-//     }
-// }
