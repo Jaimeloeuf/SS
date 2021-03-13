@@ -185,7 +185,32 @@ impl Scanner {
             '"' => Some(Token::new_string(self.string_literals(), self.line)),
 
             // Number Literals
-            '0'..='9' => Some(Token::new_number(self.number_literal(), self.line)),
+            '0'..='9' => {
+                // Keep consuming till none ascii
+                while self.peek().is_ascii_digit() {
+                    self.current += 1;
+                }
+
+                // Look for a fractional part "."
+                if self.peek() == '.' && self.peek_next().is_ascii_digit() {
+                    // Consume fractional notation "."
+                    self.current += 1;
+
+                    // Keep consuming till none ascii for the number behind the decimal point
+                    while self.peek().is_ascii_digit() {
+                        self.current += 1;
+                    }
+                }
+
+                // Get &str slice from source before parsing it into a f64, the numerical type used
+                // Unwrap directly as we assumed if scan correctly above, it can parse to a f64 no problem
+                Some(Token::new_number(
+                    self.source[self.start..self.current]
+                        .parse::<f64>()
+                        .unwrap(),
+                    self.line,
+                ))
+            }
 
             // Return ScannerError if couldn't match any valid characters
             // Since the match statement is wrapped in Ok, we cannot let this evalute to Err variant, must return explicitly instead
@@ -225,37 +250,5 @@ impl Scanner {
 
         // Trim surrounding quotes and only return the actual string content
         self.source[self.start + 1..self.current - 1].to_string()
-    }
-
-    // Return string version of number literal to parse later during Token creation
-    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
-    fn number_literal(&mut self) -> String {
-        while self.peek().is_ascii_digit() {
-            self.current += 1;
-        }
-
-        // Look for a fractional part "."
-        if self.peek() == '.' && self.peek_next().is_ascii_digit() {
-            // Consume fractional notation "."
-            self.current += 1;
-
-            while self.peek().is_ascii_digit() {
-                self.current += 1;
-            }
-        }
-
-        // Return as a new string first, then only convert it to its type later
-        self.source[self.start..self.current].to_string()
-    }
-
-    // Get alphanumerical identifier string as a slice of self.source
-    fn identifier(&mut self) -> &str {
-        // See link for the list of supported alphanumeric characters
-        // https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric
-        while self.peek().is_alphanumeric() {
-            self.current += 1;
-        }
-
-        &self.source[self.start..self.current]
     }
 }
