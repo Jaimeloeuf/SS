@@ -30,6 +30,7 @@ fn main() {
     };
 }
 
+#[allow(dead_code)]
 fn test_vm_with_chunk() {
     let mut chunk = Chunk::new();
 

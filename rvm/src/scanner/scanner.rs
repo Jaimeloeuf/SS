@@ -1,8 +1,8 @@
 use super::Scanner;
 use crate::keywords::get_token_type_if_keyword;
 
-use crate::token::token::Token;
-use crate::token::token_type::TokenType;
+use crate::token::Token;
+use crate::token::TokenType;
 
 impl Scanner {
     // @todo Should be named compile function

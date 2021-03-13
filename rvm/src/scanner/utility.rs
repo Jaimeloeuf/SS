@@ -1,7 +1,7 @@
 use super::Scanner;
 
-use crate::token::token::Token;
-use crate::token::token_type::TokenType;
+use crate::token::Token;
+use crate::token::TokenType;
 
 impl Scanner {
     // Method to create token using TokenType and the scanner's positional fields
