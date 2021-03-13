@@ -37,6 +37,9 @@ impl Scanner {
     }
 
     fn scan_token(&mut self) -> Token {
+        // Skips none essential characters like whitespaces and comments
+        self.skip_none_essentials();
+
         self.start = self.current;
 
         if self.is_at_end() {
