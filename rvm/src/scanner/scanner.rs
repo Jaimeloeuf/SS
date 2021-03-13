@@ -82,6 +82,61 @@ impl Scanner {
                 '*' => self.make_token(TokenType::Star),
                 '/' => self.make_token(TokenType::Slash),
 
+                // For lexeme that can be "chained" / have another char behind it to form a lexeme of 2 chars
+                '!' if self.conditional_advance('=') => self.make_token(TokenType::BangEqual),
+                '!' => self.make_token(TokenType::Bang),
+                '=' if self.conditional_advance('>') => self.make_token(TokenType::Arrow),
+                '=' if self.conditional_advance('=') => self.make_token(TokenType::EqualEqual),
+                '=' => self.make_token(TokenType::Equal),
+                '<' if self.conditional_advance('=') => self.make_token(TokenType::LessEqual),
+                '<' => self.make_token(TokenType::Less),
+                '>' if self.conditional_advance('=') => self.make_token(TokenType::GreaterEqual),
+                '>' => self.make_token(TokenType::Greater),
+
+                // String Literals
+                '"' => {
+                    while self.peek() != '"' && !self.is_at_end() {
+                        // Allow multiline strings.
+                        // @todo Is extra processing needed to remove the \n from the final string? Or keep as is?
+                        if self.peek() == '\n' {
+                            self.line += 1;
+                        }
+
+                        self.current += 1;
+                    }
+
+                    // @todo Return error variant instead
+                    if self.is_at_end() {
+                        panic!("Unexpected Eof while parsing for string literal");
+                    }
+
+                    // Consume the closing double quote "
+                    self.current += 1;
+
+                    self.make_token(TokenType::Str)
+                }
+
+                // Number Literals
+                '0'..='9' => {
+                    // Keep consuming till none ascii
+                    while self.peek().is_ascii_digit() {
+                        self.current += 1;
+                    }
+
+                    // Look for a fractional part "."
+                    if self.peek() == '.' && self.peek_next().is_ascii_digit() {
+                        // Consume fractional notation "."
+                        self.current += 1;
+
+                        // Keep consuming till none ascii for the number behind the decimal point
+                        while self.peek().is_ascii_digit() {
+                            self.current += 1;
+                        }
+                    }
+
+                    self.make_token(TokenType::Number)
+                }
+
                 _ => {
                     // @todo Return a err variant of Result
                     self.make_token(TokenType::Error)
