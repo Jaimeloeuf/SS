@@ -22,13 +22,12 @@ impl Scanner {
     // This is a conditional advance(). Only consumes current character if it's what we're looking for.
     pub fn conditional_advance(&mut self, expected: char) -> bool {
         if self.is_at_end() || (self.source.chars().nth(self.current).unwrap() != expected) {
-            return false;
+            false
+        } else {
+            // Advance if the expected character is found
+            self.current += 1;
+            true
         }
-
-        // Advance if the expected character is found
-        self.current += 1;
-
-        true
     }
 
     // Get next character in source string without advancing index of current character
@@ -52,7 +51,8 @@ impl Scanner {
     }
 
     // Simple wrapper around Token::new_none_literal to simplify none literal token creation
-    // As alot of places reuses this syntax with just different token types
+    // As alot of places reuses this syntax with just different token types, used as a inlined function
+    #[inline]
     pub fn new_none_literal(&self, token_type: TokenType) -> Option<Token> {
         Some(Token::new_none_literal(token_type, self.line))
     }
