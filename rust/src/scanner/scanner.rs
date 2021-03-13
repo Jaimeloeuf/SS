@@ -182,7 +182,31 @@ impl Scanner {
             '/' => self.new_none_literal(TokenType::Slash),
 
             // String Literals
-            '"' => Some(Token::new_string(self.string_literals(), self.line)),
+            '"' => {
+                while self.peek() != '"' && !self.is_at_end() {
+                    // Allow multiline strings.
+                    // @todo Is extra processing needed to remove the \n from the final string? Or keep as is?
+                    if self.peek() == '\n' {
+                        self.line += 1;
+                    }
+
+                    self.current += 1;
+                }
+
+                // @todo Return error variant instead
+                if self.is_at_end() {
+                    panic!("Unexpected Eof while parsing for string literal");
+                }
+
+                // Skip the closing double quote "
+                self.current += 1;
+
+                // Trim surrounding quotes and only use the actual string content for the token
+                Some(Token::new_string(
+                    self.source[self.start + 1..self.current - 1].to_string(),
+                    self.line,
+                ))
+            }
 
             // Number Literals
             '0'..='9' => {
@@ -224,31 +248,5 @@ impl Scanner {
                 });
             }
         })
-    }
-
-    // Returns the String literal between ""
-    // A new string is created and returned instead of a slice as we do not want to move the characters out from self
-    fn string_literals(&mut self) -> String {
-        while self.peek() != '"' && !self.is_at_end() {
-            // Allow multiline strings.
-            // @todo Is extra processing needed to remove the \n from the final string? Or keep as is?
-            if self.peek() == '\n' {
-                self.line += 1;
-            }
-
-            self.current += 1;
-        }
-
-        // @todo Throw error here, something like SS.error(line, "Unterminated string.");
-        if self.is_at_end() {
-            println!("Unterminated string.");
-            return "".to_string(); // @todo Fix this... I need this to return smth, but shouldnt cos this should just error out
-        }
-
-        // Skip the closing double quote "
-        self.current += 1;
-
-        // Trim surrounding quotes and only return the actual string content
-        self.source[self.start + 1..self.current - 1].to_string()
     }
 }

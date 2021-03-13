@@ -54,11 +54,11 @@ impl Token {
         }
     }
 
-    pub fn new_number(lexeme: String, line: usize) -> Token {
+    pub fn new_number(number: f64, line: usize) -> Token {
         Token {
             token_type: TokenType::Number,
             // Treating all numbers as f64 type for now
-            literal: Some(Literal::Number(lexeme.parse::<f64>().unwrap())),
+            literal: Some(Literal::Number(number)),
             lexeme: None,
             line,
         }
