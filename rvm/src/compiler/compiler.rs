@@ -30,30 +30,60 @@ enum Precedence {
 
 impl Compiler {
     pub fn compile(source: String, chunk: Chunk) {
-        let compiler = Compiler { chunk };
+        let scanner = Scanner::new(source);
+
+        // Create default token structs using the derived default trait, since at the start current and previous tokens does not exists yet
+        let parser = Parser::new(scanner, Token::default(), Token::default());
+
+        let mut compiler = Compiler { chunk, parser };
+
+        // compiler.advance();
+        // compiler.expression();
+        // compiler.consume(TokenType::Eof, "Expect end of expression".to_string());
+        compiler.parser.advance();
+        compiler.expression();
+        compiler
+            .parser
+            .consume(TokenType::Eof, "Expect end of expression".to_string());
+
+        // self.advance();
+        // self.expression();
+        // self.consume(TokenType::Eof, "Expect end of expression".to_string());
+
+        // Tmp add return code to use VM to print the return value
+        compiler.emit_code(OpCode::RETURN);
     }
-}
 
-struct Parser {
-    current: Token,
-    previous: Token,
-}
+    fn expression(&mut self) {
+        //
+    }
 
-fn advance(scanner: &Scanner) {
-    let mut parser = Parser {
-        current: scanner.make_token(TokenType::Eof),
-        previous: scanner.make_token(TokenType::Eof),
-    };
+    fn number(&mut self) {
+        let value: f64 = self.parser.scanner.source
+            [self.parser.previous.start..self.parser.previous.length]
+            .parse::<f64>()
+            .unwrap();
+        self.emit_constant(Value::Number(value));
+    }
 
-    parser.previous = parser.current;
+    fn grouping(&mut self) {
+        self.expression();
+        self.parser.consume(
+            TokenType::RightParen,
+            "Expect ')' after expression".to_string(),
+        );
+    }
 
-    loop {
-        // parser.current = Scanner::scan_token();
-        let current = *scanner::scan_token();
-        if parser.current.token_type != TokenType::Error {
-            break;
-        } else {
-            errorAtCurrent(parser.current.start);
+    fn unary(&mut self) {
+        // Compile the operand.
+        self.expression();
+
+        // Emit the operator instruction.
+        match &self.parser.previous.token_type {
+            TokenType::Minus => self.emit_code(OpCode::NEGATE),
+
+            // Unreachable.
+            _ => return,
         }
     }
 }
