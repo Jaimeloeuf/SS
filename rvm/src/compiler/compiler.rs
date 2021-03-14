@@ -1,11 +1,15 @@
 use crate::chunk::Chunk;
+use crate::compiler::Parser;
 use crate::opcode::OpCode;
 use crate::scanner::Scanner;
-use crate::token::Token;
 use crate::token::TokenType;
+use crate::value::Value;
 
 pub struct Compiler {
     pub chunk: Chunk,
+
+    // Hold a parser so that it can be passed along to the methods easily instead of relying on global state like clox
+    pub parser: Parser,
 }
 
 // Precedence enum where all these can be converted to usize
