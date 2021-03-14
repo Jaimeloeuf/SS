@@ -41,21 +41,19 @@ macro_rules! arithmetic_binary_op {
                 $stack.push(Value::Number(a $operator b));
             }
 
-            (a, b)=> {
+            (a, b) =>
                 // Unwrap the values directly assuming that they are definitely Some() variants
                 // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
                 return Err(RuntimeError::TypeError(format!(
                     "Invalid operand types {:?} and {:?} used for '{}' arithmetic operation",
                     a.unwrap(), b.unwrap(), stringify!($operator)
                 )))
-            }
         }
     }};
 }
 
 impl VM {
-    // pub fn interpret(chunk: Chunk) -> InterpretResult {
-    pub fn interpret(mut chunk: Chunk) -> Result<Value, RuntimeError> {
+    pub fn interpret(chunk: Chunk) -> Result<Value, RuntimeError> {
         // let mut vm = VM {
         //     chunk,
         //     // From Clox:
@@ -67,7 +65,6 @@ impl VM {
 
         // @todo Include max stack to cause stack overflow to prevent infinite stack use
         // let mut top_of_stack: usize = 0; // Technically just use stack.last()
-        // let mut stack = Vec::<&Value>::new();
         let mut stack = Vec::<Value>::new();
 
         // Add a debug flag for this

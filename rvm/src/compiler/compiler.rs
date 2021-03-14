@@ -8,6 +8,21 @@ pub struct Compiler {
     pub chunk: Chunk,
 }
 
+// Precedence enum where all these can be converted to usize
+enum Precedence {
+    NONE,
+    ASSIGNMENT, // =
+    OR,         // or
+    AND,        // and
+    EQUALITY,   // == !=
+    COMPARISON, // < > <= >=
+    TERM,       // + -
+    FACTOR,     // * /
+    UNARY,      // ! -
+    CALL,       // . ()
+    PRIMARY,
+}
+
 impl Compiler {
     pub fn compile(source: String, chunk: Chunk) {
         let compiler = Compiler { chunk };

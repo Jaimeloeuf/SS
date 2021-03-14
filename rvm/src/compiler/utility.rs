@@ -3,6 +3,7 @@ use super::Compiler;
 use crate::opcode::OpCode;
 use crate::token::Token;
 use crate::token::TokenType;
+use crate::value::Value;
 
 impl Compiler {
     fn error_at_current(message: String) {
@@ -25,12 +26,16 @@ impl Compiler {
         // parser.hadError = true;
     }
 
-    fn emit_code(&mut self, code: OpCode) {
+    pub fn emit_code(&mut self, code: OpCode) {
         self.chunk.write(code, parser.previous.line);
     }
 
-    fn consume(&mut self, token_type: TokenType, message: String) {
-        if (parser.current.token_type == token_type) {
+    pub fn emit_constant(&self, value: Value) {
+        self.emit_code(OpCode::CONSTANT(value));
+    }
+
+    pub fn consume(&mut self, token_type: TokenType, message: String) {
+        if parser.current.token_type == token_type {
             return self.advance();
         }
 
