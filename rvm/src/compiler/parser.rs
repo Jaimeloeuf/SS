@@ -9,12 +9,12 @@ pub struct Parser {
     pub previous: Token,
 }
 
-enum ParsingError {
+pub enum ParsingError {
     error,
 }
 
 impl Parser {
-    fn new(scanner: Scanner, current: Token, previous: Token) -> Parser {
+    pub fn new(scanner: Scanner, current: Token, previous: Token) -> Parser {
         Parser {
             current,
             previous,
@@ -24,7 +24,8 @@ impl Parser {
 
     pub fn advance(&mut self) -> Result<(), ParsingError> {
         // Stash old current token as previous, to get the lexeme after matching a token.
-        self.previous = self.current;
+        // Take the current token and place it into previous and create default placeholder token for self.current
+        self.previous = std::mem::take(&mut self.current);
 
         // Keep reading tokens and reporting errors, until we hit a non-error or reach the end.
         // That way, the rest of the parser sees only valid tokens. The current and previous token are stored in the struct

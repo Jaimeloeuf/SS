@@ -7,6 +7,10 @@
  */
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
+  // Represents nothing as initial state / placeholder
+  // Only used by compiler and parser initialization
+  NOTHING,
+
   // @todo
   Error,
 
@@ -72,4 +76,12 @@ pub enum TokenType {
   Null, // to remove?
 
   Eof,
+}
+
+// Default trait for TokenType, so that Token struct, which holds a TokenType, can derive the Default trait
+// Defaults to the empty special NOTHING variant
+impl Default for TokenType {
+  fn default() -> Self {
+    TokenType::NOTHING
+  }
 }

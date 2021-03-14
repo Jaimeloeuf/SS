@@ -9,7 +9,7 @@ impl Compiler {
         self.chunk.write(code, self.parser.previous.line);
     }
 
-    pub fn emit_constant(&self, value: Value) {
+    pub fn emit_constant(&mut self, value: Value) {
         self.emit_code(OpCode::CONSTANT(value));
     }
 }

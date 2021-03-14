@@ -2,6 +2,7 @@ use crate::chunk::Chunk;
 use crate::compiler::Parser;
 use crate::opcode::OpCode;
 use crate::scanner::Scanner;
+use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
 

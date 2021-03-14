@@ -10,7 +10,8 @@ use super::TokenType;
 //   pub line: usize,
 // }
 
-#[derive(Debug)]
+// Default trait to be used by compiler's compile and advance method to get a default place holder token struct
+#[derive(Default, Debug)]
 pub struct Token {
   pub token_type: TokenType,
   pub start: usize,
