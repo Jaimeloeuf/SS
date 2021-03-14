@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 
 mod chunk;
+mod compiler;
 mod debug;
 mod error;
 mod keywords;
