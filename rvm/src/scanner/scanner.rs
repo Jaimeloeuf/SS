@@ -5,14 +5,8 @@ use crate::token::Token;
 use crate::token::TokenType;
 
 impl Scanner {
-    // @todo Should be named compile function
-    pub fn scan_tokens(source: String) {
-        let mut scanner = Scanner {
-            source,
-            start: 0,
-            current: 0,
-            line: 1,
-        };
+    pub fn test_scanner(source: String) {
+        let mut scanner = Scanner::new(source);
 
         // @todo To fix this later, using for printing to print 0 as number instead of |
         let mut line: isize = -1;
@@ -37,7 +31,17 @@ impl Scanner {
         }
     }
 
-    fn scan_token(&mut self) -> Token {
+    // This is initScanner from clox compile()
+    pub fn new(source: String) -> Scanner {
+        Scanner {
+            source,
+            start: 0,
+            current: 0,
+            line: 1,
+        }
+    }
+
+    pub fn scan_token(&mut self) -> Token {
         // Skips none essential characters like whitespaces and comments
         self.skip_none_essentials();
 
