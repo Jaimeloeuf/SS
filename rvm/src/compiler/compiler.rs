@@ -1,3 +1,5 @@
+use super::parse_rule::{ParseRule, Precedence};
+
 use crate::chunk::Chunk;
 use crate::compiler::Parser;
 use crate::opcode::OpCode;
@@ -11,21 +13,6 @@ pub struct Compiler {
 
     // Hold a parser so that it can be passed along to the methods easily instead of relying on global state like clox
     pub parser: Parser,
-}
-
-// Precedence enum where all these can be converted to usize
-enum Precedence {
-    NONE,
-    ASSIGNMENT, // =
-    OR,         // or
-    AND,        // and
-    EQUALITY,   // == !=
-    COMPARISON, // < > <= >=
-    TERM,       // + -
-    FACTOR,     // * /
-    UNARY,      // ! -
-    CALL,       // . ()
-    PRIMARY,
 }
 
 impl Compiler {
@@ -55,7 +42,7 @@ impl Compiler {
     }
 
     fn expression(&mut self) {
-        //
+        self.parse_precedence(Precedence::Assignment);
     }
 
     fn number(&mut self) {

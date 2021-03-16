@@ -1,4 +1,5 @@
 pub mod compiler;
+mod parse_rule;
 pub mod parser;
 mod utility;
 
