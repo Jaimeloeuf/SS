@@ -21,9 +21,9 @@ pub enum Precedence {
 type ParseFn = fn(&mut Compiler);
 
 pub struct ParseRule {
-    prefix: Option<ParseFn>,
-    infix: Option<ParseFn>,
-    precedence: Precedence,
+    pub prefix: Option<ParseFn>,
+    pub infix: Option<ParseFn>,
+    pub precedence: Precedence,
 }
 
 impl ParseRule {
@@ -54,7 +54,7 @@ impl ParseRule {
 // Static so that only 1 instance of this table in memory
 // Create the table internally by inserting rules using TokenType as index 1 by 1
 // This has no runtime cost as this is a static value evaluted at compile time
-pub static rules_table: [ParseRule; 1] = {
+static rules_table: [ParseRule; 1] = {
     // Same type as rule table, need to initialize it, so using default empty ParseRule
     let rules_array: [ParseRule; 1] = [ParseRule::new(Precedence::None); 1];
 
@@ -66,3 +66,10 @@ pub static rules_table: [ParseRule; 1] = {
 
     rules_array
 };
+
+// Inline method to act like a macro, for calling rules table with a TokenType variant,
+// allow caller to call directly without manually casting TokenType variant to usize
+#[inline]
+pub fn get_rule(token_type: TokenType) -> ParseRule {
+    rules_table[token_type as usize]
+}
