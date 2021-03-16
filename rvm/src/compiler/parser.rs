@@ -48,15 +48,18 @@ impl Parser {
     }
 
     fn error_at(&self, token: &Token, message: String) {
-        eprint!("[line {}] Error", token.line);
+        eprint!("[line {}] Error ", token.line);
 
         if token.token_type == TokenType::Eof {
-            eprint!(" at end");
+            eprint!("at end");
         } else if token.token_type == TokenType::Error {
             // Nothing.
         } else {
-            // eprint!("{:0width$}", token.start, width = token.length);
-            eprint!(" at '{}'", token.start);
+            // Get slice from source and convert to String to print
+            eprint!(
+                "at '{}'",
+                self.scanner.source[token.start..token.start + token.length].to_string()
+            );
         }
 
         eprintln!(": {}", message);
