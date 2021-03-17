@@ -20,20 +20,26 @@ pub enum Precedence {
 // A method on compiler struct...
 type ParseFn = fn(&mut Compiler);
 
+// Need Copy trait for array initialization process in static rules_table creation process
+// Clone trait is needed to derive the Copy trait
+#[derive(Clone, Copy)]
 pub struct ParseRule {
     pub prefix: Option<ParseFn>,
     pub infix: Option<ParseFn>,
     pub precedence: Precedence,
 }
 
-impl ParseRule {
-    const fn new(precedence: Precedence) -> ParseRule {
+// Macro to generate ParseRule struct instantiations instead of using a const function
+// Since function pointers are not allowed in const functions so just using a macro directly instead
+macro_rules! new_parse_rule {
+    // $precedence_variant -> Takes a Precedence enum variant
+    ($precedence_variant:expr) => {
         ParseRule {
             prefix: None,
             infix: None,
-            precedence,
+            precedence: $precedence_variant,
         }
-    }
+    };
 }
 
 // The problem with this approach is that,
@@ -54,15 +60,15 @@ impl ParseRule {
 // Static so that only 1 instance of this table in memory
 // Create the table internally by inserting rules using TokenType as index 1 by 1
 // This has no runtime cost as this is a static value evaluted at compile time
-static rules_table: [ParseRule; 1] = {
+static rules_table: [ParseRule; 40] = {
     // Same type as rule table, need to initialize it, so using default empty ParseRule
-    let rules_array: [ParseRule; 1] = [ParseRule::new(Precedence::None); 1];
+    let mut rules_array: [ParseRule; 40] = [new_parse_rule!(Precedence::None); 40];
 
     /*
         Insert rules for each token type 1 by 1
         TokenType enum variants converted to usize first before using it to index the array
     */
-    rules_array[TokenType::Semicolon as usize] = ParseRule::new(Precedence::None);
+    rules_array[TokenType::Semicolon as usize] = new_parse_rule!(Precedence::None);
 
     rules_array
 };
