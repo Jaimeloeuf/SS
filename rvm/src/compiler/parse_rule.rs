@@ -118,13 +118,18 @@ macro_rules! new_parse_rule {
 // 2. This is more dangerous, as a change in TokenType enum's ordering will cause wrong ParseRules to be matched to the TokenTypes
 // static rule_table: [ParseRule; 1] = [ParseRule::new(Precedence::None)];
 
+// Use last enum variant's discriminant to calculate number of variants in the enum
+// Used during RULES_TABLE initialization as the number of elements
+const NUM_OF_TOKENTYPE_VARIANTS: usize = (TokenType::Eof as usize) + 1;
+
 // This array is used to map a TokenType to a ParseRule enum variant without using a hashmap
 // Static so that only 1 instance of this table in memory
 // Create the table internally by inserting rules using TokenType as index 1 by 1
 // This has no runtime cost as this is a static value evaluted at compile time
-static RULES_TABLE: [ParseRule; 40] = {
+static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
     // Same type as rule table, need to initialize it, so using default empty ParseRule
-    let mut rules_array: [ParseRule; 40] = [new_parse_rule!(Precedence::None); 40];
+    let mut rules_array: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] =
+        [new_parse_rule!(Precedence::None); NUM_OF_TOKENTYPE_VARIANTS];
 
     /*
         Explicitly insert rules for each token type 1 by 1 using TokenType as index
