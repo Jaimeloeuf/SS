@@ -4,8 +4,9 @@
  * Inherited traits:
  * Debug is to make debug printing easier and skip implementing the display trait
  * PartialEq is used to do comparison instead of match. Refer to Parser struct methods
+ * Clone trait is used to use TokenType as usize index value of arrays without consuming the value
  */
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
   // Represents nothing as initial state / placeholder
   // Only used by compiler and parser initialization

@@ -73,9 +73,12 @@ static rules_table: [ParseRule; 40] = {
     rules_array
 };
 
-// Inline method to act like a macro, for calling rules table with a TokenType variant,
+// Inline method to act like a macro (but with type signatures), for calling rules table with a TokenType variant,
 // allow caller to call directly without manually casting TokenType variant to usize
+// taking it a TokenType ref to prevent consuming/moving token_type value away from caller
+// Since behind a shared ref, token_type needs to be cloned before it can be used
+// Return ParseRule ref of static lifetime, since ParseRule is stored in the static rules_table, it will be static
 #[inline]
-pub fn get_rule(token_type: TokenType) -> ParseRule {
-    rules_table[token_type as usize]
+pub fn get_rule(token_type: &TokenType) -> &'static ParseRule {
+    &rules_table[token_type.clone() as usize]
 }
