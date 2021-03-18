@@ -45,15 +45,15 @@ impl Compiler {
         self.parse_precedence(Precedence::Assignment);
     }
 
-    fn number(&mut self) {
+    pub fn number(&mut self) {
         let value: f64 = self.parser.scanner.source
-            [self.parser.previous.start..self.parser.previous.length]
+            [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<f64>()
             .unwrap();
         self.emit_constant(Value::Number(value));
     }
 
-    fn grouping(&mut self) {
+    pub fn grouping(&mut self) {
         self.expression();
         self.parser.consume(
             TokenType::RightParen,
@@ -61,7 +61,7 @@ impl Compiler {
         );
     }
 
-    fn unary(&mut self) {
+    pub fn unary(&mut self) {
         // Compile the operand.
         self.expression();
 
