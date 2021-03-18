@@ -2,7 +2,12 @@ use super::Compiler;
 
 use crate::token::TokenType;
 
-// Precedence enum where all these can be converted to usize
+// @todo Make this u8 instead of usize
+// repr(usize) is used temporarily, both to document the memory layout to use and for testing with mem::transmute
+// Precedence enum, where they are represented with usize so that they can be converted to it, to do C like enum operations
+// Derives both Clone and Copy trait as this enum is used as a field type on ParseRule struct, which implements the 2 traits
+#[repr(usize)]
+#[derive(Clone, Copy)]
 pub enum Precedence {
     None,
     Assignment, // =
@@ -17,8 +22,22 @@ pub enum Precedence {
     Primary,
 }
 
+
+impl Precedence {
+    // Option
+    pub fn from(us: usize) -> Precedence {
+        if us >= 0 && us < NUM_OF_PRECEDENCE_VARIANTS {
+            // Some(unsafe { mem::transmute(usize) })
+            unsafe { std::mem::transmute(us) }
+        } else {
+            // None
+            panic!("")
+        }
+    }
+}
+
 // A method on compiler struct...
-type ParseFn = fn(&mut Compiler);
+pub type ParseFn = fn(&mut Compiler);
 
 // Need Copy trait for array initialization process in static rules_table creation process
 // Clone trait is needed to derive the Copy trait

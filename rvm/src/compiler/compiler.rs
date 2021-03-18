@@ -1,4 +1,4 @@
-use super::parse_rule::{get_rule, ParseRule, Precedence};
+use super::parse_rule::{get_rule, ParseFn, ParseRule, Precedence};
 
 use crate::chunk::Chunk;
 use crate::compiler::Parser;
