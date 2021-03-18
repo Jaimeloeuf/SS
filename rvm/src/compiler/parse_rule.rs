@@ -22,6 +22,35 @@ pub enum Precedence {
     Primary,
 }
 
+// Use last enum variant for its discriminant to calculate the number of variants in the enum
+const NUM_OF_PRECEDENCE_VARIANTS: usize = (Precedence::Primary as usize) + 1;
+
+// This array is used to convert usize into a Precedence enum variant using the usize as discriminant of the enum
+// This has no runtime cost as this is a static value evaluted at compile time compared to a match statement from usize to variant
+// Access is constant time too since this will be a direct array indexing operation
+pub static USIZE_TO_PRECEDENCE: [Precedence; NUM_OF_PRECEDENCE_VARIANTS] = {
+    // Same type as rule table, need to initialize it, so using default empty ParseRule
+    let mut precedence_array = [Precedence::None; NUM_OF_PRECEDENCE_VARIANTS];
+
+    /*
+        Explicitly insert precedence for each token type 1 by 1 using the precedence variant itself as index
+        This prevents errors caused with directly instantiating the array in the correct order
+        Precedence enum variants are converted to usize first before using it to index the array
+    */
+    precedence_array[Precedence::None as usize] = Precedence::None;
+    precedence_array[Precedence::Assignment as usize] = Precedence::Assignment;
+    precedence_array[Precedence::Or as usize] = Precedence::Or;
+    precedence_array[Precedence::And as usize] = Precedence::And;
+    precedence_array[Precedence::Equality as usize] = Precedence::Equality;
+    precedence_array[Precedence::Comparison as usize] = Precedence::Comparison;
+    precedence_array[Precedence::Term as usize] = Precedence::Term;
+    precedence_array[Precedence::Factor as usize] = Precedence::Factor;
+    precedence_array[Precedence::Unary as usize] = Precedence::Unary;
+    precedence_array[Precedence::Call as usize] = Precedence::Call;
+    precedence_array[Precedence::Primary as usize] = Precedence::Primary;
+
+    precedence_array
+};
 
 impl Precedence {
     // Option
@@ -39,7 +68,7 @@ impl Precedence {
 // A method on compiler struct...
 pub type ParseFn = fn(&mut Compiler);
 
-// Need Copy trait for array initialization process in static rules_table creation process
+// Need Copy trait for array initialization process in static RULES_TABLE creation process
 // Clone trait is needed to derive the Copy trait
 #[derive(Clone, Copy)]
 pub struct ParseRule {
@@ -76,16 +105,18 @@ macro_rules! new_parse_rule {
 // 2. This is more dangerous, as a change in TokenType enum's ordering will cause wrong ParseRules to be matched to the TokenTypes
 // static rule_table: [ParseRule; 1] = [ParseRule::new(Precedence::None)];
 
+// This array is used to map a TokenType to a ParseRule enum variant without using a hashmap
 // Static so that only 1 instance of this table in memory
 // Create the table internally by inserting rules using TokenType as index 1 by 1
 // This has no runtime cost as this is a static value evaluted at compile time
-static rules_table: [ParseRule; 40] = {
+static RULES_TABLE: [ParseRule; 40] = {
     // Same type as rule table, need to initialize it, so using default empty ParseRule
     let mut rules_array: [ParseRule; 40] = [new_parse_rule!(Precedence::None); 40];
 
     /*
-        Insert rules for each token type 1 by 1
-        TokenType enum variants converted to usize first before using it to index the array
+        Explicitly insert rules for each token type 1 by 1 using TokenType as index
+        This prevents errors caused with directly instantiating the array in the correct order
+        TokenType enum variants are converted to usize first before using it to index the array
     */
     rules_array[TokenType::Semicolon as usize] = new_parse_rule!(Precedence::None);
 
@@ -96,8 +127,8 @@ static rules_table: [ParseRule; 40] = {
 // allow caller to call directly without manually casting TokenType variant to usize
 // taking it a TokenType ref to prevent consuming/moving token_type value away from caller
 // Since behind a shared ref, token_type needs to be cloned before it can be used
-// Return ParseRule ref of static lifetime, since ParseRule is stored in the static rules_table, it will be static
+// Return ParseRule ref of static lifetime, since ParseRule is stored in the static RULES_TABLE, it will be static
 #[inline]
 pub fn get_rule(token_type: &TokenType) -> &'static ParseRule {
-    &rules_table[token_type.clone() as usize]
+    &RULES_TABLE[token_type.clone() as usize]
 }
