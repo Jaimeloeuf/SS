@@ -80,11 +80,24 @@ pub struct ParseRule {
 // Macro to generate ParseRule struct instantiations instead of using a const function
 // Since function pointers are not allowed in const functions so just using a macro directly instead
 macro_rules! new_parse_rule {
+    // For creating ParseRule that dont have any prefix or infix methods
     // $precedence_variant -> Takes a Precedence enum variant
     ($precedence_variant:expr) => {
         ParseRule {
             prefix: None,
             infix: None,
+            precedence: $precedence_variant,
+        }
+    };
+
+    // For creating ParseRule that have prefix, infix or both methods
+    // $prefix -> Takes a compiler method to parse/compile the prefix part
+    // $infix -> Takes a compiler method to parse/compile the infix part
+    // $precedence_variant -> Takes a Precedence enum variant
+    ($prefix:expr, $infix:expr, $precedence_variant:expr) => {
+        ParseRule {
+            prefix: $prefix,
+            infix: $infix,
             precedence: $precedence_variant,
         }
     };
