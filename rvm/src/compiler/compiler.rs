@@ -74,18 +74,22 @@ impl Compiler {
     }
 
     pub fn unary(&mut self) {
-        // Compile the operand.
-        self.expression();
+        // Compile the operand
+        self.parse_precedence(Precedence::Unary);
 
         // Emit the operator instruction.
         match &self.parser.previous.token_type {
             TokenType::Minus => self.emit_code(OpCode::NEGATE),
 
-            // Unreachable.
+            // Unreachable
+            // @todo Change to use Result error variant to bubble error up
             _ => return,
         }
     }
 
+
+    // Parse expression by using the TokenType to get a ParseRule's parse/compile method
+    // Continues to parse/compile infix operators if the precedence level is low enough
     fn parse_precedence(&mut self, precedence: Precedence) {
         // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
         let precedence = precedence as usize;
