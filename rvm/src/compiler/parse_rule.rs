@@ -54,17 +54,17 @@ pub static USIZE_TO_PRECEDENCE: [Precedence; NUM_OF_PRECEDENCE_VARIANTS] = {
 
 impl Precedence {
     // Safe method with panic guard to wrap around unsafe transmute code to convert usize as discriminant to Precedence variant
-    pub fn from_usize(discriminant: usize) -> Precedence {
-        // Since Precedence enum uses usize, the discriminant must be between 0 and the number of enum variants
-        // This acts as a "safe" check before executing unsafe code, to ensure that the unsafe code wont fail
-        // Dont need to check if it is bigger or equals to 0, since the usize type itself forces it to be 0 or bigger.
-        if discriminant < NUM_OF_PRECEDENCE_VARIANTS {
-            unsafe { std::mem::transmute(discriminant) }
-        } else {
-            // If the discriminant is out of bounds, panic!
-            panic!("Out of bounds discriminant used to convert to a Precedence enum variant")
-        }
-    }
+    // pub fn from_usize(discriminant: usize) -> Precedence {
+    //     // Since Precedence enum uses usize, the discriminant must be between 0 and the number of enum variants
+    //     // This acts as a "safe" check before executing unsafe code, to ensure that the unsafe code wont fail
+    //     // Dont need to check if it is bigger or equals to 0, since the usize type itself forces it to be 0 or bigger.
+    //     if discriminant < NUM_OF_PRECEDENCE_VARIANTS {
+    //         unsafe { std::mem::transmute(discriminant) }
+    //     } else {
+    //         // If the discriminant is out of bounds, panic!
+    //         panic!("Out of bounds discriminant used to convert to a Precedence enum variant")
+    //     }
+    // }
 }
 
 // A method on compiler struct...

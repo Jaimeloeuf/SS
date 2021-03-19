@@ -87,6 +87,33 @@ impl Compiler {
         }
     }
 
+    pub fn binary(&mut self) {
+        // Remember the operator.
+        let operator_type: TokenType = self.parser.previous.token_type.clone();
+
+        // Parse/Compile right operand first, so that opcode will execute before operator code,
+        // which for binary arithmetic operators needs the values on the stack already.
+        // Get next precedence enum variant and parse it
+        self.parse_precedence(
+            USIZE_TO_PRECEDENCE[get_rule(&operator_type).precedence as usize + 1],
+        );
+
+        // Alternative is to use method that relies on unsafe mem::transmute code
+        // self.parse_precedence(Precedence::from_usize(
+        //     get_rule(&operator_type).precedence as usize + 1,
+        // ));
+
+        // Emit the operator's OpCode
+        match operator_type {
+            TokenType::Plus => self.emit_code(OpCode::ADD),
+            TokenType::Minus => self.emit_code(OpCode::SUBTRACT),
+            TokenType::Star => self.emit_code(OpCode::MULTIPLY),
+            TokenType::Slash => self.emit_code(OpCode::DIVIDE),
+
+            // Unreachable
+            _ => return,
+        }
+    }
 
     // Parse expression by using the TokenType to get a ParseRule's parse/compile method
     // Continues to parse/compile infix operators if the precedence level is low enough
