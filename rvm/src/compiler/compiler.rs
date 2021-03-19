@@ -115,6 +115,18 @@ impl Compiler {
         }
     }
 
+    pub fn literal(&mut self) {
+        match &self.parser.previous.token_type {
+            // Optimize by using special opcodes, like OpCode::True to load True onto stack directly instead of reading from CONSTANT(val)
+            TokenType::True => self.emit_constant(Value::Bool(true)),
+            TokenType::False => self.emit_constant(Value::Bool(false)),
+            TokenType::Null => self.emit_constant(Value::Null),
+
+            // @todo Error out
+            _ => return,
+        }
+    }
+
     // Parse expression by using the TokenType to get a ParseRule's parse/compile method
     // Continues to parse/compile infix operators if the precedence level is low enough
     fn parse_precedence(&mut self, precedence: Precedence) {
