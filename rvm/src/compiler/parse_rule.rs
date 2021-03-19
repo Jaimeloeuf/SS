@@ -137,6 +137,56 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
         TokenType enum variants are converted to usize first before using it to index the array
     */
     rules_array[TokenType::Semicolon as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::LeftParen as usize] =
+        new_parse_rule!(Some(Compiler::grouping), None, Precedence::None);
+    rules_array[TokenType::RightParen as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::LeftBrace as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::RightBrace as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Comma as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Dot as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Minus as usize] = new_parse_rule!(
+        Some(Compiler::unary),
+        Some(Compiler::binary),
+        Precedence::Term
+    );
+    rules_array[TokenType::Plus as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Term);
+    rules_array[TokenType::Semicolon as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Slash as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Factor);
+    rules_array[TokenType::Star as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Factor);
+    rules_array[TokenType::Bang as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::BangEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Equal as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::EqualEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Greater as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::GreaterEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Less as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::LessEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Identifier as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Str as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Number as usize] =
+        new_parse_rule!(Some(Compiler::number), None, Precedence::None);
+    rules_array[TokenType::And as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::False as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::For as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Function as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::If as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Else as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Null as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Or as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Print as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Return as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Const as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::True as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::While as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Error as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Eof as usize] = new_parse_rule!(Precedence::None);
+
+    // rules_array[TokenType::Class as usize] = new_parse_rule!(Precedence::None);
+    // rules_array[TokenType::Super as usize] = new_parse_rule!(Precedence::None);
+    // rules_array[TokenType::This as usize] = new_parse_rule!(Precedence::None);
 
     rules_array
 };
