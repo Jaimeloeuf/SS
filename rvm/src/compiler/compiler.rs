@@ -8,6 +8,10 @@ use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
 
+// The Compiler / Parser / Scanner structs are strung together,
+// Compiler struct holds a Parser
+// Parser struct holds a Scanner
+// Scanner is created inside compile method, it is used to create Parser struct, which is used to create the Compiler struct
 pub struct Compiler {
     pub chunk: Chunk,
 
@@ -16,13 +20,22 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    pub fn compile(source: String, chunk: Chunk) {
-        let scanner = Scanner::new(source);
+    // Returns Chunk that can be run immediately
+    pub fn compile(source: String, chunk: Chunk) -> Chunk {
+        // Create compiler struct internally instead of having a seperate method to create and compile.
+        let mut compiler = Compiler {
+            // Move chunk into the compiler struct, so that the methods can access it
+            chunk,
 
-        // Create default token structs using the derived default trait, since at the start current and previous tokens does not exists yet
-        let parser = Parser::new(scanner, Token::default(), Token::default());
-
-        let mut compiler = Compiler { chunk, parser };
+            // Create default token structs using the derived default trait, since at the start current and previous tokens does not exists yet
+            parser: Parser::new(
+                // Create scanner using the source string
+                Scanner::new(source),
+                // Since parser current and previous fields hold tokens instead of Option<Token>, generate 2 default Tokens
+                Token::default(),
+                Token::default(),
+            ),
+        };
 
         // compiler.advance();
         // compiler.expression();
@@ -33,12 +46,11 @@ impl Compiler {
             .parser
             .consume(TokenType::Eof, "Expect end of expression".to_string());
 
-        // self.advance();
-        // self.expression();
-        // self.consume(TokenType::Eof, "Expect end of expression".to_string());
-
-        // Tmp add return code to use VM to print the return value
+        // @todo Tmp add return code to use VM to print the return value
         compiler.emit_code(OpCode::RETURN);
+
+        // Return the chunk, now that it is filled with OpCodes from Compiler struct
+        compiler.chunk
     }
 
     fn expression(&mut self) {
