@@ -85,4 +85,41 @@ impl Compiler {
             _ => return,
         }
     }
+
+    fn parse_precedence(&mut self, precedence: Precedence) {
+        // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
+        let precedence = precedence as usize;
+
+        // Read the next token
+        self.parser.advance();
+
+        // Look up corresponding ParseRule of the previous token's TokenType, and match to use the prefix parser
+        match get_rule(&self.parser.previous.token_type).prefix {
+            // Alternative syntax for self.prefix_rule() where prefix_rule is a variable function pointer
+            Some(prefix_rule) => prefix_rule(self),
+
+            // If there is no prefix parser, then the token must be a syntax error
+            // @todo Handle error using an Result error variant
+            None => return eprintln!("Expect expression. No prefix parser"),
+        };
+
+        // After parsing the prefix expression, which may consume more tokens this look for an infix parser for the next token.
+        // If there is one, it means the prefix expression this just compiled might be an operand for it,
+        // BUT ONLY if the call to parse_precedence() has a precedence that is low enough to permit that infix operator.
+        // To test if it is low enough, convert ParseRule's precedence into its usize discriminant to compare with the precedence passed in
+        while precedence <= get_rule(&self.parser.current.token_type).precedence as usize {
+            // Read the next token
+            self.parser.advance();
+
+            // Look up corresponding ParseRule of the previous token's TokenType, and match to use the infix parser
+            match get_rule(&self.parser.previous.token_type).infix {
+                // Alternative syntax for self.infix_rule() where infix_rule is a variable function pointer
+                Some(infix_rule) => infix_rule(self),
+
+                // If there is no prefix parser, then the token must be a syntax error
+                // @todo Handle error using an Result error variant
+                None => return eprintln!("Expect expression. No infix parser"),
+            }
+        }
+    }
 }
