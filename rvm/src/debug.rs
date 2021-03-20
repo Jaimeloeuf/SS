@@ -40,7 +40,15 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
         OpCode::MULTIPLY => simple_instruction(&chunk, offset),
         OpCode::DIVIDE => simple_instruction(&chunk, offset),
 
+        OpCode::NOT => simple_instruction(&chunk, offset),
         OpCode::NEGATE => simple_instruction(&chunk, offset),
+
+        OpCode::EQUAL => simple_instruction(&chunk, offset),
+        OpCode::NOT_EQUAL => simple_instruction(&chunk, offset),
+        OpCode::GREATER => simple_instruction(&chunk, offset),
+        OpCode::GREATER_EQUAL => simple_instruction(&chunk, offset),
+        OpCode::LESS => simple_instruction(&chunk, offset),
+        OpCode::LESS_EQUAL => simple_instruction(&chunk, offset),
 
         ref instruction => {
             println!("Unknown opcode {:?}", instruction);

@@ -15,5 +15,14 @@ pub enum OpCode {
     DIVIDE,
 
     // Unary operators
+    NOT,
     NEGATE,
+
+    // Equality and Comparison operators
+    EQUAL,
+    NOT_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
 }

@@ -160,14 +160,21 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
     rules_array[TokenType::Star as usize] =
         new_parse_rule!(None, Some(Compiler::binary), Precedence::Factor);
 
-    rules_array[TokenType::Bang as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::BangEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Bang as usize] =
+        new_parse_rule!(Some(Compiler::unary), None, Precedence::None);
+    rules_array[TokenType::BangEqual as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Equality);
     rules_array[TokenType::Equal as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::EqualEqual as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::Greater as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::GreaterEqual as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::Less as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::LessEqual as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::EqualEqual as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Equality);
+    rules_array[TokenType::Greater as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+    rules_array[TokenType::GreaterEqual as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+    rules_array[TokenType::Less as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+    rules_array[TokenType::LessEqual as usize] =
+        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
 
     rules_array[TokenType::Const as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Identifier as usize] = new_parse_rule!(Precedence::None);

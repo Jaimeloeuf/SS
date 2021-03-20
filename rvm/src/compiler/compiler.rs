@@ -79,6 +79,7 @@ impl Compiler {
 
         // Emit the operator instruction.
         match &self.parser.previous.token_type {
+            TokenType::Bang => self.emit_code(OpCode::NOT),
             TokenType::Minus => self.emit_code(OpCode::NEGATE),
 
             // Unreachable
@@ -109,6 +110,13 @@ impl Compiler {
             TokenType::Minus => self.emit_code(OpCode::SUBTRACT),
             TokenType::Star => self.emit_code(OpCode::MULTIPLY),
             TokenType::Slash => self.emit_code(OpCode::DIVIDE),
+
+            TokenType::BangEqual => self.emit_code(OpCode::NOT_EQUAL),
+            TokenType::EqualEqual => self.emit_code(OpCode::EQUAL),
+            TokenType::Greater => self.emit_code(OpCode::GREATER),
+            TokenType::GreaterEqual => self.emit_code(OpCode::GREATER_EQUAL),
+            TokenType::Less => self.emit_code(OpCode::LESS),
+            TokenType::LessEqual => self.emit_code(OpCode::LESS_EQUAL),
 
             // Unreachable
             _ => return,

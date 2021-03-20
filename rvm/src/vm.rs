@@ -89,6 +89,10 @@ impl VM {
                 OpCode::MULTIPLY => arithmetic_binary_op!(*, stack),
                 OpCode::DIVIDE => arithmetic_binary_op!(/, stack),
 
+                OpCode::NOT => {
+                    let value = stack.pop().unwrap().not()?;
+                    stack.push(value);
+                }
                 OpCode::NEGATE => {
                     let value = stack.pop().unwrap().negate()?;
                     stack.push(value);
