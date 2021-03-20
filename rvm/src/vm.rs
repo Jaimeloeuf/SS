@@ -23,85 +23,65 @@ pub enum InterpretResult {
     RuntimeError,
 }
 
+// Macro to perform any generic binary operation on the last 2 values on the stack
+// This macro should only used by the other binary operation macros
+macro_rules! generic_binary_op {
+    // $stack       -> Takes in the identifier for the stack value too
+    // $operator    -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    // $arm_pattern -> A match arm pattern for the types of values expected of the last 2 values on the stack
+    // $arm_logic   -> An expression to execute and return if the last 2 values on the stack matched the arm_pattern
+    ($stack:ident, $operator:tt, $arm_pattern:pat => $arm_logic:expr) => {
+        // Pop the operands off the stack in reverse order, since the first operand will be loaded first
+        // Loading will be, LOAD A, LOAD B, since stack is LIFO, when we pop out 2 values, it will be B then A
+        let b = $stack.pop();
+        let a = $stack.pop();
+
+        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
+        #[cfg(debug_assertions)]
+        if a.is_none() || b.is_none(){
+            panic!(format!("VM Debug Error: Stack missing values for binary operation '{}'", stringify!($operator)));
+        }
+
+        match (a, b) {
+            $arm_pattern => $arm_logic,
+
+            // If the last 2 values on the stack did not match the pattern described by $arm_pattern
+            // The value types are assumed to be wrong, thus return Runtime TypeError
+            (a, b) =>
+                // Unwrap the values directly assuming that they are definitely Some() variants
+                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
+                return Err(RuntimeError::TypeError(format!(
+                    "Invalid operand types {:?} and {:?} used for '{}' operation",
+                    a.unwrap(), b.unwrap(), stringify!($operator)
+                )))
+        }
+    }
+}
+
+// Macro to perform a binary arithmetic operation (+, -, *, /) on the last 2 values on the stack
 macro_rules! arithmetic_binary_op {
     // $stack ->  Takes in the identifier for the stack value too
     // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
     ($stack:ident, $operator:tt) => {{
-        let b = $stack.pop();
-        let a = $stack.pop();
-
-        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
-        #[cfg(debug_assertions)]
-        if a.is_none() || b.is_none(){
-            panic!(format!("VM Error: Stack missing values for arithmetic binary operation {}", stringify!($operator)));
-        }
-
-        match (a, b) {
-            (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Number(num1 $operator num2)),
-
-            (a, b) =>
-                // Unwrap the values directly assuming that they are definitely Some() variants
-                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
-                return Err(RuntimeError::TypeError(format!(
-                    "Invalid operand types {:?} and {:?} used for '{}' arithmetic operation",
-                    a.unwrap(), b.unwrap(), stringify!($operator)
-                )))
-        }
+        generic_binary_op!($stack, $operator, (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Number(num1 $operator num2)));
     }};
 }
 
-macro_rules! comparison_op {
+// Macro to perform a binary boolean equality operation (==, !=) on the last 2 values on the stack
+macro_rules! equality_op {
     // $stack ->  Takes in the identifier for the stack value too
     // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
     ($stack:ident, $operator:tt) => {{
-        let b = $stack.pop();
-        let a = $stack.pop();
-
-        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
-        #[cfg(debug_assertions)]
-        if a.is_none() || b.is_none(){
-            panic!(format!("VM Error: Stack missing values for comparison binary operation {}", stringify!($operator)));
-        }
-
-        match (a, b) {
-            (Some(value1), Some(value2)) => $stack.push(Value::Bool(value1 $operator value2)),
-
-            (a, b) =>
-                // Unwrap the values directly assuming that they are definitely Some() variants
-                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
-                return Err(RuntimeError::TypeError(format!(
-                    "Invalid operand types {:?} and {:?} used for '{}' comparison operation",
-                    a.unwrap(), b.unwrap(), stringify!($operator)
-                )))
-        }
+        generic_binary_op!($stack, $operator, (Some(value1), Some(value2)) => $stack.push(Value::Bool(value1 $operator value2)));
     }};
 }
 
+// Macro to perform a numeric comparison operation (>, >=, <, <=) on the last 2 values on the stack
 macro_rules! numeric_comparison_op {
     // $stack ->  Takes in the identifier for the stack value too
     // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
     ($stack:ident, $operator:tt) => {{
-        // Rev
-        let b = $stack.pop();
-        let a = $stack.pop();
-
-        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
-        #[cfg(debug_assertions)]
-        if a.is_none() || b.is_none(){
-            panic!(format!("VM Error: Stack missing values for numeric comparison binary operation {}", stringify!($operator)));
-        }
-
-        match (a, b) {
-            (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Bool(num1 $operator num2)),
-
-            (a, b) =>
-                // Unwrap the values directly assuming that they are definitely Some() variants
-                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
-                return Err(RuntimeError::TypeError(format!(
-                    "Invalid operand types {:?} and {:?} used for '{}' numeric comparison operation",
-                    a.unwrap(), b.unwrap(), stringify!($operator)
-                )))
-        }
+        generic_binary_op!($stack, $operator, (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Bool(num1 $operator num2)));
     }};
 }
 
@@ -151,8 +131,8 @@ impl VM {
                     stack.push(value);
                 }
 
-                OpCode::EQUAL => comparison_op!(stack, ==),
-                OpCode::NOT_EQUAL => comparison_op!(stack, !=),
+                OpCode::EQUAL => equality_op!(stack, ==),
+                OpCode::NOT_EQUAL => equality_op!(stack, !=),
                 OpCode::GREATER => numeric_comparison_op!(stack, >),
                 OpCode::GREATER_EQUAL => numeric_comparison_op!(stack, >=),
                 OpCode::LESS => numeric_comparison_op!(stack, <),
