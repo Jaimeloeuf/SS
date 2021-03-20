@@ -24,9 +24,9 @@ pub enum InterpretResult {
 }
 
 macro_rules! arithmetic_binary_op {
-    // $perator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
     // $stack ->  Takes in the identifier for the stack value too
-    ($operator:tt, $stack:ident) => {{
+    // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    ($stack:ident, $operator:tt) => {{
         let b = $stack.pop();
         let a = $stack.pop();
 
@@ -37,15 +37,68 @@ macro_rules! arithmetic_binary_op {
         }
 
         match (a, b) {
-            (Some(Value::Number(a)), Some(Value::Number(b))) => {
-                $stack.push(Value::Number(a $operator b));
-            }
+            (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Number(num1 $operator num2)),
 
             (a, b) =>
                 // Unwrap the values directly assuming that they are definitely Some() variants
                 // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
                 return Err(RuntimeError::TypeError(format!(
                     "Invalid operand types {:?} and {:?} used for '{}' arithmetic operation",
+                    a.unwrap(), b.unwrap(), stringify!($operator)
+                )))
+        }
+    }};
+}
+
+macro_rules! comparison_op {
+    // $stack ->  Takes in the identifier for the stack value too
+    // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    ($stack:ident, $operator:tt) => {{
+        let b = $stack.pop();
+        let a = $stack.pop();
+
+        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
+        #[cfg(debug_assertions)]
+        if a.is_none() || b.is_none(){
+            panic!(format!("VM Error: Stack missing values for comparison binary operation {}", stringify!($operator)));
+        }
+
+        match (a, b) {
+            (Some(value1), Some(value2)) => $stack.push(Value::Bool(value1 $operator value2)),
+
+            (a, b) =>
+                // Unwrap the values directly assuming that they are definitely Some() variants
+                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
+                return Err(RuntimeError::TypeError(format!(
+                    "Invalid operand types {:?} and {:?} used for '{}' comparison operation",
+                    a.unwrap(), b.unwrap(), stringify!($operator)
+                )))
+        }
+    }};
+}
+
+macro_rules! numeric_comparison_op {
+    // $stack ->  Takes in the identifier for the stack value too
+    // $operator -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    ($stack:ident, $operator:tt) => {{
+        // Rev
+        let b = $stack.pop();
+        let a = $stack.pop();
+
+        // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
+        #[cfg(debug_assertions)]
+        if a.is_none() || b.is_none(){
+            panic!(format!("VM Error: Stack missing values for numeric comparison binary operation {}", stringify!($operator)));
+        }
+
+        match (a, b) {
+            (Some(Value::Number(num1)), Some(Value::Number(num2))) => $stack.push(Value::Bool(num1 $operator num2)),
+
+            (a, b) =>
+                // Unwrap the values directly assuming that they are definitely Some() variants
+                // If it fails, it means opcodes are generated wrongly where the stack is missing values needed for the opcode
+                return Err(RuntimeError::TypeError(format!(
+                    "Invalid operand types {:?} and {:?} used for '{}' numeric comparison operation",
                     a.unwrap(), b.unwrap(), stringify!($operator)
                 )))
         }
@@ -84,10 +137,10 @@ impl VM {
                 // @todo Find a way to take value out from enum to do `stack.push(value);` instead of cloning value
                 OpCode::CONSTANT(value) => stack.push(value.clone()),
 
-                OpCode::ADD => arithmetic_binary_op!(+, stack),
-                OpCode::SUBTRACT => arithmetic_binary_op!(-, stack),
-                OpCode::MULTIPLY => arithmetic_binary_op!(*, stack),
-                OpCode::DIVIDE => arithmetic_binary_op!(/, stack),
+                OpCode::ADD => arithmetic_binary_op!(stack, +),
+                OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),
+                OpCode::MULTIPLY => arithmetic_binary_op!(stack, *),
+                OpCode::DIVIDE => arithmetic_binary_op!(stack, /),
 
                 OpCode::NOT => {
                     let value = stack.pop().unwrap().not()?;
@@ -97,6 +150,13 @@ impl VM {
                     let value = stack.pop().unwrap().negate()?;
                     stack.push(value);
                 }
+
+                OpCode::EQUAL => comparison_op!(stack, ==),
+                OpCode::NOT_EQUAL => comparison_op!(stack, !=),
+                OpCode::GREATER => numeric_comparison_op!(stack, >),
+                OpCode::GREATER_EQUAL => numeric_comparison_op!(stack, >=),
+                OpCode::LESS => numeric_comparison_op!(stack, <),
+                OpCode::LESS_EQUAL => numeric_comparison_op!(stack, <=),
 
                 OpCode::RETURN => {
                     println!("{:?}", stack.pop().unwrap());
