@@ -41,6 +41,7 @@ impl Scanner {
         }
     }
 
+    // Change to Option<Token> or Result type instead of panic directly here
     pub fn scan_token(&mut self) -> Token {
         // Skips none essential characters like whitespaces and comments
         self.skip_none_essentials();

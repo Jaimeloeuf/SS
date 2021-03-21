@@ -16,6 +16,7 @@ impl Scanner {
     }
 
     // Method checks if reached end of source code string
+    #[inline]
     pub fn is_at_end(&self) -> bool {
         // Alternative way is to check if the current character is the terminating EOF
         // self.source.chars().nth(self.current).unwrap() == '\0'

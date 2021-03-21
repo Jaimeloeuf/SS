@@ -37,6 +37,7 @@ impl Compiler {
             ),
         };
 
+        // Start by advancing the parser first, since Parser is created with default placeholder tokens
         compiler.parser.advance();
 
         // Keep parsing and compiling statements until EOF
@@ -44,11 +45,12 @@ impl Compiler {
             compiler.declaration();
         }
 
+        // @todo Fix the error message
         compiler
             .parser
             .consume(TokenType::Eof, "Expect end of expression".to_string());
 
-        // Return the chunk, now that it is filled with OpCodes from Compiler struct
+        // Now that the chunk is filled with OpCodes after compilation, return it from Compiler struct to use with the VM
         compiler.chunk
     }
 
@@ -56,7 +58,8 @@ impl Compiler {
         self.statement();
     }
 
-    // Indirection for all declaration and statement methods, to call advance method first
+    // Indirection for all declaration and statement methods, to advance parser before calling the method
+    // Inlined to remove runtime method call overhead
     #[inline]
     fn advance_and_call(&mut self, method: fn(&mut Compiler)) {
         self.parser.advance();
@@ -85,6 +88,14 @@ impl Compiler {
     fn expression(&mut self) {
         self.parse_precedence(Precedence::Assignment);
     }
+
+    /*
+        ============= Expression compiler methods =============
+
+        Methods to parse and compile expressions are public,
+        as they are referenced in the RULES_TABLE which will be used by parse_precedence
+        method to call expression compiler methods recursively as needed.
+    */
 
     pub fn number(&mut self) {
         let value: f64 = self.parser.scanner.source
@@ -180,6 +191,8 @@ impl Compiler {
             _ => return,
         }
     }
+
+    /* ============= End of Expression compiler methods ============= */
 
     // Parse expression by using the TokenType to get a ParseRule's parse/compile method
     // Continues to parse/compile infix operators if the precedence level is low enough

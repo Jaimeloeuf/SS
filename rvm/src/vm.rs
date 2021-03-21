@@ -128,10 +128,7 @@ impl VM {
         for (offset, ref code) in chunk.codes.iter().enumerate() {
             // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
             #[cfg(debug_assertions)]
-            {
-                debug::print_stack(&stack);
-                debug::disassemble_instruction(&chunk, offset);
-            }
+            debug::disassemble_instruction(&chunk, offset);
 
             match code {
                 // In Clox, vm access constant value in this op code by getting next byte as index and calling from const pool
@@ -171,6 +168,10 @@ impl VM {
 
                 ref instruction => println!("VM Error: Unknown OpCode {:?}\n", instruction),
             }
+
+            // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
+            #[cfg(debug_assertions)]
+            debug::print_stack(&stack);
         }
 
         // @todo Tmp value to return for testing

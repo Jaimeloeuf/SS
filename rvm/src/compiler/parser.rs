@@ -22,11 +22,14 @@ impl Parser {
         }
     }
 
+    // Utility method to make it easy to check current token's TokenType.
+    // No runtime method call overhead as it will be inlined.
     #[inline]
     pub fn check(&self, token_type: TokenType) -> bool {
         self.current.token_type == token_type
     }
 
+    // Checks if current token has the same TokenType as the method argument, if so advances parser and return true
     pub fn match_next(&mut self, token_type: TokenType) -> bool {
         if self.check(token_type) {
             self.advance();
@@ -36,6 +39,7 @@ impl Parser {
         }
     }
 
+    // Advance parser until the next token that is not TokenType::Error
     pub fn advance(&mut self) -> Result<(), ParsingError> {
         // Stash old current token as previous, to get the lexeme after matching a token.
         // Take the current token and place it into previous and create default placeholder token for self.current
@@ -61,6 +65,7 @@ impl Parser {
         return Ok(());
     }
 
+    // @todo Should bubble error up to be handled instead of internally here
     fn error_at(&self, token: &Token, message: String) {
         eprint!("[line {}] Error ", token.line);
 
