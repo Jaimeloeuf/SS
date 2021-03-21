@@ -86,11 +86,15 @@ impl Compiler {
     }
 
     pub fn unary(&mut self) {
+        // Remember the operator because the next call to parse_precedence moves the parser forward
+        // Need to clone here instead of taking a immutable ref because self.parse_precedence needs a mutable ref to self
+        let operator_type: TokenType = self.parser.previous.token_type.clone();
+
         // Compile the operand
         self.parse_precedence(Precedence::Unary);
 
         // Emit the operator instruction.
-        match &self.parser.previous.token_type {
+        match operator_type {
             TokenType::Bang => self.emit_code(OpCode::NOT),
             TokenType::Minus => self.emit_code(OpCode::NEGATE),
 
@@ -101,7 +105,8 @@ impl Compiler {
     }
 
     pub fn binary(&mut self) {
-        // Remember the operator.
+        // Remember the operator because the next call to parse_precedence moves the parser forward
+        // Need to clone here instead of taking a immutable ref because self.parse_precedence needs a mutable ref to self
         let operator_type: TokenType = self.parser.previous.token_type.clone();
 
         // Parse/Compile right operand first, so that opcode will execute before operator code,
