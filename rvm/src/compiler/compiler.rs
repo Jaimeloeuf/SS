@@ -65,6 +65,18 @@ impl Compiler {
         self.emit_constant(Value::Number(value));
     }
 
+    pub fn string(&mut self) {
+        let value: String = self.parser.scanner.source[
+                // Plus 1 from starting char to skip the " double quote literal
+                // Minus 1 to skip the " double quote literal after the string literal
+                self.parser.previous.start + 1 ..
+                self.parser.previous.start + self.parser.previous.length - 1
+            ]
+            .parse::<String>()
+            .unwrap();
+        self.emit_constant(Value::String(value));
+    }
+
     pub fn grouping(&mut self) {
         self.expression();
         self.parser.consume(

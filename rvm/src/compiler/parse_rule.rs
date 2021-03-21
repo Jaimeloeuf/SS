@@ -178,7 +178,8 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
 
     rules_array[TokenType::Const as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Identifier as usize] = new_parse_rule!(Precedence::None);
-    rules_array[TokenType::Str as usize] = new_parse_rule!(Precedence::None);
+    rules_array[TokenType::Str as usize] =
+        new_parse_rule!(Some(Compiler::string), None, Precedence::None);
     rules_array[TokenType::Number as usize] =
         new_parse_rule!(Some(Compiler::number), None, Precedence::None);
     rules_array[TokenType::Null as usize] =
