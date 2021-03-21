@@ -25,4 +25,6 @@ pub enum OpCode {
     GREATER_EQUAL,
     LESS,
     LESS_EQUAL,
+
+    PRINT,
 }

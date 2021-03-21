@@ -37,20 +37,49 @@ impl Compiler {
             ),
         };
 
-        // compiler.advance();
-        // compiler.expression();
-        // compiler.consume(TokenType::Eof, "Expect end of expression".to_string());
         compiler.parser.advance();
-        compiler.expression();
+
+        // Keep parsing and compiling statements until EOF
+        while !compiler.parser.match_next(TokenType::Eof) {
+            compiler.declaration();
+        }
+
         compiler
             .parser
             .consume(TokenType::Eof, "Expect end of expression".to_string());
 
-        // @todo Tmp add return code to use VM to print the return value
-        compiler.emit_code(OpCode::RETURN);
-
         // Return the chunk, now that it is filled with OpCodes from Compiler struct
         compiler.chunk
+    }
+
+    fn declaration(&mut self) {
+        self.statement();
+    }
+
+    // Indirection for all declaration and statement methods, to call advance method first
+    #[inline]
+    fn advance_and_call(&mut self, method: fn(&mut Compiler)) {
+        self.parser.advance();
+        method(self)
+    }
+
+    fn statement(&mut self) {
+        match &self.parser.current.token_type {
+            TokenType::Print => self.advance_and_call(Compiler::print_statement),
+
+            _ => self.expression(),
+        }
+    }
+
+    pub fn print_statement(&mut self) {
+        self.expression();
+
+        self.parser.consume(
+            TokenType::Semicolon,
+            "Expect ';' after print expression".to_string(),
+        );
+
+        self.emit_code(OpCode::PRINT);
     }
 
     fn expression(&mut self) {

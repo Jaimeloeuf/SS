@@ -22,6 +22,20 @@ impl Parser {
         }
     }
 
+    #[inline]
+    pub fn check(&self, token_type: TokenType) -> bool {
+        self.current.token_type == token_type
+    }
+
+    pub fn match_next(&mut self, token_type: TokenType) -> bool {
+        if self.check(token_type) {
+            self.advance();
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn advance(&mut self) -> Result<(), ParsingError> {
         // Stash old current token as previous, to get the lexeme after matching a token.
         // Take the current token and place it into previous and create default placeholder token for self.current

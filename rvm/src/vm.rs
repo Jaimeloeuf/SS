@@ -160,6 +160,11 @@ impl VM {
                 OpCode::LESS => numeric_comparison_op!(stack, <),
                 OpCode::LESS_EQUAL => numeric_comparison_op!(stack, <=),
 
+                OpCode::PRINT => {
+                    // @todo Dont use debug symbol
+                    println!("{:?}", stack.pop().unwrap());
+                }
+
                 OpCode::RETURN => {
                     println!("{:?}", stack.pop().unwrap());
                 }
