@@ -32,6 +32,7 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     }
 
     match chunk.codes[offset] {
+        OpCode::POP => simple_instruction(&chunk, offset),
         OpCode::RETURN => simple_instruction(&chunk, offset),
         OpCode::CONSTANT(_) => constant_instruction(&chunk, offset),
 

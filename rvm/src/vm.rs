@@ -131,6 +131,11 @@ impl VM {
             debug::disassemble_instruction(&chunk, offset);
 
             match code {
+                // Pop value off stack, used at the end of expression statements
+                OpCode::POP => {
+                    stack.pop();
+                }
+
                 // In Clox, vm access constant value in this op code by getting next byte as index and calling from const pool
                 // But here value is stored in the enum variant, and is accessed directly instead of getting from a const pool
                 // @todo Find a way to take value out from enum to do `stack.push(value);` instead of cloning value

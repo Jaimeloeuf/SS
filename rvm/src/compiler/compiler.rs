@@ -70,11 +70,12 @@ impl Compiler {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
 
-            _ => self.expression(),
+            // it is as an expression statement if it did not match any statement tokens
+            _ => self.expression_statement(),
         }
     }
 
-    pub fn print_statement(&mut self) {
+    fn print_statement(&mut self) {
         self.expression();
 
         self.parser.consume(
@@ -85,8 +86,20 @@ impl Compiler {
         self.emit_code(OpCode::PRINT);
     }
 
-    fn expression(&mut self) {
-        self.parse_precedence(Precedence::Assignment);
+    // An expression statement is an expression followed by a semicolon.
+    // They’re how you write an expression in a context where a statement is expected.
+    // Usually, it’s so that you can call a function or evaluate an assignment for its side effect
+    // An expression statement evaluates the expression and discards the result from the stack
+    fn expression_statement(&mut self) {
+        self.expression();
+
+        self.parser.consume(
+            TokenType::Semicolon,
+            "Expect ';' after expression".to_string(),
+        );
+
+        // POP opcode to discard result from the stack
+        self.emit_code(OpCode::POP);
     }
 
     /*
@@ -96,6 +109,10 @@ impl Compiler {
         as they are referenced in the RULES_TABLE which will be used by parse_precedence
         method to call expression compiler methods recursively as needed.
     */
+
+    fn expression(&mut self) {
+        self.parse_precedence(Precedence::Assignment);
+    }
 
     pub fn number(&mut self) {
         let value: f64 = self.parser.scanner.source
