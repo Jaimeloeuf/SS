@@ -67,8 +67,14 @@ impl Precedence {
     // }
 }
 
-// A method on compiler struct...
-pub type ParseFn = fn(&mut Compiler);
+/*
+    Type definition for methods on compiler struct
+    There are 2 types of methods, ones that take a can_assign arguement and others that dont
+    To have both without changing the function signature of the methods that do not need that argument
+    These methods will be wrapped in a function with a function signature that takes in the extra argument and discard it
+*/
+pub type ParseFnBase = fn(&mut Compiler);
+pub type ParseFn = fn(&mut Compiler, can_assign: bool);
 
 // Need Copy trait for array initialization process in static RULES_TABLE creation process
 // Clone trait is needed to derive the Copy trait
