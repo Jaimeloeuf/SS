@@ -82,6 +82,15 @@ pub struct ParseRule {
 // Macro to generate ParseRule struct instantiations instead of using a const function
 // Since function pointers are not allowed in const functions so just using a macro directly instead
 macro_rules! new_parse_rule {
+    // Internal rule, used by the other matches to expand into ParseRule struct instantiation
+    (INTERNAL, $precedence_variant:expr, $prefix:expr, $infix:expr) => {
+        ParseRule {
+            prefix: $prefix,
+            infix: $infix,
+            precedence: $precedence_variant,
+        }
+    };
+
     // For creating ParseRule that dont have any prefix or infix methods
     // $precedence_variant -> Takes a Precedence enum variant
     ($precedence_variant:expr) => {
@@ -96,13 +105,15 @@ macro_rules! new_parse_rule {
     // $prefix -> Takes a compiler method to parse/compile the prefix part
     // $infix -> Takes a compiler method to parse/compile the infix part
     // $precedence_variant -> Takes a Precedence enum variant
-    ($prefix:expr, $infix:expr, $precedence_variant:expr) => {
-        ParseRule {
-            prefix: $prefix,
-            infix: $infix,
-            precedence: $precedence_variant,
-        }
-    };
+    (None, $infix:expr, $precedence_variant:expr) => {{
+        new_parse_rule!(INTERNAL, $precedence_variant, None, Some($infix))
+    }};
+    ($prefix:expr, None, $precedence_variant:expr) => {{
+        new_parse_rule!(INTERNAL, $precedence_variant, Some($prefix), None)
+    }};
+    ($prefix:expr, $infix:expr, $precedence_variant:expr) => {{
+        new_parse_rule!(INTERNAL, $precedence_variant, Some($prefix), Some($infix))
+    }};
 }
 
 // The problem with this approach is that,
@@ -139,7 +150,7 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
         TokenType enum variants are converted to usize first before using it to index the array
     */
     rules_array[TokenType::LeftParen as usize] =
-        new_parse_rule!(Some(Compiler::grouping), None, Precedence::None);
+        new_parse_rule!(Compiler::grouping, None, Precedence::None);
     rules_array[TokenType::RightParen as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::LeftBrace as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::RightBrace as usize] = new_parse_rule!(Precedence::None);
@@ -148,42 +159,39 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
     rules_array[TokenType::Dot as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Semicolon as usize] = new_parse_rule!(Precedence::None);
 
-    rules_array[TokenType::Minus as usize] = new_parse_rule!(
-        Some(Compiler::unary),
-        Some(Compiler::binary),
-        Precedence::Term
-    );
+    rules_array[TokenType::Minus as usize] =
+        new_parse_rule!(Compiler::unary, Compiler::binary, Precedence::Term);
     rules_array[TokenType::Plus as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Term);
+        new_parse_rule!(None, Compiler::binary, Precedence::Term);
     rules_array[TokenType::Slash as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Factor);
+        new_parse_rule!(None, Compiler::binary, Precedence::Factor);
     rules_array[TokenType::Star as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Factor);
+        new_parse_rule!(None, Compiler::binary, Precedence::Factor);
 
     rules_array[TokenType::Bang as usize] =
-        new_parse_rule!(Some(Compiler::unary), None, Precedence::None);
+        new_parse_rule!(Compiler::unary, None, Precedence::None);
     rules_array[TokenType::BangEqual as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Equality);
+        new_parse_rule!(None, Compiler::binary, Precedence::Equality);
     rules_array[TokenType::Equal as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::EqualEqual as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Equality);
+        new_parse_rule!(None, Compiler::binary, Precedence::Equality);
     rules_array[TokenType::Greater as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+        new_parse_rule!(None, Compiler::binary, Precedence::Comparison);
     rules_array[TokenType::GreaterEqual as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+        new_parse_rule!(None, Compiler::binary, Precedence::Comparison);
     rules_array[TokenType::Less as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+        new_parse_rule!(None, Compiler::binary, Precedence::Comparison);
     rules_array[TokenType::LessEqual as usize] =
-        new_parse_rule!(None, Some(Compiler::binary), Precedence::Comparison);
+        new_parse_rule!(None, Compiler::binary, Precedence::Comparison);
 
     rules_array[TokenType::Const as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Identifier as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Str as usize] =
-        new_parse_rule!(Some(Compiler::string), None, Precedence::None);
+        new_parse_rule!(Compiler::string, None, Precedence::None);
     rules_array[TokenType::Number as usize] =
-        new_parse_rule!(Some(Compiler::number), None, Precedence::None);
+        new_parse_rule!(Compiler::number, None, Precedence::None);
     rules_array[TokenType::Null as usize] =
-        new_parse_rule!(Some(Compiler::literal), None, Precedence::None);
+        new_parse_rule!(Compiler::literal, None, Precedence::None);
 
     rules_array[TokenType::And as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Or as usize] = new_parse_rule!(Precedence::None);
@@ -200,9 +208,9 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
     rules_array[TokenType::Print as usize] = new_parse_rule!(Precedence::None);
 
     rules_array[TokenType::True as usize] =
-        new_parse_rule!(Some(Compiler::literal), None, Precedence::None);
+        new_parse_rule!(Compiler::literal, None, Precedence::None);
     rules_array[TokenType::False as usize] =
-        new_parse_rule!(Some(Compiler::literal), None, Precedence::None);
+        new_parse_rule!(Compiler::literal, None, Precedence::None);
 
     rules_array[TokenType::Error as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::Eof as usize] = new_parse_rule!(Precedence::None);
