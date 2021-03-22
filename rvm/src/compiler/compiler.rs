@@ -58,14 +58,6 @@ impl Compiler {
         self.statement();
     }
 
-    // Indirection for all declaration and statement methods, to advance parser before calling the method
-    // Inlined to remove runtime method call overhead
-    #[inline]
-    fn advance_and_call(&mut self, method: fn(&mut Compiler)) {
-        self.parser.advance();
-        method(self)
-    }
-
     fn statement(&mut self) {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
