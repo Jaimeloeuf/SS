@@ -79,6 +79,13 @@ pub struct ParseRule {
     pub precedence: Precedence,
 }
 
+// Converts ParseFnBase to ParseFn
+macro_rules! wrap_parse_fn {
+    ($parse_fn:expr) => {
+        |compiler: &mut Compiler, _| $parse_fn(compiler);
+    };
+}
+
 // Macro to generate ParseRule struct instantiations instead of using a const function
 // Since function pointers are not allowed in const functions so just using a macro directly instead
 macro_rules! new_parse_rule {
@@ -101,18 +108,33 @@ macro_rules! new_parse_rule {
         }
     };
 
-    // For creating ParseRule that have prefix, infix or both methods
+    // 3 different wrapper macros For creating ParseRule that have prefix, infix or both methods
     // $prefix -> Takes a compiler method to parse/compile the prefix part
     // $infix -> Takes a compiler method to parse/compile the infix part
     // $precedence_variant -> Takes a Precedence enum variant
     (None, $infix:expr, $precedence_variant:expr) => {{
-        new_parse_rule!(INTERNAL, $precedence_variant, None, Some($infix))
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            None,
+            Some(wrap_parse_fn!($infix))
+        )
     }};
     ($prefix:expr, None, $precedence_variant:expr) => {{
-        new_parse_rule!(INTERNAL, $precedence_variant, Some($prefix), None)
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            Some(wrap_parse_fn!($prefix)),
+            None
+        )
     }};
     ($prefix:expr, $infix:expr, $precedence_variant:expr) => {{
-        new_parse_rule!(INTERNAL, $precedence_variant, Some($prefix), Some($infix))
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            Some(wrap_parse_fn!($prefix)),
+            Some(wrap_parse_fn!($infix))
+        )
     }};
 }
 
