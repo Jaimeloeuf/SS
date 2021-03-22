@@ -84,6 +84,17 @@ macro_rules! wrap_parse_fn {
     ($parse_fn:expr) => {
         |compiler: &mut Compiler, _| $parse_fn(compiler);
     };
+    // @todo See if this is still needed
+    // Alternative wrapper using a inline function instead of a closure
+    ($parse_fn:expr => INLINE) => {{
+        // Although can_assign will be unused, still have to define it unlike a closure definition
+        #[inline]
+        fn wrapped(compiler: &mut Compiler, _can_assign: bool) {
+            $parse_fn(compiler)
+        }
+
+        wrapped
+    }};
 }
 
 // Macro to generate ParseRule struct instantiations instead of using a const function
