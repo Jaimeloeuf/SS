@@ -153,6 +153,12 @@ impl VM {
                 OpCode::NEGATE => {
                     let value = stack.pop().unwrap().negate()?;
                     stack.push(value);
+
+                    // @todo Is stack value check needed?
+                    // match stack.pop() {
+                    //     Some(value) => stack.push(value.negate()?),
+                    //     None => panic!("VM Debug Error: Missing value in stack"),
+                    // }
                 }
 
                 OpCode::EQUAL => equality_op!(stack, ==),
@@ -168,7 +174,7 @@ impl VM {
                 }
 
                 OpCode::RETURN => {
-                    println!("{:?}", stack.pop().unwrap());
+                    println!("RETURN:  {:?}", stack.pop().unwrap());
                 }
 
                 ref instruction => println!("VM Error: Unknown OpCode {:?}\n", instruction),
