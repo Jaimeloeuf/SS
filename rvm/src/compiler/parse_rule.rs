@@ -153,6 +153,32 @@ macro_rules! new_parse_rule {
             Some(wrap_parse_fn!($infix))
         )
     }};
+
+    // Rules for parser functions that do not need the function wrapping
+    (None, SKIP $infix:expr, $precedence_variant:expr) => {{
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            None,
+            Some(wrap_parse_fn!($infix))
+        )
+    }};
+    (SKIP $prefix:expr, None, $precedence_variant:expr) => {{
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            Some(wrap_parse_fn!($prefix)),
+            None
+        )
+    }};
+    (SKIP $prefix:expr, SKIP $infix:expr, $precedence_variant:expr) => {{
+        new_parse_rule!(
+            INTERNAL,
+            $precedence_variant,
+            Some(wrap_parse_fn!($prefix)),
+            Some(wrap_parse_fn!($infix))
+        )
+    }};
 }
 
 // The problem with this approach is that,
