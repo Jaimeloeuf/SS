@@ -50,19 +50,22 @@ impl Parser {
         loop {
             // Steps forward through token stream, asking scanner for the next token and storing it
             self.current = self.scanner.scan_token();
+
+            // Break once there isnt anymore error tokens
             if self.current.token_type != TokenType::Error {
-                // return Ok(());
                 // Once there is a token that is not an error, we exit the loop to continue with whatever we are doing
-                // The caller will access the tokens using previous and current on the struct
-                break;
+                // The caller will access the tokens using previous and current on the parser struct
+                return Ok(());
             } else {
                 // Print the error out only, but dont stop.
                 // self.error_at_current(self.current.start);
                 // self.error_at_current("");
+
+                // @todo Fix this error
+                // Should this break out or?
+                return Err(ParsingError::error);
             }
         }
-
-        return Ok(());
     }
 
     // @todo Should bubble error up to be handled instead of internally here
