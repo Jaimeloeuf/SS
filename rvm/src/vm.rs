@@ -147,18 +147,28 @@ impl VM {
                 OpCode::DIVIDE => arithmetic_binary_op!(stack, /),
 
                 OpCode::NOT => {
-                    let value = stack.pop().unwrap().not()?;
-                    stack.push(value);
+                    let value = stack.pop();
+
+                    // @todo Is runtime stack value check needed?
+                    // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
+                    #[cfg(debug_assertions)]
+                    if value.is_none() {
+                        panic!("VM Debug Error: Stack missing values for NOT OpCode");
+                    }
+
+                    stack.push(value.unwrap().not()?);
                 }
                 OpCode::NEGATE => {
-                    let value = stack.pop().unwrap().negate()?;
-                    stack.push(value);
+                    let value = stack.pop();
 
-                    // @todo Is stack value check needed?
-                    // match stack.pop() {
-                    //     Some(value) => stack.push(value.negate()?),
-                    //     None => panic!("VM Debug Error: Missing value in stack"),
-                    // }
+                    // @todo Is runtime stack value check needed?
+                    // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
+                    #[cfg(debug_assertions)]
+                    if value.is_none() {
+                        panic!("VM Debug Error: Stack missing values for NEGATE OpCode");
+                    }
+
+                    stack.push(value.unwrap().negate()?);
                 }
 
                 OpCode::EQUAL => equality_op!(stack, ==),
