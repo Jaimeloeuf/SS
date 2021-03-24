@@ -55,7 +55,43 @@ impl Compiler {
     }
 
     fn declaration(&mut self) {
-        self.statement();
+        match &self.parser.current.token_type {
+            TokenType::Const => self.advance_and_call(Compiler::const_declaration),
+
+            // it is as a statement if it did not match any declaration tokens
+            _ => self.statement(),
+        }
+    }
+
+    fn const_declaration(&mut self) {
+        let const_name = self.parse_const("Expect const name".to_string());
+
+        if self.parser.match_next(TokenType::Equal) {
+            self.expression();
+        } else {
+            self.emit_constant(Value::Null);
+        }
+
+        self.parser.consume(
+            TokenType::Semicolon,
+            "Expect ';' after const declaration".to_string(),
+        );
+
+        // self.define_const(const_name);
+    }
+
+    // It requires the next token to be an identifier, which it consumes and sends here:
+    fn parse_const(&mut self, error_message: String) -> String {
+        self.parser.consume(TokenType::Identifier, error_message);
+
+        self.parser.scanner.source[
+            // Plus 1 from starting char to skip the " double quote literal
+            // Minus 1 to skip the " double quote literal after the string literal
+            self.parser.previous.start + 1 ..
+            self.parser.previous.start + self.parser.previous.length - 1
+        ]
+            .parse::<String>()
+            .unwrap()
     }
 
     fn statement(&mut self) {
