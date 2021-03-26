@@ -73,6 +73,10 @@ Notes:
     - void? undefined? null?
         - The case for this is that, functions can have no return values, therefore we should perhaps include a null or None to indicate that there is nothing.
         - The other thing to consider is, can constants be set as this undefined? Since they can never be changed afterwards.
+        - The difference between undefined and null in JS
+            - https://medium.com/@alyz26/undefined-vs-null-c567b539ee71
+            - 1 in unintentional missing value, 1 is intentionally missing value set by the programmer
+        - see rust on concept of null using Option type https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#the-option-enum-and-its-advantages-over-null-values
 - Symbols
     - All the operators [link]()
     - ;
@@ -101,10 +105,15 @@ Block comments
 - No variables
 - All values are constants (IMMUTABLE)
     - Note that there is no way of declaring variables, you can only create new constants
+    - ? perhaps allow mutable variables, but copying rust, have a unsafe block
+        - so variables can only be declared and live in an unsafe block
+        - The only reason for this is because imperative paradigm is really difficult without mutable variables
 - Strongly typed language
     - generics?
     - do we really want it to be strongly typed? Giving up type inference too?
         - well we should be explicit, but this prevents the language from being expressive.
+        - https://softwareengineering.stackexchange.com/questions/209376/is-there-a-correlation-between-the-scale-of-the-project-and-the-strictness-of-th
+            - Strict type checking and static type checking aren't the same thing. Python is dynamically typed, but is more strict than C. The advantage of static type checking isn't strictness per se but that types are checked at build time, not run time. I've dealt with many C/C++ issues in my career because of implicit casting.
 - Should we enforce explicit typing? Or can we have type inference??
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
