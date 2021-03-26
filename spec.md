@@ -439,6 +439,18 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
 - Function arguements will be evaluated 1 by 1 in order from right to left before they are passed to the function.
     - The arguments will be evaluated in a strict order to make it easier to read, reason and prove the execution order and control flows. This differs from other languages like Scheme and C where the spec does not specify, giving compilers the freedom to reorder for efficiency.
         - what you see is what you get
+- ```return``` keyword
+    - The return keyword causes the function to end at any point during execution
+    - A function will end when it reaches the end of its function body or when a return keyword is executed
+    - A return keyword also allows the user to "return" a value from a function.
+        - This can be a literal value, or an expression that evaluates to a value
+        - Any function call, is an expression, so it can be expressed as its return value directly.
+        - If function g() returns "my string", then all expressions of g() can be replaced with "my string"
+            - **Only if the function is pure and referentially transparent**
+    - !!!! What happens if return is used outside of a function?
+        - this perhaps should be a syntax error
+        - for now the resolver will error out on it
+        - add a section in spec to address this
 - TBD:
     - should functions be hoisted? Or cannot be accessed before definition
     - overloading?
@@ -450,6 +462,8 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
         - elm syntax f1 f2 f3 f4 f5 arg
     - for function calls, should it be pass by value or pass by reference?
         - pass by reference is fine right? Since values cant be modified anyways right.
+        - Although if all data is immutable, we can directly pass values by reference instead of duplication the value.
+            - @todo Right now, the test intererter evaluates all arguements, then pass this newly created Value objects from evaluating the arguements into the function scope to use.
     - what about variadic functions?
         - like JS provide arguement value?
         - or like JS Rest parameters, using fn(...Args)
@@ -464,6 +478,7 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
         - The [midori method](http://joeduffyblog.com/2016/02/07/the-error-model/) to make it explicit
             - ignore foo();
             - [Calling ignore method on promises](http://joeduffyblog.com/2015/11/19/asynchronous-everything/)
+            - If function have return value, it cannot be ignored, it must be explicitly ignored like in Go lang
 
 ### Pure functions
 ```js
