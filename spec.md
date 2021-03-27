@@ -810,7 +810,19 @@ When printing functions, the type of function and the function name will be disp
 - Pointers
     - https://golang.org/doc/faq#no_pointer_arithmetic
     - Probably no pointers needed since the goal is to simplify things
+- Introspection / Reflection
+    - Runtime semantic to see into an object // @todo cannot be done at compile time right?
+- Symbols?
+    - Both JS and lisp have it
+    - https://flaviocopes.com/javascript-symbols/#:~:text=Symbol%20is%20a%20primitive%20data,private%20and%20for%20internal%20use.
+- Should stnadard library be include in the specs?
+    - Certain native functions must be included in the prelude no matter what to deal with things like file IO, without these even SS based std lib wont be possible
+    - So perhaps these native functions will be part of the spec
+
+
 
 ## Preferences
 - Use camelCase for value and function names
 - Tabs over spaces, because it is quicker to tokenize in simple scanner implementations
+
+## References
