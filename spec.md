@@ -648,6 +648,9 @@ The goal is to provide AN EXTREMELY SIMPLE way of dealing with modules to users.
 - Modules and Libraries can be used to apply namespaces to the code scope
 - The name of the imported item MUST be the same as the exported item to make explicit what you are importing
 - Modules / Types / Seperate Compilation
+- Support URL for import path like deno
+    - Build in caching support
+- A package manager like go get or npm built in // @todo should this be part of spec or?
 
 ### Import
 - Import a standard library
@@ -762,6 +765,16 @@ When printing functions, the type of function and the function name will be disp
     - For errors, generate error messages like --> error TS2307: Cannot find module 'moduleA'. Then user can use the given link to a website to learn and find out more.
     - other languages
         - https://wren.io/error-handling.html
+    - One of the most important thing in error handling, is that, not every function wants to deal with it.
+        - So esp in functional languages where there is deep nesting, there should be a mechanism to bubble up errors all the way up until a point where the programmer wants to handle it
+        - In languages like JS/Java, where exceptions are used with throw and try/catch to implement the idea of bubbling errors up
+            - Just dont catch, and let error bubble up to toplevel if the error is unrecoverable, which will then kill the process if nothing caught and handle it
+                - Kinda like Wren
+        - In rust, there is Result<T, E> and the ? operator to unwrap it if Ok() variant, else bubbles error up, and there is panic! for errors that are unrecoverable
+        - How do they compare?
+            - Well with Result<T, E> you know explicitly what you will get in the function Type signature itself
+                - unlike exceptions, where you never know who or where might throw, problem if u using third party libraries
+                - Prevents "Invisible code paths"
 - A part of the spec should include native code from standard library
     - native code as in, implemented by the runtime, instead of being libraries written in SS itself
         - JSON support
@@ -776,6 +789,7 @@ When printing functions, the type of function and the function name will be disp
         - This should either be implemented at the runtime level or user/std level
         - But this should be powerful and allow for interesting use cases like python pickles
         - Write about why this is needed, and how can this be used, and how will this be implemented
+        - https://docs.python.org/3/library/pickle.html
     - Regexp
         - Should this be implemented in user land?
         - https://nodejs.org/en/docs/guides/dont-block-the-event-loop/#blocking-the-event-loop-redos
