@@ -84,12 +84,8 @@ impl Compiler {
     fn parse_const(&mut self, error_message: String) -> String {
         self.parser.consume(TokenType::Identifier, error_message);
 
-        self.parser.scanner.source[
-            // Plus 1 from starting char to skip the " double quote literal
-            // Minus 1 to skip the " double quote literal after the string literal
-            self.parser.previous.start + 1 ..
-            self.parser.previous.start + self.parser.previous.length - 1
-        ]
+        self.parser.scanner.source
+            [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<String>()
             .unwrap()
     }
