@@ -9,6 +9,9 @@ pub enum OpCode {
     RETURN,
     CONSTANT(Value),
 
+    // Opcode to take and store last value on stack as a value with the given string identifier
+    IDENTIFIER(String),
+
     // Arithmetic Binary operators
     ADD,
     SUBTRACT,

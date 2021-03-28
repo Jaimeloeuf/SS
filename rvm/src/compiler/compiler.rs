@@ -77,7 +77,7 @@ impl Compiler {
             "Expect ';' after const declaration".to_string(),
         );
 
-        // self.define_const(const_name);
+        self.define_const(const_name);
     }
 
     // It requires the next token to be an identifier, which it consumes and sends here:
@@ -88,6 +88,10 @@ impl Compiler {
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<String>()
             .unwrap()
+    }
+
+    fn define_const(&mut self, const_name: String) {
+        self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
     fn statement(&mut self) {

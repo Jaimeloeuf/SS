@@ -141,6 +141,12 @@ impl VM {
                 // @todo Find a way to take value out from enum to do `stack.push(value);` instead of cloning value
                 OpCode::CONSTANT(value) => stack.push(value.clone()),
 
+                // Right now is it taking the identifier or isit copying it since identifier is a copy type?
+                OpCode::IDENTIFIER(identifier) => {
+                    // @todo Perhaps need to check if key is already used... should this be a runtime or compile time check
+                    values.insert(identifier.clone(), stack.pop().unwrap());
+                }
+
                 OpCode::ADD => arithmetic_binary_op!(stack, +),
                 OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),
                 OpCode::MULTIPLY => arithmetic_binary_op!(stack, *),
