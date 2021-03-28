@@ -94,6 +94,12 @@ impl Compiler {
         self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
+    pub fn identifier_lookup(&mut self) {
+        // @todo The error message is unnecessary
+        let const_name = self.parse_const("Expect const name".to_string());
+        self.emit_code(OpCode::IDENTIFIER_LOOKUP(const_name));
+    }
+
     fn statement(&mut self) {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),

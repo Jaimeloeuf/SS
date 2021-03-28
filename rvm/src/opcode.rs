@@ -11,6 +11,8 @@ pub enum OpCode {
 
     // Opcode to take and store last value on stack as a value with the given string identifier
     IDENTIFIER(String),
+    // Opcode to take and value using given string identifier from hashmap and push it onto stack
+    IDENTIFIER_LOOKUP(String),
 
     // Arithmetic Binary operators
     ADD,

@@ -3,6 +3,7 @@ use crate::debug;
 use crate::error::RuntimeError;
 use crate::opcode::OpCode;
 use crate::value::Value;
+use std::collections::HashMap;
 
 pub struct VM {
     pub chunk: Chunk,
@@ -121,6 +122,7 @@ impl VM {
         // @todo Include max stack to cause stack overflow to prevent infinite stack use
         // let mut top_of_stack: usize = 0; // Technically just use stack.last()
         let mut stack = Vec::<Value>::new();
+        let mut values = HashMap::<String, Value>::new();
 
         // Add a debug flag for this
         // offset is used for disassemble_instruction
@@ -146,6 +148,15 @@ impl VM {
                     // @todo Perhaps need to check if key is already used... should this be a runtime or compile time check
                     values.insert(identifier.clone(), stack.pop().unwrap());
                 }
+                OpCode::IDENTIFIER_LOOKUP(identifier) => match values.get(identifier) {
+                    Some(value) => stack.push(value.clone()),
+                    None => {
+                        return Err(RuntimeError::UndefinedIdentifier(
+                            chunk.lines[offset],
+                            identifier.clone(),
+                        ))
+                    }
+                },
 
                 OpCode::ADD => arithmetic_binary_op!(stack, +),
                 OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),

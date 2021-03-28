@@ -36,6 +36,7 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
         OpCode::RETURN => simple_instruction(&chunk, offset),
         OpCode::CONSTANT(_) => constant_instruction(&chunk, offset),
         OpCode::IDENTIFIER(_) => constant_instruction(&chunk, offset),
+        OpCode::IDENTIFIER_LOOKUP(_) => constant_instruction(&chunk, offset),
 
         OpCode::ADD => simple_instruction(&chunk, offset),
         OpCode::SUBTRACT => simple_instruction(&chunk, offset),
