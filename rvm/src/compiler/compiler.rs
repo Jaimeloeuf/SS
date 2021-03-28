@@ -8,6 +8,12 @@ use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
 
+#[derive(Debug)]
+struct Local {
+    name: Token,
+    depth: usize,
+}
+
 // The Compiler / Parser / Scanner structs are strung together,
 // Compiler struct holds a Parser
 // Parser struct holds a Scanner
@@ -17,6 +23,15 @@ pub struct Compiler {
 
     // Hold a parser so that it can be passed along to the methods easily instead of relying on global state like clox
     pub parser: Parser,
+
+    // Vector of Locals to get at from the stack
+    locals: Vec<Local>,
+
+    // localCount field tracks how many locals are in scope / how many of those array slots are in use
+    local_count: usize,
+
+    // scope depth is the number of blocks surrounding the current bit of code we’re compiling.
+    scope_depth: usize,
 }
 
 impl Compiler {
@@ -35,6 +50,10 @@ impl Compiler {
                 Token::default(),
                 Token::default(),
             ),
+
+            locals: Vec::<Local>::new(),
+            local_count: 0,
+            scope_depth: 0,
         };
 
         // Start by advancing the parser first, since Parser is created with default placeholder tokens
