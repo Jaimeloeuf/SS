@@ -152,6 +152,8 @@ impl Compiler {
 
             self.add_local(identifier);
         }
+
+        // Return Ok variant with unit type
         Ok(())
     }
 
@@ -342,7 +344,8 @@ impl Compiler {
         // Look up corresponding ParseRule of the previous token's TokenType, and match to use the prefix parser
         match get_rule(&self.parser.previous.token_type).prefix {
             // Alternative syntax for self.prefix_rule() where prefix_rule is a variable function pointer
-            Some(prefix_rule) => prefix_rule(self),
+            // Some(prefix_rule) => prefix_rule(self),
+            Some(prefix_rule) => prefix_rule(self, false),
 
             // If there is no prefix parser, then the token must be a syntax error
             // @todo Handle error using an Result error variant
@@ -360,7 +363,8 @@ impl Compiler {
             // Look up corresponding ParseRule of the previous token's TokenType, and match to use the infix parser
             match get_rule(&self.parser.previous.token_type).infix {
                 // Alternative syntax for self.infix_rule() where infix_rule is a variable function pointer
-                Some(infix_rule) => infix_rule(self),
+                // Some(infix_rule) => infix_rule(self),
+                Some(infix_rule) => infix_rule(self, false),
 
                 // If there is no prefix parser, then the token must be a syntax error
                 // @todo Handle error using an Result error variant
