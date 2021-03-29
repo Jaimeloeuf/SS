@@ -205,6 +205,11 @@ impl Compiler {
 
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
+
+        // Delete local identifier's values whose lifetime ends in the current scope
+        while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
+            self.emit_code(OpCode::POP);
+        }
     }
 
     // An expression statement is an expression followed by a semicolon.
