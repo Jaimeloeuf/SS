@@ -122,6 +122,7 @@ impl Compiler {
     fn statement(&mut self) {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
+            TokenType::LeftBrace => self.advance_and_call(Compiler::block_statement),
 
             // it is as an expression statement if it did not match any statement tokens
             _ => self.expression_statement(),
@@ -137,6 +138,22 @@ impl Compiler {
         );
 
         self.emit_code(OpCode::PRINT);
+    }
+
+    fn block_statement(&mut self) {
+        // Create a new scope by incrementing compiler's scope depth
+        self.scope_depth += 1;
+
+        // Keep parsing/compiling as long as it is not the closing right brace or an unexpected EOF yet
+        while !self.parser.check(TokenType::RightBrace) && !self.parser.check(TokenType::Eof) {
+            self.declaration();
+        }
+
+        self.parser
+            .consume(TokenType::RightBrace, "Expect '}' after block".to_string());
+
+        // Destroy the current block scope by decrementing compiler's scope depth
+        self.scope_depth -= 1;
     }
 
     // An expression statement is an expression followed by a semicolon.
