@@ -8,6 +8,11 @@ use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
 
+
+enum CompileError {
+    IdentifierAlreadyUsed(String),
+}
+
 #[derive(Debug)]
 struct Local {
     name: String,
@@ -119,15 +124,35 @@ impl Compiler {
         self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
-    fn declare_const(&mut self) {
+    fn declare_const(&mut self) -> Result<(), CompileError> {
         // @todo Skip if global scope
         if self.scope_depth != 0 {
+            // Can we use a slice instead of a String?
             let identifier: String = self.parser.scanner.source[self.parser.previous.start
                 ..self.parser.previous.start + self.parser.previous.length]
                 .parse::<String>()
                 .unwrap();
+
+            // Run identifier check to make sure it is unused in current scope, if there are local identifiers already
+            if self.locals.len() > 0 {
+                // Check from the last element in locals to the first, only stopping when scope ends
+                for i in (0..self.locals.len() - 1).rev() {
+                    let local = &self.locals[i];
+
+                    if local.depth < self.scope_depth {
+                        break;
+                    }
+
+                    if &identifier == &local.name {
+                        eprintln!("Identifier already used in current scope");
+                        return Err(CompileError::IdentifierAlreadyUsed(identifier));
+                    }
+                }
+            }
+
             self.add_local(identifier);
         }
+        Ok(())
     }
 
     fn add_local(&mut self, identifier: String) {
