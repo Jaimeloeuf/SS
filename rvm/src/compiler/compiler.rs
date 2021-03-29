@@ -10,7 +10,7 @@ use crate::value::Value;
 
 #[derive(Debug)]
 struct Local {
-    name: Token,
+    name: String,
     depth: usize,
 }
 
@@ -103,6 +103,7 @@ impl Compiler {
     fn parse_const(&mut self, error_message: String) -> String {
         self.parser.consume(TokenType::Identifier, error_message);
 
+        self.declare_const();
         self.parser.scanner.source
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<String>()
@@ -110,9 +111,32 @@ impl Compiler {
     }
 
     fn define_const(&mut self, const_name: String) {
+        // @todo Skip if none global scope
+        if self.scope_depth > 0 {
+            return;
+        }
+
         self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
+    fn declare_const(&mut self) {
+        // @todo Skip if global scope
+        if self.scope_depth != 0 {
+            let identifier: String = self.parser.scanner.source[self.parser.previous.start
+                ..self.parser.previous.start + self.parser.previous.length]
+                .parse::<String>()
+                .unwrap();
+            self.add_local(identifier);
+        }
+    }
+
+    fn add_local(&mut self, identifier: String) {
+        self.local_count += 1;
+        self.locals.push(Local {
+            name: identifier,
+            depth: self.scope_depth,
+        });
+    }
     pub fn identifier_lookup(&mut self) {
         // @todo The error message is unnecessary
         let const_name = self.parse_const("Expect const name".to_string());
