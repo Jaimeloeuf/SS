@@ -14,6 +14,9 @@ pub enum OpCode {
     // Opcode to take and value using given string identifier from hashmap and push it onto stack
     IDENTIFIER_LOOKUP(String),
 
+    GET_LOCAL(usize),
+    SET_LOCAL(usize),
+
     // Arithmetic Binary operators
     ADD,
     SUBTRACT,

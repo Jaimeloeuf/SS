@@ -158,6 +158,9 @@ impl VM {
                     }
                 },
 
+                OpCode::GET_LOCAL(stack_index) => stack.push(stack[*stack_index].clone()),
+                OpCode::SET_LOCAL(stack_index) => stack[*stack_index] = stack.pop().unwrap(),
+
                 OpCode::ADD => arithmetic_binary_op!(stack, +),
                 OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),
                 OpCode::MULTIPLY => arithmetic_binary_op!(stack, *),
