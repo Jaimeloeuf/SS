@@ -212,6 +212,19 @@ impl Compiler {
         }
     }
 
+    fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
+        // Reverse to allow identifier shadowing
+        for i in (0..self.local_count - 1).rev() {
+            if &identifier == &self.locals[i].name {
+                return Ok(i);
+            }
+        }
+
+        // This assumes error, but in Clox it means try looking for a global variable instead
+        eprintln!("Identifier not available in local scope");
+        return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
+    }
+
     // An expression statement is an expression followed by a semicolon.
     // They’re how you write an expression in a context where a statement is expected.
     // Usually, it’s so that you can call a function or evaluate an assignment for its side effect
