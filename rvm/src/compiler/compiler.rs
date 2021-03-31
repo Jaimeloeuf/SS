@@ -134,19 +134,15 @@ impl Compiler {
                 .unwrap();
 
             // Run identifier check to make sure it is unused in current scope, if there are local identifiers already
-            if self.locals.len() > 0 {
-                // Check from the last element in locals to the first, only stopping when scope ends
-                for i in (0..self.locals.len() - 1).rev() {
-                    let local = &self.locals[i];
-
-                    if local.depth < self.scope_depth {
-                        break;
-                    }
-
-                    if &identifier == &local.name {
-                        eprintln!("Identifier already used in current scope");
-                        return Err(CompileError::IdentifierAlreadyUsed(identifier));
-                    }
+            // Check from the last element in locals to the first, only stopping when scope ends or no more locals
+            for local in (&self.locals).into_iter().rev() {
+                // Check to ensure still in the same scope
+                if local.depth < self.scope_depth {
+                    break;
+                }
+                if &identifier == &local.name {
+                    eprintln!("Identifier already used in current scope");
+                    return Err(CompileError::IdentifierAlreadyUsed(identifier));
                 }
             }
 
