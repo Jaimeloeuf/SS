@@ -32,7 +32,7 @@ pub struct Compiler {
     // Vector of Locals to get at from the stack
     locals: Vec<Local>,
 
-    // localCount field tracks how many locals are in scope / how many of those array slots are in use
+    // local_count field tracks how many locals are in scope / how many of those array slots are in use
     local_count: usize,
 
     // scope depth is the number of blocks surrounding the current bit of code we’re compiling.
@@ -167,7 +167,12 @@ impl Compiler {
     pub fn identifier_lookup(&mut self) {
         // @todo The error message is unnecessary
         let const_name = self.parse_const("Expect const name".to_string());
-        self.emit_code(OpCode::IDENTIFIER_LOOKUP(const_name));
+        // Handling identifiers in local scopes differently from global scope identifiers
+        // @todo Merge these
+        match self.resolve_local(&const_name) {
+            Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
+            Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(const_name)),
+        }
     }
 
     fn statement(&mut self) {
