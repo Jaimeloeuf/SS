@@ -16,7 +16,6 @@ use chunk::Chunk;
 use compiler::Compiler;
 use debug::disassemble_chunk;
 use opcode::OpCode;
-use scanner::Scanner;
 use value::Value;
 use vm::VM;
 
