@@ -219,9 +219,9 @@ impl Compiler {
 
     fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
         // Reverse to allow identifier shadowing
-        for i in (0..self.local_count - 1).rev() {
-            if &identifier == &self.locals[i].name {
-                return Ok(i);
+        for (stack_index, local) in (&self.locals).into_iter().rev().enumerate() {
+            if identifier == local.name {
+                return Ok(stack_index);
             }
         }
 
