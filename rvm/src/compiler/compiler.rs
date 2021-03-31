@@ -88,7 +88,14 @@ impl Compiler {
     }
 
     fn const_declaration(&mut self) {
+        // Consume the identifier token before parsing for the const's identifier string
+        self.parser
+            .consume(TokenType::Identifier, "Expect const name".to_string());
+
         let const_name = self.parse_const();
+
+        // Only works for local scope
+        self.declare_const();
 
         if self.parser.match_next(TokenType::Equal) {
             self.expression();
@@ -101,6 +108,7 @@ impl Compiler {
             "Expect ';' after const declaration".to_string(),
         );
 
+        // Only works for global scope
         self.define_const(const_name);
     }
 
