@@ -218,10 +218,13 @@ impl Compiler {
     }
 
     fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
-        // Reverse to allow identifier shadowing
-        for (stack_index, local) in (&self.locals).into_iter().rev().enumerate() {
+        // Reverse to allow identifier shadowing in child scope
+        // loop_index starts from 0..(self.locals.len() - 1) where 0 refers to the last element in the vec
+        for (loop_index, local) in (&self.locals).into_iter().rev().enumerate() {
             if identifier == local.name {
-                return Ok(stack_index);
+                // Calculate stack index, using length of vector - 1 - loop_index
+                // -1 from length as vec index starts from 0, and -loop_index to get actual stack index since loop is reversed
+                return Ok(self.locals.len() - 1 - loop_index);
             }
         }
 
