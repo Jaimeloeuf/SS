@@ -88,7 +88,7 @@ impl Compiler {
     }
 
     fn const_declaration(&mut self) {
-        let const_name = self.parse_const("Expect const name".to_string());
+        let const_name = self.parse_const();
 
         if self.parser.match_next(TokenType::Equal) {
             self.expression();
@@ -105,10 +105,7 @@ impl Compiler {
     }
 
     // It requires the next token to be an identifier, which it consumes and sends here:
-    fn parse_const(&mut self, error_message: String) -> String {
-        self.parser.consume(TokenType::Identifier, error_message);
-
-        self.declare_const();
+    fn parse_const(&mut self) -> String {
         self.parser.scanner.source
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<String>()
@@ -161,8 +158,7 @@ impl Compiler {
         });
     }
     pub fn identifier_lookup(&mut self) {
-        // @todo The error message is unnecessary
-        let const_name = self.parse_const("Expect const name".to_string());
+        let const_name = self.parse_const();
         // Handling identifiers in local scopes differently from global scope identifiers
         // @todo Merge these
         match self.resolve_local(&const_name) {
