@@ -1,4 +1,5 @@
 use super::parse_rule::{get_rule, ParseFn, ParseRule, Precedence, USIZE_TO_PRECEDENCE};
+use super::CompileError;
 
 use crate::chunk::Chunk;
 use crate::compiler::Parser;
@@ -7,11 +8,6 @@ use crate::scanner::Scanner;
 use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
-
-
-enum CompileError {
-    IdentifierAlreadyUsed(String),
-}
 
 #[derive(Debug)]
 struct Local {

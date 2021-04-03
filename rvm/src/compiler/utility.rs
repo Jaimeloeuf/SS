@@ -1,3 +1,4 @@
+use super::CompileError;
 use super::Compiler;
 
 use crate::opcode::OpCode;
