@@ -15,6 +15,7 @@ mod vm;
 use chunk::Chunk;
 use compiler::Compiler;
 use debug::disassemble_chunk;
+use error::SSError;
 use opcode::OpCode;
 use value::Value;
 use vm::VM;
@@ -30,17 +31,19 @@ fn main() {
         Err(err) => panic!("Unable to read file: {}", err), // Bubble error up instead of panic!
     };
 
-    interpret(source);
+    if let Err(e) = interpret(source) {
+        println!("{:?}", e)
+    }
 }
 
-fn interpret(source: String) {
-    let chunk = Compiler::compile(source, Chunk::new());
+fn interpret(source: String) -> Result<(), SSError> {
+    let chunk = Compiler::compile(source, Chunk::new())?;
 
     // disassemble_chunk(&chunk, "test");
 
-    if let Err(e) = VM::interpret(chunk) {
-        println!("{}", e)
-    }
+    VM::interpret(chunk)?;
+
+    Ok(())
 }
 
 #[allow(dead_code)]
@@ -63,6 +66,6 @@ fn test_vm_with_chunk() {
     // println!("{:?}", chunk);
 
     if let Err(e) = VM::interpret(chunk) {
-        println!("{}", e)
+        println!("{:?}", e)
     }
 }
