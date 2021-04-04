@@ -5,6 +5,7 @@ use crate::debug;
 use crate::error::RuntimeError;
 use crate::opcode::OpCode;
 use crate::value::Value;
+use crate::SSError;
 
 use std::collections::HashMap;
 
@@ -21,7 +22,15 @@ pub struct VM {
 }
 
 impl VM {
-    pub fn interpret(chunk: Chunk) -> Result<Value, RuntimeError> {
+    // Wrapper method over the inner hidden _interpret method, to wrap any RuntimeError as SSError before bubbling it up
+    pub fn interpret(chunk: Chunk) -> Result<Value, SSError> {
+        match VM::_interpret(chunk) {
+            Ok(value) => Ok(value),
+            Err(e) => Err(SSError::RuntimeError(e)),
+        }
+    }
+
+    fn _interpret(chunk: Chunk) -> Result<Value, RuntimeError> {
         // let mut vm = VM {
         //     chunk,
         //     // From Clox:
