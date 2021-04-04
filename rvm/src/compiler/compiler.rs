@@ -63,7 +63,10 @@ impl Compiler {
 
         // Keep parsing and compiling statements until EOF
         while !compiler.parser.match_next(TokenType::Eof) {
-            compiler.declaration();
+            // Stop compilation if there is an error
+            if let Err(e) = compiler.declaration() {
+                panic!(e)
+            }
         }
 
         // @todo Fix the error message
@@ -75,7 +78,7 @@ impl Compiler {
         compiler.chunk
     }
 
-    fn declaration(&mut self) {
+    fn declaration(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
             TokenType::Const => self.advance_and_call(Compiler::const_declaration),
 
@@ -84,7 +87,7 @@ impl Compiler {
         }
     }
 
-    fn const_declaration(&mut self) {
+    fn const_declaration(&mut self) -> Result<(), CompileError> {
         // Consume the identifier token before parsing for the const's identifier string
         self.parser
             .consume(TokenType::Identifier, "Expect const name".to_string());
@@ -92,10 +95,10 @@ impl Compiler {
         let const_name = self.parse_const();
 
         // Only works for local scope
-        self.declare_const();
+        self.declare_const()?;
 
         if self.parser.match_next(TokenType::Equal) {
-            self.expression();
+            self.expression()?;
         } else {
             self.emit_constant(Value::Null);
         }
@@ -107,6 +110,8 @@ impl Compiler {
 
         // Only works for global scope
         self.define_const(const_name);
+
+        Ok(())
     }
 
     // It requires the next token to be an identifier, which it consumes and sends here:
@@ -143,7 +148,6 @@ impl Compiler {
                     break;
                 }
                 if &identifier == &local.name {
-                    eprintln!("Identifier already used in current scope");
                     return Err(CompileError::IdentifierAlreadyUsed(identifier));
                 }
             }
@@ -172,7 +176,7 @@ impl Compiler {
         }
     }
 
-    fn statement(&mut self) {
+    fn statement(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Compiler::block_statement),
@@ -182,8 +186,8 @@ impl Compiler {
         }
     }
 
-    fn print_statement(&mut self) {
-        self.expression();
+    fn print_statement(&mut self) -> Result<(), CompileError> {
+        self.expression()?;
 
         self.parser.consume(
             TokenType::Semicolon,
@@ -191,15 +195,17 @@ impl Compiler {
         );
 
         self.emit_code(OpCode::PRINT);
+
+        Ok(())
     }
 
-    fn block_statement(&mut self) {
+    fn block_statement(&mut self) -> Result<(), CompileError> {
         // Create a new scope by incrementing compiler's scope depth
         self.scope_depth += 1;
 
         // Keep parsing/compiling as long as it is not the closing right brace or an unexpected EOF yet
         while !self.parser.check(TokenType::RightBrace) && !self.parser.check(TokenType::Eof) {
-            self.declaration();
+            self.declaration()?;
         }
 
         self.parser
@@ -208,10 +214,13 @@ impl Compiler {
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
 
+        // @todo Optimize by creating a POP_N(usize) opcode, to pop N number of times at the same time to make runtime execution faster
         // Delete local identifier's values whose lifetime ends in current scope from locals vector, and emit opcode to delete from stack
         while self.locals.len() > 0 && self.locals.pop().unwrap().depth > self.scope_depth {
             self.emit_code(OpCode::POP);
         }
+
+        Ok(())
     }
 
     fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
@@ -234,8 +243,8 @@ impl Compiler {
     // They’re how you write an expression in a context where a statement is expected.
     // Usually, it’s so that you can call a function or evaluate an assignment for its side effect
     // An expression statement evaluates the expression and discards the result from the stack
-    fn expression_statement(&mut self) {
-        self.expression();
+    fn expression_statement(&mut self) -> Result<(), CompileError> {
+        self.expression()?;
 
         self.parser.consume(
             TokenType::Semicolon,
@@ -244,6 +253,8 @@ impl Compiler {
 
         // POP opcode to discard result from the stack
         self.emit_code(OpCode::POP);
+
+        Ok(())
     }
 
     /*
@@ -254,8 +265,8 @@ impl Compiler {
         method to call expression compiler methods recursively as needed.
     */
 
-    fn expression(&mut self) {
-        self.parse_precedence(Precedence::Assignment);
+    fn expression(&mut self) -> Result<(), CompileError> {
+        self.parse_precedence(Precedence::Assignment)
     }
 
     pub fn number(&mut self) {
@@ -278,34 +289,35 @@ impl Compiler {
         self.emit_constant(Value::String(value));
     }
 
-    pub fn grouping(&mut self) {
-        self.expression();
+    pub fn grouping(&mut self) -> Result<(), CompileError> {
+        self.expression()?;
         self.parser.consume(
             TokenType::RightParen,
             "Expect ')' after expression".to_string(),
         );
+
+        Ok(())
     }
 
-    pub fn unary(&mut self) {
+    pub fn unary(&mut self) -> Result<(), CompileError> {
         // Remember the operator because the next call to parse_precedence moves the parser forward
         // Need to clone here instead of taking a immutable ref because self.parse_precedence needs a mutable ref to self
         let operator_type: TokenType = self.parser.previous.token_type.clone();
 
         // Compile the operand
-        self.parse_precedence(Precedence::Unary);
+        self.parse_precedence(Precedence::Unary)?;
 
         // Emit the operator instruction.
-        match operator_type {
+        Ok(match operator_type {
             TokenType::Bang => self.emit_code(OpCode::NOT),
             TokenType::Minus => self.emit_code(OpCode::NEGATE),
 
             // Unreachable
-            // @todo Change to use Result error variant to bubble error up
-            _ => return,
-        }
+            _ => return Err(CompileError::InvalidOperatorType(operator_type)),
+        })
     }
 
-    pub fn binary(&mut self) {
+    pub fn binary(&mut self) -> Result<(), CompileError> {
         // Remember the operator because the next call to parse_precedence moves the parser forward
         // Need to clone here instead of taking a immutable ref because self.parse_precedence needs a mutable ref to self
         let operator_type: TokenType = self.parser.previous.token_type.clone();
@@ -315,7 +327,7 @@ impl Compiler {
         // Get next precedence enum variant and parse it
         self.parse_precedence(
             USIZE_TO_PRECEDENCE[get_rule(&operator_type).precedence as usize + 1],
-        );
+        )?;
 
         // Alternative is to use method that relies on unsafe mem::transmute code
         // self.parse_precedence(Precedence::from_usize(
@@ -323,7 +335,7 @@ impl Compiler {
         // ));
 
         // Emit the operator's OpCode
-        match operator_type {
+        Ok(match operator_type {
             TokenType::Plus => self.emit_code(OpCode::ADD),
             TokenType::Minus => self.emit_code(OpCode::SUBTRACT),
             TokenType::Star => self.emit_code(OpCode::MULTIPLY),
@@ -337,8 +349,8 @@ impl Compiler {
             TokenType::LessEqual => self.emit_code(OpCode::LESS_EQUAL),
 
             // Unreachable
-            _ => return,
-        }
+            _ => return Err(CompileError::InvalidOperatorType(operator_type)),
+        })
     }
 
     pub fn literal(&mut self) {
@@ -357,7 +369,7 @@ impl Compiler {
 
     // Parse expression by using the TokenType to get a ParseRule's parse/compile method
     // Continues to parse/compile infix operators if the precedence level is low enough
-    fn parse_precedence(&mut self, precedence: Precedence) {
+    fn parse_precedence(&mut self, precedence: Precedence) -> Result<(), CompileError> {
         // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
         let precedence = precedence as usize;
 
@@ -369,11 +381,14 @@ impl Compiler {
         match get_rule(&self.parser.previous.token_type).prefix {
             // Alternative syntax for self.prefix_rule() where prefix_rule is a variable function pointer
             // Some(prefix_rule) => prefix_rule(self),
-            Some(prefix_rule) => prefix_rule(self, false),
+            Some(prefix_rule) => prefix_rule(self, false)?,
 
             // If there is no prefix parser, then the token must be a syntax error
-            // @todo Handle error using an Result error variant
-            None => return eprintln!("Expect expression. No prefix parser"),
+            None => {
+                return Err(CompileError::MissingParser(
+                    "Expect expression. No prefix parser".to_string(),
+                ))
+            }
         };
 
         // After parsing the prefix expression, which may consume more tokens this look for an infix parser for the next token.
@@ -389,12 +404,17 @@ impl Compiler {
             match get_rule(&self.parser.previous.token_type).infix {
                 // Alternative syntax for self.infix_rule() where infix_rule is a variable function pointer
                 // Some(infix_rule) => infix_rule(self),
-                Some(infix_rule) => infix_rule(self, false),
+                Some(infix_rule) => infix_rule(self, false)?,
 
                 // If there is no prefix parser, then the token must be a syntax error
-                // @todo Handle error using an Result error variant
-                None => return eprintln!("Expect expression. No infix parser"),
+                None => {
+                    return Err(CompileError::MissingParser(
+                        "Expect expression. No infix parser".to_string(),
+                    ))
+                }
             }
         }
+
+        Ok(())
     }
 }
