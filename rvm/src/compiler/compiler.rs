@@ -3,6 +3,7 @@ use super::CompileError;
 
 use crate::chunk::Chunk;
 use crate::compiler::Parser;
+use crate::error::SSError;
 use crate::opcode::OpCode;
 use crate::scanner::Scanner;
 use crate::token::Token;
@@ -37,7 +38,7 @@ pub struct Compiler {
 
 impl Compiler {
     // Returns Chunk that can be run immediately
-    pub fn compile(source: String, chunk: Chunk) -> Chunk {
+    pub fn compile(source: String, chunk: Chunk) -> Result<Chunk, SSError> {
         // Create compiler struct internally instead of having a seperate method to create and compile.
         let mut compiler = Compiler {
             // Move chunk into the compiler struct, so that the methods can access it
@@ -63,9 +64,9 @@ impl Compiler {
 
         // Keep parsing and compiling statements until EOF
         while !compiler.parser.match_next(TokenType::Eof) {
-            // Stop compilation if there is an error
+            // CompileError cannot be bubbled up as method's signature is Result<(), SSError>, so convert before returning error
             if let Err(e) = compiler.declaration() {
-                panic!(e)
+                return Err(SSError::CompileError(e));
             }
         }
 
@@ -75,7 +76,7 @@ impl Compiler {
             .consume(TokenType::Eof, "Expect end of expression".to_string());
 
         // Now that the chunk is filled with OpCodes after compilation, return it from Compiler struct to use with the VM
-        compiler.chunk
+        Ok(compiler.chunk)
     }
 
     fn declaration(&mut self) -> Result<(), CompileError> {

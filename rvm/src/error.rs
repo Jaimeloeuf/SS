@@ -1,3 +1,12 @@
+use crate::compiler::CompileError;
+
+// Error enum type that encapsulates all other error enum types that can happen and bubble up to main SS program.
+#[derive(Debug)]
+pub enum SSError {
+    CompileError(CompileError),
+    RuntimeError(RuntimeError),
+}
+
 /**
  * WIP Scaffolded from rust interpreter.
  *
