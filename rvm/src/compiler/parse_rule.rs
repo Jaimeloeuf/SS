@@ -1,5 +1,6 @@
 use super::Compiler;
 
+use crate::compiler::CompileError;
 use crate::token::TokenType;
 
 // @todo Make this u8 instead of usize
@@ -73,8 +74,8 @@ impl Precedence {
     To have both without changing the function signature of the methods that do not need that argument
     These methods will be wrapped in a function with a function signature that takes in the extra argument and discard it
 */
-pub type ParseFnBase = fn(&mut Compiler);
-pub type ParseFn = fn(&mut Compiler, can_assign: bool);
+pub type ParseFnBase = fn(compiler: &mut Compiler) -> Result<(), CompileError>;
+pub type ParseFn = fn(compiler: &mut Compiler, can_assign: bool) -> Result<(), CompileError>;
 
 // Need Copy trait for array initialization process in static RULES_TABLE creation process
 // Clone trait is needed to derive the Copy trait
@@ -87,16 +88,12 @@ pub struct ParseRule {
 
 // Converts ParseFnBase to ParseFn
 macro_rules! wrap_parse_fn {
-    ($parse_fn:expr) => {
-        |compiler: &mut Compiler, _| $parse_fn(compiler);
-    };
-    // @todo See if this is still needed
-    // Alternative wrapper using a inline function instead of a closure
-    ($parse_fn:expr => INLINE) => {{
+    ($parse_fn:expr) => {{
         // Although can_assign will be unused, still have to define it unlike a closure definition
         #[inline]
-        fn wrapped(compiler: &mut Compiler, _can_assign: bool) {
-            $parse_fn(compiler)
+        fn wrapped(compiler: &mut Compiler, _can_assign: bool) -> Result<(), CompileError> {
+            $parse_fn(compiler);
+            Ok(())
         }
 
         wrapped
