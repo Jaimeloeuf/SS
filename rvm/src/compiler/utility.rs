@@ -16,9 +16,12 @@ impl Compiler {
 
     // Indirection for all declaration and statement methods, to advance parser before calling the method
     // Inlined to remove runtime method call overhead
-    // @todo compiler method and this method should return  -> Result<Stmt, ParsingError>
     #[inline]
-    pub fn advance_and_call(&mut self, method: fn(&mut Compiler)) {
+    pub fn advance_and_call(
+        &mut self,
+        method: fn(&mut Compiler) -> Result<(), CompileError>,
+    ) -> Result<(), CompileError> {
+        // @todo Handle result variant
         self.parser.advance();
         method(self)
     }

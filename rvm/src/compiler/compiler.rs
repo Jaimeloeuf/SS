@@ -58,6 +58,7 @@ impl Compiler {
         };
 
         // Start by advancing the parser first, since Parser is created with default placeholder tokens
+        // @todo Handle result return value
         compiler.parser.advance();
 
         // Keep parsing and compiling statements until EOF
@@ -360,6 +361,7 @@ impl Compiler {
         // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
         let precedence = precedence as usize;
 
+        // @todo Handle result variant
         // Read the next token
         self.parser.advance();
 
@@ -379,6 +381,7 @@ impl Compiler {
         // BUT ONLY if the call to parse_precedence() has a precedence that is low enough to permit that infix operator.
         // To test if it is low enough, convert ParseRule's precedence into its usize discriminant to compare with the precedence passed in
         while precedence <= get_rule(&self.parser.current.token_type).precedence as usize {
+            // @todo Handle result variant
             // Read the next token
             self.parser.advance();
 
