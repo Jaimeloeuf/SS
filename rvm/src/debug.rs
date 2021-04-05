@@ -33,10 +33,13 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
 
     match chunk.codes[offset] {
         OpCode::POP => simple_instruction(&chunk, offset),
+        OpCode::POP_N(_) => simple_instruction(&chunk, offset),
         OpCode::RETURN => simple_instruction(&chunk, offset),
         OpCode::CONSTANT(_) => constant_instruction(&chunk, offset),
         OpCode::IDENTIFIER(_) => constant_instruction(&chunk, offset),
         OpCode::IDENTIFIER_LOOKUP(_) => constant_instruction(&chunk, offset),
+        OpCode::GET_LOCAL(_) => constant_instruction(&chunk, offset),
+        OpCode::SET_LOCAL(_) => constant_instruction(&chunk, offset),
 
         OpCode::ADD => simple_instruction(&chunk, offset),
         OpCode::SUBTRACT => simple_instruction(&chunk, offset),
@@ -68,7 +71,7 @@ fn simple_instruction(chunk: &Chunk, offset: usize) -> usize {
 }
 
 fn constant_instruction(chunk: &Chunk, offset: usize) -> usize {
-    println!("{:?} ", chunk.codes[offset]);
+    println!("{:?}", chunk.codes[offset]);
     offset + 1
 }
 

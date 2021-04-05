@@ -58,6 +58,23 @@ impl VM {
                 OpCode::POP => {
                     stack.pop();
                 }
+                // Pop N number of values off stack, usually used to pop local values off stack when local scope ends
+                OpCode::POP_N(number_of_pops) => {
+                    // Runtime check on debug builds to ensure number of pops less than number of values on stack
+                    #[cfg(debug_assertions)]
+                    if stack.len() < *number_of_pops {
+                        panic!(format!(
+                            "VM Debug Error: Popping {} values from Stack of {} values",
+                            number_of_pops,
+                            stack.len()
+                        ));
+                    }
+
+                    // https://stackoverflow.com/questions/28952411/what-is-the-idiomatic-way-to-pop-the-last-n-elements-in-a-mutable-vec
+                    // https://doc.rust-lang.org/std/vec/struct.Vec.html#method.truncate
+                    // https://doc.rust-lang.org/std/primitive.i32.html#method.saturating_sub
+                    stack.truncate(stack.len() - number_of_pops);
+                }
 
                 // In Clox, vm access constant value in this op code by getting next byte as index and calling from const pool
                 // But here value is stored in the enum variant, and is accessed directly instead of getting from a const pool

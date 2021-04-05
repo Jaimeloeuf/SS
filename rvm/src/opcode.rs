@@ -6,6 +6,7 @@ use crate::value::Value;
 #[derive(Debug)]
 pub enum OpCode {
     POP,
+    POP_N(usize),
     RETURN,
     CONSTANT(Value),
 

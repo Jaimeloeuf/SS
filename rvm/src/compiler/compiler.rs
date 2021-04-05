@@ -219,11 +219,17 @@ impl Compiler {
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
 
-        // @todo Optimize by creating a POP_N(usize) opcode, to pop N number of times at the same time to make runtime execution faster
         // Delete local identifier's values whose lifetime ends in current scope from locals vector, and emit opcode to delete from stack
-        while self.locals.len() > 0 && self.locals.pop().unwrap().depth > self.scope_depth {
-            self.emit_code(OpCode::POP);
+        // Can unwrap last() value directly because len has already been checked to be bigger than 0
+        //
+        // Instead of popping values of stack 1 by 1 using multiple pop opcodes,
+        // Use POP_N(usize) opcode, to pop N number of values of the stack with a single opcode to make runtime faster
+        let mut number_of_pops = 0;
+        while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
+            self.locals.pop();
+            number_of_pops += 1;
         }
+        self.emit_code(OpCode::POP_N(number_of_pops));
 
         Ok(())
     }
