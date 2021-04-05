@@ -167,14 +167,18 @@ impl Compiler {
             depth: self.scope_depth,
         });
     }
-    pub fn identifier_lookup(&mut self) {
+
+    // @todo Move this down, ad this is an expression method
+    pub fn identifier_lookup(&mut self) -> Result<(), CompileError> {
         let const_name = self.parse_const();
         // Handling identifiers in local scopes differently from global scope identifiers
         // @todo Merge these
         match self.resolve_local(&const_name) {
             Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
             Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(const_name)),
-        }
+        };
+
+        Ok(())
     }
 
     fn statement(&mut self) -> Result<(), CompileError> {
@@ -270,15 +274,19 @@ impl Compiler {
         self.parse_precedence(Precedence::Assignment)
     }
 
-    pub fn number(&mut self) {
+    // @todo Add error checks when unwrapping
+    pub fn number(&mut self) -> Result<(), CompileError> {
         let value: f64 = self.parser.scanner.source
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<f64>()
             .unwrap();
         self.emit_constant(Value::Number(value));
+
+        Ok(())
     }
 
-    pub fn string(&mut self) {
+    // @todo Add error checks when unwrapping
+    pub fn string(&mut self) -> Result<(), CompileError> {
         let value: String = self.parser.scanner.source[
                 // Plus 1 from starting char to skip the " double quote literal
                 // Minus 1 to skip the " double quote literal after the string literal
@@ -288,6 +296,8 @@ impl Compiler {
             .parse::<String>()
             .unwrap();
         self.emit_constant(Value::String(value));
+
+        Ok(())
     }
 
     pub fn grouping(&mut self) -> Result<(), CompileError> {
@@ -354,16 +364,19 @@ impl Compiler {
         })
     }
 
-    pub fn literal(&mut self) {
-        match &self.parser.previous.token_type {
+    pub fn literal(&mut self) -> Result<(), CompileError> {
+        Ok(match &self.parser.previous.token_type {
             // Optimize by using special opcodes, like OpCode::True to load True onto stack directly instead of reading from CONSTANT(val)
             TokenType::True => self.emit_constant(Value::Bool(true)),
             TokenType::False => self.emit_constant(Value::Bool(false)),
             TokenType::Null => self.emit_constant(Value::Null),
 
-            // @todo Error out
-            _ => return,
-        }
+            _ => {
+                return Err(CompileError::InvalidOperatorType(
+                    self.parser.previous.token_type.clone(),
+                ))
+            }
+        })
     }
 
     /* ============= End of Expression compiler methods ============= */
