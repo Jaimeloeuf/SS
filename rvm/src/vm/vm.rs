@@ -103,6 +103,25 @@ impl VM {
                 OpCode::GET_LOCAL(stack_index) => stack.push(stack[*stack_index].clone()),
                 OpCode::SET_LOCAL(stack_index) => stack[*stack_index] = stack.pop().unwrap(),
 
+                OpCode::JUMP(offset) => ip += offset,
+                OpCode::JUMP_IF_FALSE(offset) => {
+                    // Dont pop the value off the stack, just take a ref to it
+                    // POP instructions will be generated seperately
+                    let value = stack.last();
+
+                    // @todo Is runtime stack value check needed?
+                    // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
+                    #[cfg(debug_assertions)]
+                    if value.is_none() {
+                        panic!("VM Debug Error: Stack missing value for JUMP_IF_FALSE OpCode");
+                    }
+
+                    // Only offset the VM's ip if the condition evaluates to false, to skip the codes for 'true' branch
+                    if let Some(Value::Bool(false)) = value {
+                        ip += offset;
+                    }
+                }
+
                 OpCode::ADD => arithmetic_binary_op!(stack, +),
                 OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),
                 OpCode::MULTIPLY => arithmetic_binary_op!(stack, *),
