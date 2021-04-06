@@ -188,6 +188,7 @@ impl Compiler {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Compiler::block_statement),
+            TokenType::If => self.advance_and_call(Compiler::if_statement),
 
             // it is as an expression statement if it did not match any statement tokens
             _ => self.expression_statement(),
@@ -251,6 +252,59 @@ impl Compiler {
         // This assumes error, but in Clox it means try looking for a global variable instead
         eprintln!("Identifier not available in local scope");
         return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
+    }
+
+    fn if_statement(&mut self) -> Result<(), CompileError> {
+        self.parser.consume(
+            TokenType::LeftParen,
+            "Expect '(' after 'if' keyword".to_string(),
+        );
+        // Parse the condition expression
+        self.expression()?;
+        self.parser.consume(
+            TokenType::RightParen,
+            "Expect ')' after 'if' condition".to_string(),
+        );
+
+        let then_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
+        // POP opcode to discard condition value from stack
+        self.emit_code(OpCode::POP);
+        self.statement()?;
+
+        let else_jump: usize = self.emit_jump(OpCode::JUMP(0));
+
+        self.patch_jump(then_jump)?;
+
+        // POP opcode to discard condition value from stack
+        self.emit_code(OpCode::POP);
+
+        if self.parser.match_next(TokenType::Else) {
+            self.statement()?;
+        }
+        self.patch_jump(else_jump)?;
+
+        Ok(())
+    }
+
+    // Utility method to emit a JUMP type opcode and return the current code position
+    fn emit_jump(&mut self, instruction: OpCode) -> usize {
+        self.emit_code(instruction);
+
+        // Return current code position, which is simply the last index as the code just emitted will be appended to the vec
+        self.chunk.codes.len() - 1
+    }
+
+    // Utility method to patch a JUMP type opcode with the actual jump offset value
+    // JUMP instructions are first emitted with a 0 offset, before the offset is calculated and patched back in with this method
+    fn patch_jump(&mut self, offset: usize) -> Result<(), CompileError> {
+        let jump: usize = self.chunk.codes.len() - offset - 1;
+
+        Ok(match &self.chunk.codes[offset] {
+            OpCode::JUMP(0) => self.chunk.codes[offset] = OpCode::JUMP(jump),
+            OpCode::JUMP_IF_FALSE(0) => self.chunk.codes[offset] = OpCode::JUMP_IF_FALSE(jump),
+
+            invalid_opcode => return Err(CompileError::InvalidJumpOpcode(invalid_opcode.clone())),
+        })
     }
 
     // An expression statement is an expression followed by a semicolon.

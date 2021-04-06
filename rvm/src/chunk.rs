@@ -19,8 +19,8 @@ impl Chunk {
     }
 
     // Method to write a new OpCode
-    pub fn write(&mut self, byte: OpCode, line_number: usize) {
-        self.codes.push(byte);
+    pub fn write(&mut self, code: OpCode, line_number: usize) {
+        self.codes.push(code);
         self.lines.push(line_number);
     }
 }

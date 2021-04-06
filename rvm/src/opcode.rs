@@ -4,7 +4,7 @@ use crate::value::Value;
 // Clox differentiate OpCode from Data using OP_ prefix, and also all their data types is just a single byte anyways
 
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OpCode {
     POP,
     POP_N(usize),
