@@ -1,4 +1,4 @@
-use super::parse_rule::{get_rule, ParseFn, ParseRule, Precedence, USIZE_TO_PRECEDENCE};
+use super::parse_rule::{get_rule, Precedence, USIZE_TO_PRECEDENCE};
 use super::CompileError;
 
 use crate::chunk::Chunk;
@@ -148,7 +148,10 @@ impl Compiler {
                 if local.depth < self.scope_depth {
                     break;
                 }
+
+                // Ensure that the identifier name is unique in current scope
                 if &identifier == &local.name {
+                    // @todo Include line info
                     return Err(CompileError::IdentifierAlreadyUsed(identifier));
                 }
             }

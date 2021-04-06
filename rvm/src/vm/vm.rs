@@ -40,18 +40,22 @@ impl VM {
         //     ip: 0,
         // };
 
+        // Local variable Instruction Pointer is a array index pointing to the current OpCode in chunk's 'codes' vector
+        let mut ip: usize = 0;
+
         // @todo Include max stack to cause stack overflow to prevent infinite stack use
         // let mut top_of_stack: usize = 0; // Technically just use stack.last()
         let mut stack = Vec::<Value>::new();
         let mut values = HashMap::<String, Value>::new();
 
-        // Add a debug flag for this
-        // offset is used for disassemble_instruction
-        // for ref code in &chunk.codes {
-        for (offset, ref code) in chunk.codes.iter().enumerate() {
+        // Keep looping and executing as long as Instruction Pointer does not point past the length of codes in current chunk
+        while ip < chunk.codes.len() {
+            // Get ref to current OpCode in chunk to execute
+            let code = &chunk.codes[ip];
+
             // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
             #[cfg(debug_assertions)]
-            debug::disassemble_instruction(&chunk, offset);
+            debug::disassemble_instruction(&chunk, ip);
 
             match code {
                 // Pop value off stack, used at the end of expression statements
@@ -90,7 +94,7 @@ impl VM {
                     Some(value) => stack.push(value.clone()),
                     None => {
                         return Err(RuntimeError::UndefinedIdentifier(
-                            chunk.lines[offset],
+                            chunk.lines[ip],
                             identifier.clone(),
                         ))
                     }
@@ -111,7 +115,7 @@ impl VM {
                     // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
                     #[cfg(debug_assertions)]
                     if value.is_none() {
-                        panic!("VM Debug Error: Stack missing values for NOT OpCode");
+                        panic!("VM Debug Error: Stack missing value for NOT OpCode");
                     }
 
                     stack.push(value.unwrap().not()?);
@@ -123,7 +127,7 @@ impl VM {
                     // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
                     #[cfg(debug_assertions)]
                     if value.is_none() {
-                        panic!("VM Debug Error: Stack missing values for NEGATE OpCode");
+                        panic!("VM Debug Error: Stack missing value for NEGATE OpCode");
                     }
 
                     stack.push(value.unwrap().negate()?);
@@ -145,12 +149,16 @@ impl VM {
                     println!("RETURN:  {:?}", stack.pop().unwrap());
                 }
 
+                #[allow(unreachable_patterns)]
                 ref instruction => println!("VM Error: Unknown OpCode {:?}\n", instruction),
             }
 
             // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
             #[cfg(debug_assertions)]
             debug::print_stack(&stack);
+
+            // Increment ip (Instruction Pointer) by 1 on every loop
+            ip += 1;
         }
 
         // @todo Tmp value to return for testing
