@@ -19,6 +19,9 @@ pub enum OpCode {
     GET_LOCAL(usize),
     SET_LOCAL(usize),
 
+    JUMP(usize),
+    JUMP_IF_FALSE(usize),
+
     // Arithmetic Binary operators
     ADD,
     SUBTRACT,

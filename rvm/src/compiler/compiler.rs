@@ -230,10 +230,15 @@ impl Compiler {
         // Use POP_N(usize) opcode, to pop N number of values of the stack with a single opcode to make runtime faster
         let mut number_of_pops = 0;
         while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
+            // Remove the local from compiler's locals vector too
             self.locals.pop();
             number_of_pops += 1;
         }
-        self.emit_code(OpCode::POP_N(number_of_pops));
+
+        // Only emit POP_N instruction if there are locals to pop off the stack
+        if number_of_pops > 0 {
+            self.emit_code(OpCode::POP_N(number_of_pops));
+        }
 
         Ok(())
     }
