@@ -291,27 +291,6 @@ impl Compiler {
         Ok(())
     }
 
-    // Utility method to emit a JUMP type opcode and return the current code position
-    fn emit_jump(&mut self, instruction: OpCode) -> usize {
-        self.emit_code(instruction);
-
-        // Return current code position, which is simply the last index as the code just emitted will be appended to the vec
-        self.chunk.codes.len() - 1
-    }
-
-    // Utility method to patch a JUMP type opcode with the actual jump offset value
-    // JUMP instructions are first emitted with a 0 offset, before the offset is calculated and patched back in with this method
-    fn patch_jump(&mut self, offset: usize) -> Result<(), CompileError> {
-        let jump: usize = self.chunk.codes.len() - offset - 1;
-
-        Ok(match &self.chunk.codes[offset] {
-            OpCode::JUMP(0) => self.chunk.codes[offset] = OpCode::JUMP(jump),
-            OpCode::JUMP_IF_FALSE(0) => self.chunk.codes[offset] = OpCode::JUMP_IF_FALSE(jump),
-
-            invalid_opcode => return Err(CompileError::InvalidJumpOpcode(invalid_opcode.clone())),
-        })
-    }
-
     // An expression statement is an expression followed by a semicolon.
     // They’re how you write an expression in a context where a statement is expected.
     // Usually, it’s so that you can call a function or evaluate an assignment for its side effect
@@ -430,6 +409,28 @@ impl Compiler {
             // Unreachable
             _ => return Err(CompileError::InvalidOperatorType(operator_type)),
         })
+    }
+
+    /*
+        The 2 operands of 'and' will be typed check to be bool
+        The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals
+        The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool
+    */
+    pub fn and(&mut self) -> Result<(), CompileError> {
+        let end_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
+
+        // POP opcode to discard condition value from stack, which will be the left hand side expression of the 'and' keyword
+        self.emit_code(OpCode::POP);
+
+        self.parse_precedence(Precedence::And)?;
+
+        // Patch jump to jump/skip the right hand side operand expression opcodes if the left hand side operand is Bool(false)
+        self.patch_jump(end_jump)?;
+
+        // Add TYPE_CHECK_BOOL opcode to type check if the right hand side operand expression evaluates to a Bool(_)
+        self.emit_code(OpCode::TYPE_CHECK_BOOL);
+
+        Ok(())
     }
 
     pub fn literal(&mut self) -> Result<(), CompileError> {

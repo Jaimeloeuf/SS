@@ -103,6 +103,30 @@ impl VM {
                 OpCode::GET_LOCAL(stack_index) => stack.push(stack[*stack_index].clone()),
                 OpCode::SET_LOCAL(stack_index) => stack[*stack_index] = stack.pop().unwrap(),
 
+                OpCode::TYPE_CHECK_BOOL => {
+                    let value = stack.last();
+
+                    // @todo Is runtime stack value check needed?
+                    // Only run this check during debug builds, assuming correctly compiled codes will not have this issue
+                    #[cfg(debug_assertions)]
+                    if value.is_none() {
+                        panic!("VM Debug Error: Stack missing value for TYPE_CHECK_BOOL OpCode");
+                    }
+
+                    match value {
+                        Some(Value::Bool(_)) => {}
+
+                        // @todo Fix the error message
+                        // Runtime type checking
+                        Some(invalid_type) => {
+                            return Err(RuntimeError::TypeError("Expect Boolean".to_string()))
+                        }
+
+                        // This should be a no value error
+                        None => todo!(),
+                    }
+                }
+
                 OpCode::JUMP(offset) => ip += offset,
                 OpCode::JUMP_IF_FALSE(offset) => {
                     // Dont pop the value off the stack, just take a ref to it

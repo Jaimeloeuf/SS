@@ -19,8 +19,12 @@ pub enum OpCode {
     GET_LOCAL(usize),
     SET_LOCAL(usize),
 
+    // JUMP type / control flow opcodes
     JUMP(usize),
     JUMP_IF_FALSE(usize),
+
+    // Special opcodes to do type checking of the last value on the stack
+    TYPE_CHECK_BOOL,
 
     // Arithmetic Binary operators
     ADD,
