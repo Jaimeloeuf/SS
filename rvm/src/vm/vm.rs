@@ -140,9 +140,23 @@ impl VM {
                         panic!("VM Debug Error: Stack missing value for JUMP_IF_FALSE OpCode");
                     }
 
-                    // Only offset the VM's ip if the condition evaluates to false, to skip the codes for 'true' branch
-                    if let Some(Value::Bool(false)) = value {
-                        ip += offset;
+                    match value {
+                        // Only handle bool cases
+                        Some(Value::Bool(bool)) => {
+                            // Only offset VM's ip if condition evaluates to false, to skip the codes for 'true branch'
+                            if *bool == false {
+                                ip += offset
+                            }
+                        }
+
+                        // @todo Fix the error message
+                        // Runtime type checking
+                        Some(invalid_type) => {
+                            return Err(RuntimeError::TypeError("Expect Boolean".to_string()))
+                        }
+
+                        // This should be a no value error
+                        None => todo!(),
                     }
                 }
 
