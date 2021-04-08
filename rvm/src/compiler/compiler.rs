@@ -422,9 +422,40 @@ impl Compiler {
         // POP opcode to discard condition value from stack, which will be the left hand side expression of the 'and' keyword
         self.emit_code(OpCode::POP);
 
+        // Parse/Compile the right hand side expression
         self.parse_precedence(Precedence::And)?;
 
         // Patch jump to jump/skip the right hand side operand expression opcodes if the left hand side operand is Bool(false)
+        self.patch_jump(end_jump)?;
+
+        // Add TYPE_CHECK_BOOL opcode to type check if the right hand side operand expression evaluates to a Bool(_)
+        self.emit_code(OpCode::TYPE_CHECK_BOOL);
+
+        Ok(())
+    }
+
+    /*
+        The 2 operands of 'or' will be typed check to be bool
+        The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals
+        The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool
+
+        @todo Because of how we compile this, if the first value is true, the second value will not be type checked
+    */
+    pub fn or(&mut self) -> Result<(), CompileError> {
+        let else_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
+        let end_jump: usize = self.emit_jump(OpCode::JUMP(0));
+
+        // If left hand side expression is Bool(false), jump to the POP instruction emitted below to pop it from stack.
+        self.patch_jump(else_jump)?;
+
+        // POP opcode to discard condition value from stack, which will be the left hand side expression of the 'or' keyword
+        // This only executes if left hand side expression evaluates to Bool(false), to pop it off before evaluating the right hand side expression
+        self.emit_code(OpCode::POP);
+
+        // Parse/Compile the right hand side expression
+        self.parse_precedence(Precedence::Or)?;
+
+        // Patch jump to jump/skip the right hand side operand expression opcodes if the left hand side operand is Bool(true)
         self.patch_jump(end_jump)?;
 
         // Add TYPE_CHECK_BOOL opcode to type check if the right hand side operand expression evaluates to a Bool(_)
