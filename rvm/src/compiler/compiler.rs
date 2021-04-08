@@ -189,6 +189,7 @@ impl Compiler {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Compiler::block_statement),
             TokenType::If => self.advance_and_call(Compiler::if_statement),
+            TokenType::While => self.advance_and_call(Compiler::while_statement),
 
             // it is as an expression statement if it did not match any statement tokens
             _ => self.expression_statement(),
@@ -313,7 +314,10 @@ impl Compiler {
 
         // Calculate the opcode count difference between current length after compiling loop body and start of loop
         let offset = self.chunk.codes.len() - loop_start;
-        self.emit_code(OpCode::LOOP(offset)); // @todo Can optimize to use JUMP(-offset) opcode
+
+        // Although this can be implemented with JUMP(-offset), alot more work needs to be done in the VM to support negative offsets
+        // This is because most offset calculation and things like the VM's Instruction Pointer are all usize
+        self.emit_code(OpCode::LOOP(offset));
 
         self.patch_jump(exit_jump)?;
 

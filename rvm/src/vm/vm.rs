@@ -163,7 +163,15 @@ impl VM {
                 OpCode::LOOP(offset) => {
                     ip -= offset;
 
-                    // Must use Continue here to skip rest of the loop body to skip the ip increment code
+                    /*
+                        The offset is already calculated so that 'ip - offset' is the start of the loop conditional expression.
+                        So the rest of the loop body must be skipped with continue, to skip the ip increment code.
+
+                        Q:  Why not calculate offset to be 'offset + 1' so that this will work with the ip increment?
+                        A:  The edge case where the start of the loop conditional expression is ip == 0 prevents it,
+                            because ip is of usize type, which means 'ip - offset' cannot be less than 0,
+                            which means that 'ip - offset + 1' will always be at least 1, break the code in this edge case.
+                    */
                     continue;
                 }
 
