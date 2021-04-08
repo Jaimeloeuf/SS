@@ -291,6 +291,38 @@ impl Compiler {
         Ok(())
     }
 
+    fn while_statement(&mut self) -> Result<(), CompileError> {
+        // Store the chunk’s current opcode count to record the opcodes offset right before compiling the condition expression
+        let loop_start: usize = self.chunk.codes.len();
+
+        self.parser.consume(
+            TokenType::LeftParen,
+            "Expect '(' after 'while' keyword".to_string(),
+        );
+        // Parse the condition expression
+        self.expression()?;
+        self.parser.consume(
+            TokenType::RightParen,
+            "Expect ')' after 'while' condition".to_string(),
+        );
+
+        let exit_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
+        // POP opcode to discard condition value from stack
+        self.emit_code(OpCode::POP);
+        self.statement()?;
+
+        // Calculate the opcode count difference between current length after compiling loop body and start of loop
+        let offset = self.chunk.codes.len() - loop_start;
+        self.emit_code(OpCode::LOOP(offset)); // @todo Can optimize to use JUMP(-offset) opcode
+
+        self.patch_jump(exit_jump)?;
+
+        // POP opcode to discard condition value from stack
+        self.emit_code(OpCode::POP);
+
+        Ok(())
+    }
+
     // An expression statement is an expression followed by a semicolon.
     // They’re how you write an expression in a context where a statement is expected.
     // Usually, it’s so that you can call a function or evaluate an assignment for its side effect

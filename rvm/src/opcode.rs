@@ -23,6 +23,9 @@ pub enum OpCode {
     JUMP(usize),
     JUMP_IF_FALSE(usize),
 
+    // Special loop opcode, that is basically JUMP, but jumps backwards instead of forward
+    LOOP(usize),
+
     // Special opcodes to do type checking of the last value on the stack
     TYPE_CHECK_BOOL,
 

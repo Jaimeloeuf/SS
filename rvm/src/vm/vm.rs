@@ -160,6 +160,13 @@ impl VM {
                     }
                 }
 
+                OpCode::LOOP(offset) => {
+                    ip -= offset;
+
+                    // Must use Continue here to skip rest of the loop body to skip the ip increment code
+                    continue;
+                }
+
                 OpCode::ADD => arithmetic_binary_op!(stack, +),
                 OpCode::SUBTRACT => arithmetic_binary_op!(stack, -),
                 OpCode::MULTIPLY => arithmetic_binary_op!(stack, *),
