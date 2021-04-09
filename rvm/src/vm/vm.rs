@@ -127,7 +127,10 @@ impl VM {
                     }
                 }
 
-                OpCode::JUMP(offset) => ip += offset,
+                OpCode::JUMP(offset) => {
+                    ip += offset;
+                    continue; // To skip rest of the loop body, skipping the ip increment code
+                }
                 OpCode::JUMP_IF_FALSE(offset) => {
                     // Dont pop the value off the stack, just take a ref to it
                     // POP instructions will be generated seperately
@@ -145,7 +148,8 @@ impl VM {
                         Some(Value::Bool(bool)) => {
                             // Only offset VM's ip if condition evaluates to false, to skip the codes for 'true branch'
                             if *bool == false {
-                                ip += offset
+                                ip += offset;
+                                continue; // To skip rest of the loop body, skipping the ip increment code
                             }
                         }
 
