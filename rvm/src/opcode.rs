@@ -23,6 +23,9 @@ pub enum OpCode {
     JUMP(usize),
     JUMP_IF_FALSE(usize),
 
+    // Function call opcodes
+    CALL,
+
     // Special loop opcode, that is basically JUMP, but jumps backwards instead of forward
     LOOP(usize),
 
