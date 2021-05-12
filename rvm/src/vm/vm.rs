@@ -40,17 +40,27 @@ impl VM {
         //     ip: 0,
         // };
 
+        // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose/vm-debugging mode only
+        #[cfg(debug_assertions)]
+        println!("Chunk opcodes: {:#?}", chunk.codes);
+
         // Local variable Instruction Pointer is a array index pointing to the current OpCode in chunk's 'codes' vector
         let mut ip: usize = 0;
 
         // @todo Include max stack to cause stack overflow to prevent infinite stack use
         // let mut top_of_stack: usize = 0; // Technically just use stack.last()
+        // @todo Look into --> https://docs.rs/smallvec/1.6.1/smallvec/
         let mut stack = Vec::<Value>::new();
         let mut values = HashMap::<String, Value>::new();
+
+        // Call stack for function calls in SS.
+        // For now the call stack only stores the opcode_index to return to for execution, which is the ip value when a call opcode is executed
+        let mut call_stack = Vec::<usize>::new();
 
         // Keep looping and executing as long as Instruction Pointer does not point past the length of codes in current chunk
         while ip < chunk.codes.len() {
             // Get ref to current OpCode in chunk to execute
+            // Taking ref instead of moving it out as the code might still be executed again, e.g. in loops
             let code = &chunk.codes[ip];
 
             // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
