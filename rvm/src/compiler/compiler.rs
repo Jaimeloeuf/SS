@@ -272,6 +272,7 @@ impl Compiler {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
             TokenType::LeftBrace => self.advance_and_call(Compiler::block_statement),
+            TokenType::Return => self.advance_and_call(Compiler::return_statement),
             TokenType::If => self.advance_and_call(Compiler::if_statement),
             TokenType::While => self.advance_and_call(Compiler::while_statement),
 
@@ -285,7 +286,7 @@ impl Compiler {
 
         self.parser.consume(
             TokenType::Semicolon,
-            "Expect ';' after print expression".to_string(),
+            "Expect ';' after print statement".to_string(),
         );
 
         self.emit_code(OpCode::PRINT);
@@ -324,6 +325,26 @@ impl Compiler {
         if number_of_pops > 0 {
             self.emit_code(OpCode::POP_N(number_of_pops));
         }
+
+        Ok(())
+    }
+
+    // @todo Error when outside of a function body. Should be a compile error instead of runtime error
+    // Return statements can happen anywhere in a function body to stop execution
+    fn return_statement(&mut self) -> Result<(), CompileError> {
+        // If semicolon read a.k.a no return expression, compile "return;" as shorthand for "return null;"
+        if self.parser.check(TokenType::Semicolon) {
+            self.emit_constant(Value::Null);
+        } else {
+            self.expression()?;
+        }
+
+        self.parser.consume(
+            TokenType::Semicolon,
+            "Expect ';' after return statement".to_string(),
+        );
+
+        self.emit_code(OpCode::RETURN);
 
         Ok(())
     }
