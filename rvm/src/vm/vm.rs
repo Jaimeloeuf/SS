@@ -141,6 +141,9 @@ impl VM {
                 OpCode::CALL => {
                     match stack.pop() {
                         Some(Value::Fn(opcode_index)) => {
+                            // Calculate the return opcode index after function body executes a return instruction
+                            // EITHER set as ip + 1 here and return set ip = caller_ip before calling continue to skip end of loop ip increment
+                            // OR set to ip, then return set ip = caller_ip, before using end of loop increment of 1
                             call_stack.push(ip + 1);
 
                             // Set ip to the opcode index of the function body, so that in the next loop, this will execute the first instruction of the function body
@@ -154,7 +157,7 @@ impl VM {
                         // Runtime type checking
                         Some(invalid_type) => {
                             // panic!("VM tmp Error: Not a function");
-                            return Err(RuntimeError::TypeError("Expect Function".to_string()))
+                            return Err(RuntimeError::TypeError("Expect Function".to_string()));
                         }
 
                         // @todo This should be a no value error
@@ -261,6 +264,9 @@ impl VM {
 
                     // Get opcode index of function caller to set as ip, to resume execution at call site
                     ip = call_stack.pop().unwrap();
+
+                    // To skip rest of the loop body, skipping the ip increment code
+                    continue;
                 }
 
                 #[allow(unreachable_patterns)]
