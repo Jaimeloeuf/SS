@@ -82,10 +82,91 @@ impl Compiler {
     fn declaration(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
             TokenType::Const => self.advance_and_call(Compiler::const_declaration),
+            TokenType::Function => self.advance_and_call(Compiler::function_declaration),
 
             // it is as a statement if it did not match any declaration tokens
             _ => self.statement(),
         }
+    }
+
+    // Method to parse a function, by parsing the function declaration which includes the name + parameter of a function,
+    // Before handing it off to self.block_statement method to compile the function body as a block statement
+    fn function_declaration(&mut self) -> Result<(), CompileError> {
+        // Consume identifier token before parsing for the function's identifier/name string
+        self.parser
+            .consume(TokenType::Identifier, "Expect function name".to_string());
+
+        // Using the const_declaration method utility method to get name/identifier string of function
+        let function_name = self.parse_const();
+
+        // Only works for local scope
+        self.declare_const()?;
+
+        self.parser.consume(
+            TokenType::LeftParen,
+            "Expect '(' after function identifier".to_string(),
+        );
+
+        // @todo WIP Parameters
+        // Get the vector of parameters of the function
+        let parameters = if self.parser.check(TokenType::RightParen) {
+            // If function definition closed with no parameters, return a Vec with 0 capacity to not allocate any memory
+            Vec::with_capacity(0)
+        } else {
+            // Else create temporary vector to collect all parameters before returning it
+            let mut _parameters: Vec<Token> = Vec::new();
+
+            // self.expression()
+            self.parser.consume(
+                TokenType::Identifier,
+                "Expected parameter identifier".to_string(),
+            );
+
+            // Do while loop
+            _parameters.push(self.parser.previous.clone());
+            while self.parser.match_next(TokenType::Comma) {
+                self.parser.consume(
+                    TokenType::Identifier,
+                    "Expected parameter identifier".to_string(),
+                );
+                _parameters.push(self.parser.previous.clone());
+            }
+
+            _parameters
+        };
+
+        self.parser.consume(
+            TokenType::RightParen,
+            "Expect ')' after function parameters".to_string(),
+        );
+
+        // Emit function as a constant value
+        self.emit_constant(Value::Fn(self.chunk.codes.len() + 3));
+
+        // Only works for global scope
+        self.define_const(function_name);
+
+        // Add JUMP to jump over codes of the function body, as the function is being defined and not being executed/called yet
+        let jump_over_fn_body: usize = self.emit_jump(OpCode::JUMP(0));
+
+        // Need to consume the LeftBrace before calling block_statement method as it assumes that it is already consumed
+        self.parser.consume(
+            TokenType::LeftBrace,
+            "Expect '{' before function body".to_string(),
+        );
+
+        // Function body is compiled just like any other block statement
+        self.block_statement()?;
+
+        // @todo WIP return and return values...
+        // Add a default return to mark the end of the function body
+        // Usually there will be a return, but in case the function does not have any, this will break out of the function
+        self.emit_code(OpCode::RETURN);
+
+        // Patch the jump over function body once it has been compiled
+        self.patch_jump(jump_over_fn_body)?;
+
+        Ok(())
     }
 
     fn const_declaration(&mut self) -> Result<(), CompileError> {
@@ -98,6 +179,7 @@ impl Compiler {
         // Only works for local scope
         self.declare_const()?;
 
+        // @todo Should not have this right, all const must be initialized
         if self.parser.match_next(TokenType::Equal) {
             self.expression()?;
         } else {
@@ -171,7 +253,7 @@ impl Compiler {
         });
     }
 
-    // @todo Move this down, ad this is an expression method
+    // @todo Move this down, as this is an expression method
     pub fn identifier_lookup(&mut self) -> Result<(), CompileError> {
         let const_name = self.parse_const();
         // Handling identifiers in local scopes differently from global scope identifiers
