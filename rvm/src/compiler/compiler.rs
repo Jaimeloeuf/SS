@@ -439,6 +439,17 @@ impl Compiler {
         self.parse_precedence(Precedence::Assignment)
     }
 
+    // Method to compile function calls
+    // @todo Handle calls with arguments
+    pub fn call(&mut self) -> Result<(), CompileError> {
+        self.parser.consume(
+            TokenType::RightParen,
+            "Expected ')' after function arguments".to_string(),
+        );
+        self.emit_code(OpCode::CALL);
+        Ok(())
+    }
+
     // @todo Add error checks when unwrapping
     pub fn number(&mut self) -> Result<(), CompileError> {
         let value: f64 = self.parser.scanner.source

@@ -216,7 +216,7 @@ static RULES_TABLE: [ParseRule; NUM_OF_TOKENTYPE_VARIANTS] = {
         TokenType enum variants are converted to usize first before using it to index the array
     */
     rules_array[TokenType::LeftParen as usize] =
-        new_parse_rule!(Compiler::grouping, None, Precedence::None);
+        new_parse_rule!(Compiler::grouping, Compiler::call, Precedence::Call);
     rules_array[TokenType::RightParen as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::LeftBrace as usize] = new_parse_rule!(Precedence::None);
     rules_array[TokenType::RightBrace as usize] = new_parse_rule!(Precedence::None);
