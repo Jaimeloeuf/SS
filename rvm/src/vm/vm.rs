@@ -257,7 +257,10 @@ impl VM {
                 }
 
                 OpCode::RETURN => {
-                    println!("RETURN:  {:?}", stack.pop().unwrap());
+                    println!("RETURN - value:  {:?}", stack.last());
+
+                    // Get opcode index of function caller to set as ip, to resume execution at call site
+                    ip = call_stack.pop().unwrap();
                 }
 
                 #[allow(unreachable_patterns)]
