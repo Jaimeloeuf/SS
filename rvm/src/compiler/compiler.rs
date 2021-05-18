@@ -161,6 +161,8 @@ impl Compiler {
         // @todo WIP return and return values...
         // Add a default return to mark the end of the function body
         // Usually there will be a return, but in case the function does not have any, this will break out of the function
+        // Default return is a Null, since a function call is an expression and always expects a value to be left on stack
+        self.emit_constant(Value::Null);
         self.emit_code(OpCode::RETURN);
 
         // Patch the jump over function body once it has been compiled
@@ -422,6 +424,8 @@ impl Compiler {
         );
 
         // POP opcode to discard result from the stack
+        // This assumes every single type of expression will always leave exactly one value on the stack once executed
+        // And since this is a single expression statement, the value on stack is not needed, thus discarded
         self.emit_code(OpCode::POP);
 
         Ok(())
