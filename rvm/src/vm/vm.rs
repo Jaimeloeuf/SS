@@ -23,6 +23,7 @@ pub struct VM {
 
 impl VM {
     // Wrapper method over the inner hidden _interpret method, to wrap any RuntimeError as SSError before bubbling it up
+    // @todo Instead use a trait on SSError/RuntimeError to convert between each other
     pub fn interpret(chunk: Chunk) -> Result<Value, SSError> {
         match VM::_interpret(chunk) {
             Ok(value) => Ok(value),
@@ -133,6 +134,30 @@ impl VM {
                         }
 
                         // This should be a no value error
+                        None => todo!(),
+                    }
+                }
+
+                OpCode::CALL => {
+                    match stack.pop() {
+                        Some(Value::Fn(opcode_index)) => {
+                            call_stack.push(ip + 1);
+
+                            // Set ip to the opcode index of the function body, so that in the next loop, this will execute the first instruction of the function body
+                            ip = opcode_index;
+
+                            // To skip rest of the loop body, skipping the ip increment code
+                            continue;
+                        }
+
+                        // @todo Fix the error message
+                        // Runtime type checking
+                        Some(invalid_type) => {
+                            // panic!("VM tmp Error: Not a function");
+                            return Err(RuntimeError::TypeError("Expect Function".to_string()))
+                        }
+
+                        // @todo This should be a no value error
                         None => todo!(),
                     }
                 }
