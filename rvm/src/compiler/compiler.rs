@@ -249,19 +249,6 @@ impl Compiler {
         });
     }
 
-    // @todo Move this down, as this is an expression method
-    pub fn identifier_lookup(&mut self) -> Result<(), CompileError> {
-        let const_name = self.parse_identifier_string();
-        // Handling identifiers in local scopes differently from global scope identifiers
-        // @todo Merge these
-        match self.resolve_local(&const_name) {
-            Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
-            Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(const_name)),
-        };
-
-        Ok(())
-    }
-
     fn statement(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
             TokenType::Print => self.advance_and_call(Compiler::print_statement),
@@ -456,6 +443,20 @@ impl Compiler {
 
     fn expression(&mut self) -> Result<(), CompileError> {
         self.parse_precedence(Precedence::Assignment)
+    }
+
+    /// Compile an identifier use/lookup into either a local value ora global scope identifier lookup opcode
+    pub fn identifier_lookup(&mut self) -> Result<(), CompileError> {
+        let identifier = self.parse_identifier_string();
+
+        // Handling identifiers in local scopes differently from global scope identifiers
+        // @todo Merge these
+        match self.resolve_local(&identifier) {
+            Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
+            Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(identifier)),
+        };
+
+        Ok(())
     }
 
     // Method to compile function calls
