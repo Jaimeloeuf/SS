@@ -100,7 +100,7 @@ impl Compiler {
         let function_name = self.parse_identifier_string();
 
         // Only works for local scope
-        self.declare_const()?;
+        self.declare_const(&function_name)?;
 
         self.parser.consume(
             TokenType::LeftParen,
@@ -179,7 +179,7 @@ impl Compiler {
         let const_name = self.parse_identifier_string();
 
         // Only works for local scope
-        self.declare_const()?;
+        self.declare_const(&const_name)?;
 
         // @todo Should not have this right, all const must be initialized
         if self.parser.match_next(TokenType::Equal) {
@@ -216,15 +216,9 @@ impl Compiler {
         self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
-    fn declare_const(&mut self) -> Result<(), CompileError> {
+    fn declare_const(&mut self, identifier: &String) -> Result<(), CompileError> {
         // @todo Skip if global scope
         if self.scope_depth != 0 {
-            // Can we use a slice instead of a String?
-            let identifier: String = self.parser.scanner.source[self.parser.previous.start
-                ..self.parser.previous.start + self.parser.previous.length]
-                .parse::<String>()
-                .unwrap();
-
             // Run identifier check to make sure it is unused in current scope, if there are local identifiers already
             // Check from the last element in locals to the first, only stopping when scope ends or no more locals
             for local in (&self.locals).into_iter().rev() {
@@ -234,13 +228,13 @@ impl Compiler {
                 }
 
                 // Ensure that the identifier name is unique in current scope
-                if &identifier == &local.name {
+                if identifier == &local.name {
                     // @todo Include line info
-                    return Err(CompileError::IdentifierAlreadyUsed(identifier));
+                    return Err(CompileError::IdentifierAlreadyUsed(identifier.clone()));
                 }
             }
 
-            self.add_local(identifier);
+            self.add_local(identifier.clone());
         }
 
         // Return Ok variant with unit type
