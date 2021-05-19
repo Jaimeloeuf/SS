@@ -22,14 +22,14 @@ impl Parser {
         }
     }
 
-    // Utility method to make it easy to check current token's TokenType.
-    // No runtime method call overhead as it will be inlined.
+    /// Utility method to make it easy to check current token's TokenType.
+    /// No runtime method call overhead as it will be inlined.
     #[inline]
     pub fn check(&self, token_type: TokenType) -> bool {
         self.current.token_type == token_type
     }
 
-    // Checks if current token has the same TokenType as the method argument, if so advances parser and return true
+    /// Checks if current token has the same TokenType as the method argument, if so advances parser and return true
     pub fn match_next(&mut self, token_type: TokenType) -> bool {
         if self.check(token_type) {
             self.advance();
@@ -39,7 +39,7 @@ impl Parser {
         }
     }
 
-    // Advance parser until the next token that is not TokenType::Error
+    /// Advance parser until the next token that is not TokenType::Error
     pub fn advance(&mut self) -> Result<(), ParsingError> {
         // Stash old current token as previous, to get the lexeme after matching a token.
         // Take the current token and place it into previous and create default placeholder token for self.current
@@ -94,7 +94,7 @@ impl Parser {
         self.error_at(&self.current, message)
     }
 
-    // Self needs to be parser
+    /// Self needs to be parser
     pub fn consume(&mut self, token_type: TokenType, message: String) {
         if self.current.token_type == token_type {
             self.advance();

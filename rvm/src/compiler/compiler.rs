@@ -37,7 +37,7 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    // Returns Chunk that can be run immediately
+    /// Returns a 'Chunk' that can be run immediately
     pub fn compile(source: String, chunk: Chunk) -> Result<Chunk, SSError> {
         // Create compiler struct internally instead of having a seperate method to create and compile.
         let mut compiler = Compiler {
@@ -89,8 +89,8 @@ impl Compiler {
         }
     }
 
-    // Method to parse a function, by parsing the function declaration which includes the name + parameter of a function,
-    // Before handing it off to self.block_statement method to compile the function body as a block statement
+    /// Method to parse a function, by parsing the function declaration which includes the name + parameter of a function,
+    /// Before handing it off to self.block_statement method to compile the function body as a block statement
     fn function_declaration(&mut self) -> Result<(), CompileError> {
         // Consume identifier token before parsing for the function's identifier/name string
         self.parser
@@ -199,7 +199,8 @@ impl Compiler {
         Ok(())
     }
 
-    // Return previous token in parser as a String used as an identifier
+    // @todo Move to utility
+    /// Return previous token in parser as a String used as an identifier
     fn parse_identifier_string(&mut self) -> String {
         self.parser.scanner.source
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
@@ -207,6 +208,7 @@ impl Compiler {
             .unwrap()
     }
 
+    /// Generate a identifier/value pair if code is in global scope
     fn define_const(&mut self, const_name: String) {
         // @todo Skip if none global scope
         if self.scope_depth > 0 {
@@ -216,6 +218,7 @@ impl Compiler {
         self.emit_code(OpCode::IDENTIFIER(const_name));
     }
 
+    /// Generate a identifier/value pair if code is in local scope
     fn declare_const(&mut self, identifier: &String) -> Result<(), CompileError> {
         // @todo Skip if global scope
         if self.scope_depth != 0 {
@@ -241,6 +244,8 @@ impl Compiler {
         Ok(())
     }
 
+    // @todo Move to utility
+    /// Add identifier to self.locals vector, which will be used for resolving stack index for identifier lookups
     fn add_local(&mut self, identifier: String) {
         self.local_count += 1;
         self.locals.push(Local {
@@ -275,6 +280,7 @@ impl Compiler {
         Ok(())
     }
 
+    /// Block statements to create new scopes, used by itself or with a conditional or loop
     fn block_statement(&mut self) -> Result<(), CompileError> {
         // Create a new scope by incrementing compiler's scope depth
         self.scope_depth += 1;
@@ -311,7 +317,7 @@ impl Compiler {
     }
 
     // @todo Error when outside of a function body. Should be a compile error instead of runtime error
-    // Return statements can happen anywhere in a function body to stop execution
+    /// Compile user's return statements, that can happen anywhere in a function body to stop execution. NOT USED for default return in function
     fn return_statement(&mut self) -> Result<(), CompileError> {
         // If semicolon read a.k.a no return expression, compile "return;" as shorthand for "return null;"
         if self.parser.check(TokenType::Semicolon) {
@@ -330,6 +336,8 @@ impl Compiler {
         Ok(())
     }
 
+    // @todo Move to utility
+    /// Resolves and return the stack index pointing to the value associated with the given local value identifier
     fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
         // Reverse to allow identifier shadowing in child scope
         // loop_index starts from 0..(self.locals.len() - 1) where 0 refers to the last element in the vec
@@ -341,6 +349,7 @@ impl Compiler {
             }
         }
 
+        // @todo Use proper error plumbing
         // This assumes error, but in Clox it means try looking for a global variable instead
         eprintln!("Identifier not available in local scope");
         return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
@@ -413,10 +422,10 @@ impl Compiler {
         Ok(())
     }
 
-    // An expression statement is an expression followed by a semicolon.
-    // They’re how you write an expression in a context where a statement is expected.
-    // Usually, it’s so that you can call a function or evaluate an assignment for its side effect
-    // An expression statement evaluates the expression and discards the result from the stack
+    /// An expression statement is an expression followed by a semicolon.
+    /// They’re how you write an expression in a context where a statement is expected.
+    /// Usually, it’s so that you can call a function or evaluate an assignment for its side effect.
+    /// An expression statement evaluates the expression and discards the result from the stack.
     fn expression_statement(&mut self) -> Result<(), CompileError> {
         self.expression()?;
 
@@ -459,8 +468,8 @@ impl Compiler {
         Ok(())
     }
 
-    // Method to compile function calls
     // @todo Handle calls with arguments
+    /// Method to compile function calls
     pub fn call(&mut self) -> Result<(), CompileError> {
         self.parser.consume(
             TokenType::RightParen,
@@ -560,11 +569,11 @@ impl Compiler {
         })
     }
 
-    /*
-        The 2 operands of 'and' will be typed check to be bool
-        The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals
-        The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool
-    */
+    /// The 2 operands of 'and' will be typed check to be bool.
+    ///
+    /// The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals.
+    ///
+    /// The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool.
     pub fn and(&mut self) -> Result<(), CompileError> {
         let end_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
 
@@ -583,13 +592,13 @@ impl Compiler {
         Ok(())
     }
 
-    /*
-        The 2 operands of 'or' will be typed check to be bool
-        The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals
-        The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool
-
-        @todo Because of how we compile this, if the first value is true, the second value will not be type checked
-    */
+    /// The 2 operands of 'or' will be typed check to be bool.
+    ///
+    /// The first operand on the left hand side, is checked by JUMP_IF_FALSE opcode, which requires bool conditionals.
+    ///
+    /// The second operand on the right hand side, is checked by TYPE_CHECK_BOOL opcode, which throws runtime error if last value on stack is not bool.
+    ///
+    /// @todo Because of how we compile this, if the first value is true, the second value will not be type checked
     pub fn or(&mut self) -> Result<(), CompileError> {
         let else_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
         let end_jump: usize = self.emit_jump(OpCode::JUMP(0));
@@ -630,8 +639,8 @@ impl Compiler {
 
     /* ============= End of Expression compiler methods ============= */
 
-    // Parse expression by using the TokenType to get a ParseRule's parse/compile method
-    // Continues to parse/compile infix operators if the precedence level is low enough
+    /// Parse expression by using the TokenType to get a ParseRule's parse/compile method
+    /// Continues to parse/compile infix operators if the precedence level is low enough
     fn parse_precedence(&mut self, precedence: Precedence) -> Result<(), CompileError> {
         // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
         let precedence = precedence as usize;

@@ -4,7 +4,7 @@ use crate::token::Token;
 use crate::token::TokenType;
 
 impl Scanner {
-    // Method to create token using TokenType and the scanner's positional fields
+    /// Method to create token using TokenType and the scanner's positional fields
     #[inline]
     pub fn make_token(&self, token_type: TokenType) -> Token {
         Token {
@@ -15,7 +15,7 @@ impl Scanner {
         }
     }
 
-    // Method checks if reached end of source code string
+    /// Method checks if reached end of source code string
     #[inline]
     pub fn is_at_end(&self) -> bool {
         // Alternative way is to check if the current character is the terminating EOF
@@ -23,9 +23,9 @@ impl Scanner {
         self.current >= self.source.len()
     }
 
-    // advance() is for input
-    // Consume next character from source and return it.
-    // Must be valid char else this will panic during the unwrap
+    /// advance() is for input.
+    /// Consume next character from source and return it.
+    /// Must be valid char else this will panic during the unwrap.
     pub fn advance(&mut self) -> char {
         self.current += 1;
         self.source.chars().nth(self.current - 1).unwrap()
@@ -42,13 +42,13 @@ impl Scanner {
         }
     }
 
-    // See what is the current character
+    /// See what is the current character
     pub fn peek(&self) -> char {
         self.source.chars().nth(self.current).unwrap()
     }
 
-    // See what is the next character
-    // For look ahead parsing
+    /// See what is the next character
+    /// For look ahead parsing
     pub fn peek_next(&self) -> char {
         // Return null terminator if reached end of source
         if self.is_at_end() {
