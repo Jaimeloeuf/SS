@@ -96,8 +96,8 @@ impl Compiler {
         self.parser
             .consume(TokenType::Identifier, "Expect function name".to_string());
 
-        // Using the const_declaration method utility method to get name/identifier string of function
-        let function_name = self.parse_const();
+        // Get name/identifier string of function
+        let function_name = self.parse_identifier_string();
 
         // Only works for local scope
         self.declare_const()?;
@@ -176,7 +176,7 @@ impl Compiler {
         self.parser
             .consume(TokenType::Identifier, "Expect const name".to_string());
 
-        let const_name = self.parse_const();
+        let const_name = self.parse_identifier_string();
 
         // Only works for local scope
         self.declare_const()?;
@@ -199,8 +199,8 @@ impl Compiler {
         Ok(())
     }
 
-    // It requires the next token to be an identifier, which it consumes and sends here:
-    fn parse_const(&mut self) -> String {
+    // Return previous token in parser as a String used as an identifier
+    fn parse_identifier_string(&mut self) -> String {
         self.parser.scanner.source
             [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
             .parse::<String>()
@@ -257,7 +257,7 @@ impl Compiler {
 
     // @todo Move this down, as this is an expression method
     pub fn identifier_lookup(&mut self) -> Result<(), CompileError> {
-        let const_name = self.parse_const();
+        let const_name = self.parse_identifier_string();
         // Handling identifiers in local scopes differently from global scope identifiers
         // @todo Merge these
         match self.resolve_local(&const_name) {
