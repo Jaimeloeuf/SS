@@ -6,31 +6,43 @@ use crate::value::Value;
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]
 pub enum OpCode {
+    /// POP a single value off the stack
     POP,
+    /// POP 'usize' number of values off the stack
     POP_N(usize),
+    /// Return from current function body. A.k.a go back once in the call stack
     RETURN,
+
+    /* Opcodes dealing with values/identifiers/variables */
+    /// Load a Value onto the stack
     CONSTANT(Value),
-
-    // Opcode to take and store last value on stack as a value with the given string identifier
+    /// Take and store last value on stack as a value with the given string identifier
     IDENTIFIER(String),
-    // Opcode to take and value using given string identifier from hashmap and push it onto stack
+    /// Get value using given string identifier from 'global scope storage' (hashmap) and push it onto stack
     IDENTIFIER_LOOKUP(String),
-
+    /// GET a local scope value, by cloning the stack value at index 'usize' and pushing it onto stack
     GET_LOCAL(usize),
+    /// Update an identifier in local scope, by setting the stack value at index 'usize' to the last value on stack
     SET_LOCAL(usize),
 
-    // JUMP type / control flow opcodes
+    /* JUMP type / control flow opcodes */
+    /// JUMP forward by 'usize' number of opcodes. See OpCode::LOOP(usize) for jumping backwards
     JUMP(usize),
     JUMP_IF_FALSE(usize),
 
-    // Function call opcodes
+    /* Function call opcodes */
+    /// @todo
+    // CALL(usize),
+    /// Make a function call, where the last value on stack 'Value::Fn(..)' is the function
     CALL,
 
-    // Special loop opcode, that is basically JUMP, but jumps backwards instead of forward
+    /// Special loop opcode, that is basically JUMP, but jumps backwards instead of forward
     LOOP(usize),
 
-    // Special opcodes to do type checking of the last value on the stack
+    /* Special opcodes to do type checking of the last value on the stack */
+    /// Check if last value on stack is a Boolean
     TYPE_CHECK_BOOL,
+    TYPE_CHECK(Value),
 
     // Arithmetic Binary operators
     ADD,
