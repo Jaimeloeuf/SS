@@ -10,30 +10,33 @@ use crate::token::Token;
 use crate::token::TokenType;
 use crate::value::Value;
 
+// @todo Refactor this out into its own module
 #[derive(Debug)]
-struct Local {
+pub struct Local {
     name: String,
-    depth: usize,
+    pub depth: usize,
 }
 
+// @todo Refactor this out into its own module
 // The Compiler / Parser / Scanner structs are strung together,
 // Compiler struct holds a Parser
 // Parser struct holds a Scanner
 // Scanner is created inside compile method, it is used to create Parser struct, which is used to create the Compiler struct
 pub struct Compiler {
+    /// Generated opcodes are emitted into this chunk
     pub chunk: Chunk,
 
-    // Hold a parser so that it can be passed along to the methods easily instead of relying on global state like clox
+    /// Hold a parser so that it can be passed along to the methods easily instead of relying on global state like clox
     pub parser: Parser,
 
-    // Vector of Locals to get at from the stack
-    locals: Vec<Local>,
+    /// Vector of Locals to get at from the stack
+    pub locals: Vec<Local>,
 
-    // local_count field tracks how many locals are in scope / how many of those array slots are in use
+    /// local_count field tracks how many locals are in scope / how many of those array slots are in use
     local_count: usize,
 
-    // scope depth is the number of blocks surrounding the current bit of code we’re compiling.
-    scope_depth: usize,
+    /// scope depth is the number of blocks surrounding the current bit of code being compiling.
+    pub scope_depth: usize,
 }
 
 impl Compiler {
@@ -296,22 +299,7 @@ impl Compiler {
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
 
-        // Delete local identifier's values whose lifetime ends in current scope from locals vector, and emit opcode to delete from stack
-        // Can unwrap last() value directly because len has already been checked to be bigger than 0
-        //
-        // Instead of popping values of stack 1 by 1 using multiple pop opcodes,
-        // Use POP_N(usize) opcode, to pop N number of values of the stack with a single opcode to make runtime faster
-        let mut number_of_pops = 0;
-        while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
-            // Remove the local from compiler's locals vector too
-            self.locals.pop();
-            number_of_pops += 1;
-        }
-
-        // Only emit POP_N instruction if there are locals to pop off the stack
-        if number_of_pops > 0 {
-            self.emit_code(OpCode::POP_N(number_of_pops));
-        }
+        self.pop_out_of_scope_locals_from_stack();
 
         Ok(())
     }

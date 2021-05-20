@@ -47,4 +47,27 @@ impl Compiler {
         self.parser.advance();
         method(self)
     }
+
+    /// Utility method to generate POP type opcodes, to pop off all locals from stack that are no longer in scope
+    pub fn pop_out_of_scope_locals_from_stack(&mut self) {
+        // Delete local identifier's values whose lifetime ends in current scope from locals vector, and emit opcode to delete from stack
+        // Can unwrap last() value directly because len has already been checked to be bigger than 0
+        //
+        // Instead of popping values of stack 1 by 1 using multiple pop opcodes,
+        // Use POP_N(usize) opcode, to pop N number of values of the stack with a single opcode to make runtime faster
+        let mut number_of_pops = 0;
+        while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
+            // Remove the local from compiler's locals vector too
+            self.locals.pop();
+            number_of_pops += 1;
+        }
+
+        if number_of_pops == 1 {
+            // Use POP if there is exactly 1 local to pop off stack, as POP is more efficient than POP_N
+            self.emit_code(OpCode::POP);
+        } else if number_of_pops > 0 {
+            // Use POP_N if there are more than 1 local to pop off the stack
+            self.emit_code(OpCode::POP_N(number_of_pops));
+        }
+    }
 }
