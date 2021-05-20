@@ -1,3 +1,4 @@
+use super::compiler::Local;
 use super::CompileError;
 use super::Compiler;
 
@@ -69,5 +70,39 @@ impl Compiler {
             // Use POP_N if there are more than 1 local to pop off the stack
             self.emit_code(OpCode::POP_N(number_of_pops));
         }
+    }
+
+    /// Return previous Identifier token in parser as a String
+    pub fn parse_identifier_string(&mut self) -> String {
+        self.parser.scanner.source
+            [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
+            .parse::<String>()
+            .unwrap()
+    }
+
+    /// Resolves and return the stack index pointing to the value associated with the given local value identifier
+    pub fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
+        // Reverse to allow identifier shadowing in child scope
+        // loop_index starts from 0..(self.locals.len() - 1) where 0 refers to the last element in the vec
+        for (loop_index, local) in (&self.locals).into_iter().rev().enumerate() {
+            if identifier == local.name {
+                // Calculate stack index, using length of vector - 1 - loop_index
+                // -1 from length as vec index starts from 0, and -loop_index to get actual stack index since loop is reversed
+                return Ok(self.locals.len() - 1 - loop_index);
+            }
+        }
+
+        // @todo Use proper error plumbing
+        // This assumes error, but in Clox it means try looking for a global variable instead
+        eprintln!("Identifier not available in local scope");
+        return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
+    }
+
+    /// Add identifier to self.locals vector, which will be used for resolving stack index for identifier lookups
+    pub fn add_local(&mut self, identifier: String) {
+        self.locals.push(Local {
+            name: identifier,
+            depth: self.scope_depth,
+        });
     }
 }

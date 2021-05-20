@@ -13,7 +13,7 @@ use crate::value::Value;
 // @todo Refactor this out into its own module
 #[derive(Debug)]
 pub struct Local {
-    name: String,
+    pub name: String,
     pub depth: usize,
 }
 
@@ -31,9 +31,6 @@ pub struct Compiler {
 
     /// Vector of Locals to get at from the stack
     pub locals: Vec<Local>,
-
-    /// local_count field tracks how many locals are in scope / how many of those array slots are in use
-    local_count: usize,
 
     /// scope depth is the number of blocks surrounding the current bit of code being compiling.
     pub scope_depth: usize,
@@ -57,7 +54,6 @@ impl Compiler {
             ),
 
             locals: Vec::<Local>::new(),
-            local_count: 0,
             scope_depth: 0,
         };
 
@@ -81,6 +77,8 @@ impl Compiler {
         // Now that the chunk is filled with OpCodes after compilation, return it from Compiler struct to use with the VM
         Ok(compiler.chunk)
     }
+
+    /* ================== Declaration compiler methods ================== */
 
     fn declaration(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
@@ -199,15 +197,6 @@ impl Compiler {
         Ok(())
     }
 
-    // @todo Move to utility
-    /// Return previous token in parser as a String used as an identifier
-    fn parse_identifier_string(&mut self) -> String {
-        self.parser.scanner.source
-            [self.parser.previous.start..self.parser.previous.start + self.parser.previous.length]
-            .parse::<String>()
-            .unwrap()
-    }
-
     /// Generate a identifier/value pair if code is in global scope
     fn define_const(&mut self, const_name: String) {
         // @todo Skip if none global scope
@@ -244,15 +233,9 @@ impl Compiler {
         Ok(())
     }
 
-    // @todo Move to utility
-    /// Add identifier to self.locals vector, which will be used for resolving stack index for identifier lookups
-    fn add_local(&mut self, identifier: String) {
-        self.local_count += 1;
-        self.locals.push(Local {
-            name: identifier,
-            depth: self.scope_depth,
-        });
-    }
+    /* ============= End of Declaration compiler methods ============= */
+
+    /* ================== Statement compiler methods ================== */
 
     fn statement(&mut self) -> Result<(), CompileError> {
         match &self.parser.current.token_type {
@@ -319,25 +302,6 @@ impl Compiler {
         self.emit_code(OpCode::RETURN);
 
         Ok(())
-    }
-
-    // @todo Move to utility
-    /// Resolves and return the stack index pointing to the value associated with the given local value identifier
-    fn resolve_local(&mut self, identifier: &str) -> Result<usize, CompileError> {
-        // Reverse to allow identifier shadowing in child scope
-        // loop_index starts from 0..(self.locals.len() - 1) where 0 refers to the last element in the vec
-        for (loop_index, local) in (&self.locals).into_iter().rev().enumerate() {
-            if identifier == local.name {
-                // Calculate stack index, using length of vector - 1 - loop_index
-                // -1 from length as vec index starts from 0, and -loop_index to get actual stack index since loop is reversed
-                return Ok(self.locals.len() - 1 - loop_index);
-            }
-        }
-
-        // @todo Use proper error plumbing
-        // This assumes error, but in Clox it means try looking for a global variable instead
-        eprintln!("Identifier not available in local scope");
-        return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
     }
 
     fn if_statement(&mut self) -> Result<(), CompileError> {
@@ -427,8 +391,10 @@ impl Compiler {
         Ok(())
     }
 
+    /* ============= End of Statement compiler methods ============= */
+
     /*
-        ============= Expression compiler methods =============
+        ================ Expression compiler methods ================
 
         Methods to parse and compile expressions are public,
         as they are referenced in the RULES_TABLE which will be used by parse_precedence
