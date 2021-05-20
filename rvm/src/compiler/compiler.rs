@@ -110,29 +110,26 @@ impl Compiler {
             "Expect '(' after function identifier".to_string(),
         );
 
-        // @todo WIP Parameters
-        // Get the vector of parameters of the function
-        let parameters = if self.parser.check(TokenType::RightParen) {
+        let parameter_identifiers: Vec<String> = if self.parser.check(TokenType::RightParen) {
             // If function definition closed with no parameters, return a Vec with 0 capacity to not allocate any memory
             Vec::with_capacity(0)
         } else {
             // Else create temporary vector to collect all parameters before returning it
-            let mut _parameters: Vec<Token> = Vec::new();
+            let mut _parameters: Vec<String> = Vec::new();
 
-            // self.expression()
+            /* 'Do while' loop to consume the function parameters as identifiers before parsing and storing its string */
             self.parser.consume(
                 TokenType::Identifier,
                 "Expected parameter identifier".to_string(),
             );
+            _parameters.push(self.parse_identifier_string());
 
-            // Do while loop
-            _parameters.push(self.parser.previous.clone());
             while self.parser.match_next(TokenType::Comma) {
                 self.parser.consume(
                     TokenType::Identifier,
                     "Expected parameter identifier".to_string(),
                 );
-                _parameters.push(self.parser.previous.clone());
+                _parameters.push(self.parse_identifier_string());
             }
 
             _parameters

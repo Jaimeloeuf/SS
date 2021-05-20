@@ -71,6 +71,14 @@ impl VM {
             match code {
                 // Pop value off stack, used at the end of expression statements
                 OpCode::POP => {
+                    // Runtime check on debug builds to ensure number of pops less than number of values on stack
+                    #[cfg(debug_assertions)]
+                    if stack.len() == 0 {
+                        panic!(format!(
+                            "VM Debug Error: Attempt to pop value from empty Stack"
+                        ));
+                    }
+
                     stack.pop();
                 }
                 // Pop N number of values off stack, usually used to pop local values off stack when local scope ends
