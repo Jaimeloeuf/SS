@@ -3,12 +3,18 @@ use crate::error::RuntimeError;
 // @todo Deriving clone trait for now before we can have a way to move value out from OpCode without cloning
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    // Primitive types
+    /* Primitive types */
     Number(f64),
     String(String),
     Bool(bool),
     Null,
-    // None primitive types, a.k.a wrapper for all complex user types
+
+    /* None primitive types, a.k.a wrapper for all complex user types */
+    /// Function, where usize is the ip
+    Fn(usize),
+    /// Function(opcode_index, number_of_parameters)
+    /// If variadic fn supported, potentially --> Function(opcode_index: usize, number_of_parameters: usize, variadic: bool)
+    Function(usize, usize),
 }
 
 impl Value {
