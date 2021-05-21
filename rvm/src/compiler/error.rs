@@ -9,12 +9,20 @@ pub enum CompileError {
     /// Missing compiler/parser method in compiler struct to parse given expression
     MissingParser(String),
 
-    InvalidOperatorType(TokenType),
+    /// 'return' can only be used in a function body, store line number with error for error message
+    // ReturnOutsideFunction(Token),
+    ReturnOutsideFunction(usize),
 
-    /* Internal Compiler Errors */
+    /// If the number of arguments does not matched the number of parameters defined
+    /// MismatchedArgumentCount(number_of_parameters, number_of_args),
+    MismatchedArgumentCount(usize, usize),
+
+    // Internal Compiler Errors
+    // @todo Change these to be panics instead in the code directly, as these should not happen if compiler is bug free
+
     // If the opcode is not a JUMP type opcode when trying to back patch a JUMP opcode
     InvalidJumpOpcode(OpCode),
 
-    /// 'return' can only be used in a function body, store line number with error for error message
-    ReturnOutsideFunction(usize),
+    /// If the operator used is not valid for the compiler method
+    InvalidOperatorType(TokenType),
 }

@@ -1,3 +1,5 @@
+use std::collections::hash_map::HashMap;
+
 use super::parse_rule::{get_rule, Precedence, USIZE_TO_PRECEDENCE};
 use super::CompileError;
 
@@ -32,6 +34,11 @@ pub struct Compiler {
     /// Vector of Locals to get at from the stack
     pub locals: Vec<Local>,
 
+    /// HashMap<function_string_identifier, parameter_count>
+    ///
+    /// Used to ensure number of arguments match number of parameters defined
+    pub functions_parameter_count: HashMap<String, usize>,
+
     /// scope depth is the number of blocks surrounding the current bit of code being compiling.
     pub scope_depth: usize,
 
@@ -58,6 +65,7 @@ impl Compiler {
             ),
 
             locals: Vec::<Local>::new(),
+            functions_parameter_count: HashMap::<String, usize>::new(),
             scope_depth: 0,
             function_scopes: 0,
         };
@@ -137,6 +145,10 @@ impl Compiler {
 
             _parameters
         };
+
+        // Store the function name and its parameter count into hashmap, to check if arg count is matching
+        self.functions_parameter_count
+            .insert(function_name.clone(), parameter_identifiers.len());
 
         self.parser.consume(
             TokenType::RightParen,
@@ -432,6 +444,7 @@ impl Compiler {
         // @todo Merge these
         match self.resolve_local(&identifier) {
             Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
+            // @todo Add compile time error to ensure that the identifier must exist
             Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(identifier)),
         };
 
@@ -441,6 +454,58 @@ impl Compiler {
     // @todo Handle calls with arguments
     /// Method to compile function calls
     pub fn call(&mut self) -> Result<(), CompileError> {
+        // Immediately before 'call compiler method' is called, the opcode in front of it is assumed to hold info to get the function's identifier
+        // Need to clone the string out to not hold onto self immutably
+        let function_name = match self.chunk.codes.last() {
+            // The identifier is stored directly for global scope identifier lookups
+            Some(OpCode::IDENTIFIER_LOOKUP(identifier)) => identifier,
+
+            // For locals, get the function name by looking into the locals vector in compiler
+            Some(OpCode::GET_LOCAL(stack_index)) => &self.locals[*stack_index].name,
+
+            _ => panic!("Compiler Debug Error: Unable to get function identifier from codes"),
+        }
+        .clone();
+
+        // Get the number of arguments used for this function call
+        let number_of_args: usize = if self.parser.check(TokenType::RightParen) {
+            // If function call closed with no arguements, return 0
+            0
+        } else {
+            let mut _number_of_args = 0;
+
+            // Do while loop to compile the arguments
+            loop {
+                self.expression()?;
+                _number_of_args += 1;
+
+                if !self.parser.match_next(TokenType::Comma) {
+                    break;
+                }
+            }
+
+            _number_of_args
+        };
+
+        // Get the function parameters count stored in the hashmap
+        let functions_parameter_count = self.functions_parameter_count.get(&function_name);
+
+        // Runtime check on debug builds to ensure function parameter count is actually stored
+        #[cfg(debug_assertions)]
+        if functions_parameter_count.is_none() {
+            panic!(format!(
+                "Compiler Debug Error: '{}' function parameter count not stored",
+                function_name
+            ));
+        }
+
+        if *functions_parameter_count.unwrap() != number_of_args {
+            return Err(CompileError::MismatchedArgumentCount(
+                *functions_parameter_count.unwrap(),
+                number_of_args,
+            ));
+        }
+
         self.parser.consume(
             TokenType::RightParen,
             "Expected ')' after function arguments".to_string(),
