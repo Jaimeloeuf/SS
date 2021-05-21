@@ -32,12 +32,12 @@ pub struct Compiler {
     /// Vector of Locals to get at from the stack
     pub locals: Vec<Local>,
 
-    /// Vector of Functions used as a stack, to track if compiler is currently compiling a function body
-    /// The stored values are the properties of that function the compiler is currently compiling
-    pub function: Vec<Value>,
-
     /// scope depth is the number of blocks surrounding the current bit of code being compiling.
     pub scope_depth: usize,
+
+    /// function scopes is the number of function bodies surrounding the current bit of code being compiling.
+    /// Used to track if compiler is currently compiling a function body
+    pub function_scopes: usize,
 }
 
 impl Compiler {
@@ -58,8 +58,8 @@ impl Compiler {
             ),
 
             locals: Vec::<Local>::new(),
-            function: Vec::<Value>::new(),
             scope_depth: 0,
+            function_scopes: 0,
         };
 
         // Start by advancing the parser first, since Parser is created with default placeholder tokens
@@ -158,17 +158,14 @@ impl Compiler {
             "Expect '{' before function body".to_string(),
         );
 
-        // Add current function to function stack before compiling function body
-        self.function.push(Value::Function(
-            self.chunk.codes.len() + 3,
-            parameter_identifiers.len(),
-        ));
+        // Increment function scopes before compiling the function body
+        self.function_scopes += 1;
 
         // Function body is compiled just like any other block statement
         self.block_statement()?;
 
-        // Remove current function from function stack once function body is compiled
-        self.function.pop();
+        // Decrement number of function scopes once function body is compiled
+        self.function_scopes -= 1;
 
         // @todo WIP return and return values...
         // Add a default return to mark the end of the function body
@@ -303,7 +300,7 @@ impl Compiler {
     fn return_statement(&mut self) -> Result<(), CompileError> {
         // Error if return is found but compiler is not enclosed by any function scope, regardless of how many level up is that function scope
         // Cannot just check scope_depth == 0, because code might be in a scope but not necessarily in the scope of a function body
-        if self.function.len() == 0 {
+        if self.function_scopes == 0 {
             return Err(CompileError::ReturnOutsideFunction(
                 self.parser.current.line,
             ));
