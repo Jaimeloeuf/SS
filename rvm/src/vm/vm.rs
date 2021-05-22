@@ -189,6 +189,11 @@ impl VM {
                         panic!("VM Debug Error: Stack missing value for JUMP_IF_FALSE OpCode");
                     }
 
+                    // Simple alternative without runtime type checking and without runtime stack value checking
+                    // Can only be used if there is static type inference and compile time type checking
+                    // if let Some(Value::Bool(false)) = value {
+                    //     ip += offset;
+                    // }
                     match value {
                         // Only handle bool cases
                         Some(Value::Bool(bool)) => {

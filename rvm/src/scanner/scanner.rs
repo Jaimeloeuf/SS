@@ -5,6 +5,7 @@ use crate::token::Token;
 use crate::token::TokenType;
 
 impl Scanner {
+    #[allow(dead_code)]
     pub fn test_scanner(source: String) {
         let mut scanner = Scanner::new(source);
 
@@ -141,6 +142,8 @@ impl Scanner {
 
                     self.make_token(TokenType::Number)
                 }
+
+                '\0' => self.make_token(TokenType::Eof),
 
                 _ => {
                     // @todo Return a err variant of Result

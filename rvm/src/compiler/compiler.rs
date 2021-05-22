@@ -113,9 +113,6 @@ impl Compiler {
         // Get name/identifier string of function
         let function_name = self.parse_identifier_string();
 
-        // Only works for local scope
-        self.declare_const(&function_name)?;
-
         self.parser.consume(
             TokenType::LeftParen,
             "Expect '(' after function identifier".to_string(),
@@ -170,6 +167,9 @@ impl Compiler {
         self.emit_constant(Value::Fn(
             self.chunk.codes.len() + if self.scope_depth == 0 { 3 } else { 2 },
         ));
+
+        // Only works for local scope
+        self.declare_const(&function_name)?;
 
         // Only works for global scope
         self.define_const(function_name);
@@ -476,6 +476,11 @@ impl Compiler {
             // For locals, get the function name by looking into the locals vector in compiler
             Some(OpCode::GET_LOCAL(stack_index)) => &self.locals[*stack_index].name,
 
+            // There will be no function name, and this method of arity checking will not work if:
+            // 1) It is an anonymous function
+            // 2) The previous opcode is something else that is able to push a Function onto stack
+            // 3) Potentially not work, if the function is imported, since they are compiled seperately and have no access to the other hashmap
+            // @todo Add method to check arity in cases like above
             _ => panic!("Compiler Debug Error: Unable to get function identifier from codes"),
         }
         .clone();
