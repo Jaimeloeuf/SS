@@ -186,18 +186,55 @@ impl Compiler {
         // Increment function scopes before compiling the function body
         self.function_scopes += 1;
 
-        // Function body is compiled just like any other block statement
-        self.block_statement()?;
+        /* Function body is compiled like a block statement with locals definition for its parameters */
+
+        // Create a new scope by incrementing compiler's scope depth
+        self.scope_depth += 1;
+
+        // Use the parameter identifiers to call declare_const and register all of the parameters as locals of the function body scope
+        // Where the first parameter will be the first local of the function body scope
+        //
+        // Essentially, 'reserving' the stack slots here first when parameters are defined, and generate opcodes to push these values onto stack later in the call method
+        //
+        // When compiling a function call, its arguments will be compiled into codes that will push values onto the stack,
+        // in the order that arguements are used, which will align with the defined stack index created here
+        for parameter_identifier in parameter_identifiers {
+            self.declare_const(&parameter_identifier)?;
+        }
+
+        // Keep parsing/compiling as long as it is not the closing right brace or an unexpected EOF yet
+        while !self.parser.check(TokenType::RightBrace) && !self.parser.check(TokenType::Eof) {
+            self.declaration()?;
+        }
+
+        self.parser
+            .consume(TokenType::RightBrace, "Expect '}' after block".to_string());
+
+        // Destroy the current block scope by decrementing compiler's scope depth
+        self.scope_depth -= 1;
+
+        // The POP(s) generated here are used to POP off locals, including function arguments and any new locals defined in the function body
+        // POP can be generated here directly before the return statement, because no locals are needed for the default return
+        self.pop_out_of_scope_locals_from_stack();
 
         // Decrement number of function scopes once function body is compiled
         self.function_scopes -= 1;
 
-        // @todo WIP return and return values...
-        // Add a default return to mark the end of the function body
-        // Usually there will be a return, but in case the function does not have any, this will break out of the function
-        // Default return is a Null, since a function call is an expression and always expects a value to be left on stack
-        self.emit_constant(Value::Null);
-        self.emit_code(OpCode::RETURN);
+        // Check if there is a return at the end of the function body and add a default return if there isn't
+        // NOTE:
+        // 1) This is just an optimization since adding an extra default return does not actually change the semantics of the code
+        // 2) This also does not account for the fact that a function can have all execution paths covered by ending them in return statements,
+        //    without having a return statement at the end of the function body. See example function definition below.
+        //    function test(condition) { if (condition) { return 1; } else { return 2; } }
+        //    In this case, due to the single pass nature of this compiler, there is no way to know and no way to optimize away the default return
+        if let Some(OpCode::RETURN) = self.chunk.codes.last() {
+        } else {
+            // Add a default return to mark the end of the function body
+            // Usually there will be a return, but in case the function does not have any, this will break out of the function
+            // Default return is a Null, since a function call is an expression and always expects a value to be left on stack
+            self.emit_constant(Value::Null);
+            self.emit_code(OpCode::RETURN);
+        }
 
         // Patch the jump over function body once it has been compiled
         self.patch_jump(jump_over_fn_body)?;
@@ -505,6 +542,7 @@ impl Compiler {
             _number_of_args
         };
 
+        // @todo To handle anonymous functions...
         // Get the function parameters count stored in the hashmap
         let functions_parameter_count = self.functions_parameter_count.get(&function_name);
 
@@ -517,6 +555,7 @@ impl Compiler {
             ));
         }
 
+        // Ensure that the number of arguments match the number of parameters defined
         if *functions_parameter_count.unwrap() != number_of_args {
             return Err(CompileError::MismatchedArgumentCount(
                 *functions_parameter_count.unwrap(),
