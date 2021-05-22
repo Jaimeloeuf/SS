@@ -156,7 +156,20 @@ impl Compiler {
         );
 
         // Emit function as a constant value
-        self.emit_constant(Value::Fn(self.chunk.codes.len() + 3));
+        // Here the opcode index of the chunk pointing to this function body will be calculated
+        // The opcode index can be calculated using the current opcode index, and a few skips for the comming instructions like JUMP
+        //
+        // A -1 is NOT NEEDED even though the base value uses the length of the vector rather than the index,
+        // because this particular constant loading code, has not been generated yet.
+        //
+        // +1 Skip this constant opcode that loads the function onto stack
+        // +1 OR +0 Only add a skip if function is defined in global scope, which means an additional opcode to set value to identifier
+        // +1 to skip the jump_over_fn_body, since now we actually want to execute the fn body code
+        //
+        // So the final value is 'current_opcode_index + 3' if function defined in global scope, else it is 'current_opcode_index + 2'
+        self.emit_constant(Value::Fn(
+            self.chunk.codes.len() + if self.scope_depth == 0 { 3 } else { 2 },
+        ));
 
         // Only works for global scope
         self.define_const(function_name);
