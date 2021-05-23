@@ -44,8 +44,7 @@ impl Compiler {
         &mut self,
         method: fn(&mut Compiler) -> Result<(), CompileError>,
     ) -> Result<(), CompileError> {
-        // @todo Handle result variant
-        self.parser.advance();
+        self.parser.advance()?;
         method(self)
     }
 
@@ -92,10 +91,12 @@ impl Compiler {
             }
         }
 
-        // @todo Use proper error plumbing
-        // This assumes error, but in Clox it means try looking for a global variable instead
-        eprintln!("Identifier not available in local scope");
-        return Err(CompileError::IdentifierAlreadyUsed(identifier.to_string()));
+        // This assumes 'Identifier not available in any local scope' error, but following Clox's implementation,
+        // This just means that, try looking for value in global scope instead.
+        // The caller is expected to handle this error and generate code for global scope lookup.
+        return Err(CompileError::IdentifierNotInAnyLocalScope(
+            identifier.to_string(),
+        ));
     }
 
     /// Add identifier to self.locals vector, which will be used for resolving stack index for identifier lookups

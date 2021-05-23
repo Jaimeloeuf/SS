@@ -490,8 +490,13 @@ impl Compiler {
         // @todo Merge these
         match self.resolve_local(&identifier) {
             Ok(stack_index) => self.emit_code(OpCode::GET_LOCAL(stack_index)),
+
             // @todo Add compile time error to ensure that the identifier must exist
-            Err(_) => self.emit_code(OpCode::IDENTIFIER_LOOKUP(identifier)),
+            Err(CompileError::IdentifierNotInAnyLocalScope(_)) => {
+                self.emit_code(OpCode::IDENTIFIER_LOOKUP(identifier))
+            }
+
+            Err(_) => panic!("Compiler Debug Error: 'Resolve Local' threw unknown error"),
         };
 
         Ok(())

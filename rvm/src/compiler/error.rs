@@ -11,6 +11,8 @@ pub enum CompileError {
 
     IdentifierAlreadyUsed(String),
 
+    IdentifierNotInAnyLocalScope(String),
+
     /// Missing compiler/parser method in compiler struct to parse given expression
     MissingParser(String),
 
