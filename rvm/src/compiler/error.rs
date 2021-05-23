@@ -1,9 +1,14 @@
+use super::parser::ParsingError;
+
 use crate::opcode::OpCode;
 use crate::token::TokenType;
 
 // @todo Should this also encapsulate parsing error?
 #[derive(Debug)]
 pub enum CompileError {
+    // Wrapper type over ParsingError to allow it to be bubbled up into CompileError eventually
+    ParsingError(ParsingError),
+
     IdentifierAlreadyUsed(String),
 
     /// Missing compiler/parser method in compiler struct to parse given expression
@@ -25,4 +30,11 @@ pub enum CompileError {
 
     /// If the operator used is not valid for the compiler method
     InvalidOperatorType(TokenType),
+}
+
+// Convert ParsingError to CompileError automatically
+impl From<ParsingError> for CompileError {
+    fn from(error: ParsingError) -> Self {
+        CompileError::ParsingError(error)
+    }
 }

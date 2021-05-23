@@ -1,10 +1,32 @@
+use crate::compiler::parser::ParsingError;
 use crate::compiler::CompileError;
 
 // Error enum type that encapsulates all other error enum types that can happen and bubble up to main SS program.
 #[derive(Debug)]
 pub enum SSError {
+    ParsingError(ParsingError),
     CompileError(CompileError),
     RuntimeError(RuntimeError),
+}
+
+// Convert ParsingError to SSError automatically
+impl From<ParsingError> for SSError {
+    fn from(error: ParsingError) -> Self {
+        SSError::ParsingError(error)
+    }
+}
+
+// Convert CompileError to SSError automatically
+impl From<CompileError> for SSError {
+    fn from(error: CompileError) -> Self {
+        // CompileError is able to wrap ParsingError, so this will unwrap it, and wrap it in SSError::ParsingError directly
+        // Instead of having a SSError::CompileError::ParsingError(parsing_error)
+        if let CompileError::ParsingError(parsing_error) = error {
+            SSError::ParsingError(parsing_error)
+        } else {
+            SSError::CompileError(error)
+        }
+    }
 }
 
 /**

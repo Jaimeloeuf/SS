@@ -9,7 +9,9 @@ pub struct Parser {
     pub previous: Token,
 }
 
+#[derive(Debug)]
 pub enum ParsingError {
+    /// @todo Change out the blanket error variant used temporarily for now
     error,
 }
 
@@ -30,13 +32,13 @@ impl Parser {
     }
 
     /// Checks if current token has the same TokenType as the method argument, if so advances parser and return true
-    pub fn match_next(&mut self, token_type: TokenType) -> bool {
-        if self.check(token_type) {
-            self.advance();
+    pub fn match_next(&mut self, token_type: TokenType) -> Result<bool, ParsingError> {
+        Ok(if self.check(token_type) {
+            self.advance()?;
             true
         } else {
             false
-        }
+        })
     }
 
     /// Advance parser until the next token that is not TokenType::Error
@@ -95,11 +97,13 @@ impl Parser {
     }
 
     /// Self needs to be parser
-    pub fn consume(&mut self, token_type: TokenType, message: String) {
+    pub fn consume(&mut self, token_type: TokenType, message: String) -> Result<(), ParsingError> {
         if self.current.token_type == token_type {
-            self.advance();
+            self.advance()?;
         } else {
             self.error_at_current(message);
         }
+
+        Ok(())
     }
 }

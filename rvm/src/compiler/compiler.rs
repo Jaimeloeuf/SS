@@ -71,21 +71,18 @@ impl Compiler {
         };
 
         // Start by advancing the parser first, since Parser is created with default placeholder tokens
-        // @todo Handle result return value
-        compiler.parser.advance();
+        compiler.parser.advance()?;
 
-        // Keep parsing and compiling statements until EOF
-        while !compiler.parser.match_next(TokenType::Eof) {
-            // CompileError cannot be bubbled up as method's signature is Result<(), SSError>, so convert before returning error
-            if let Err(e) = compiler.declaration() {
-                return Err(SSError::CompileError(e));
-            }
+        // Keep parsing and compiling until EOF or error
+        while !compiler.parser.match_next(TokenType::Eof)? {
+            // CompileError will be automatically converted to SSError using From<CompileError> trait for SSError before bubbling up
+            compiler.declaration()?;
         }
 
         // @todo Fix the error message
         compiler
             .parser
-            .consume(TokenType::Eof, "Expect end of expression".to_string());
+            .consume(TokenType::Eof, "Expect end of expression".to_string())?;
 
         // Now that the chunk is filled with OpCodes after compilation, return it from Compiler struct to use with the VM
         Ok(compiler.chunk)
@@ -108,7 +105,7 @@ impl Compiler {
     fn function_declaration(&mut self) -> Result<(), CompileError> {
         // Consume identifier token before parsing for the function's identifier/name string
         self.parser
-            .consume(TokenType::Identifier, "Expect function name".to_string());
+            .consume(TokenType::Identifier, "Expect function name".to_string())?;
 
         // Get name/identifier string of function
         let function_name = self.parse_identifier_string();
@@ -116,7 +113,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::LeftParen,
             "Expect '(' after function identifier".to_string(),
-        );
+        )?;
 
         let parameter_identifiers: Vec<String> = if self.parser.check(TokenType::RightParen) {
             // If function definition closed with no parameters, return a Vec with 0 capacity to not allocate any memory
@@ -129,14 +126,14 @@ impl Compiler {
             self.parser.consume(
                 TokenType::Identifier,
                 "Expected parameter identifier".to_string(),
-            );
+            )?;
             _parameters.push(self.parse_identifier_string());
 
-            while self.parser.match_next(TokenType::Comma) {
+            while self.parser.match_next(TokenType::Comma)? {
                 self.parser.consume(
                     TokenType::Identifier,
                     "Expected parameter identifier".to_string(),
-                );
+                )?;
                 _parameters.push(self.parse_identifier_string());
             }
 
@@ -150,7 +147,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::RightParen,
             "Expect ')' after function parameters".to_string(),
-        );
+        )?;
 
         // Emit function as a constant value
         // Here the opcode index of the chunk pointing to this function body will be calculated
@@ -181,7 +178,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::LeftBrace,
             "Expect '{' before function body".to_string(),
-        );
+        )?;
 
         // Increment function scopes before compiling the function body
         self.function_scopes += 1;
@@ -208,7 +205,7 @@ impl Compiler {
         }
 
         self.parser
-            .consume(TokenType::RightBrace, "Expect '}' after block".to_string());
+            .consume(TokenType::RightBrace, "Expect '}' after block".to_string())?;
 
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
@@ -245,7 +242,7 @@ impl Compiler {
     fn const_declaration(&mut self) -> Result<(), CompileError> {
         // Consume the identifier token before parsing for the const's identifier string
         self.parser
-            .consume(TokenType::Identifier, "Expect const name".to_string());
+            .consume(TokenType::Identifier, "Expect const name".to_string())?;
 
         let const_name = self.parse_identifier_string();
 
@@ -253,7 +250,7 @@ impl Compiler {
         self.declare_const(&const_name)?;
 
         // @todo Should not have this right, all const must be initialized
-        if self.parser.match_next(TokenType::Equal) {
+        if self.parser.match_next(TokenType::Equal)? {
             self.expression()?;
         } else {
             self.emit_constant(Value::Null);
@@ -262,7 +259,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::Semicolon,
             "Expect ';' after const declaration".to_string(),
-        );
+        )?;
 
         // Only works for global scope
         self.define_const(const_name);
@@ -329,7 +326,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::Semicolon,
             "Expect ';' after print statement".to_string(),
-        );
+        )?;
 
         self.emit_code(OpCode::PRINT);
 
@@ -347,7 +344,7 @@ impl Compiler {
         }
 
         self.parser
-            .consume(TokenType::RightBrace, "Expect '}' after block".to_string());
+            .consume(TokenType::RightBrace, "Expect '}' after block".to_string())?;
 
         // Destroy the current block scope by decrementing compiler's scope depth
         self.scope_depth -= 1;
@@ -378,8 +375,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::Semicolon,
             "Expect ';' after return statement".to_string(),
-        );
-
+        )?;
         self.emit_code(OpCode::RETURN);
 
         Ok(())
@@ -389,13 +385,13 @@ impl Compiler {
         self.parser.consume(
             TokenType::LeftParen,
             "Expect '(' after 'if' keyword".to_string(),
-        );
+        )?;
         // Parse the condition expression
         self.expression()?;
         self.parser.consume(
             TokenType::RightParen,
             "Expect ')' after 'if' condition".to_string(),
-        );
+        )?;
 
         let then_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
         // POP opcode to discard condition value from stack
@@ -409,7 +405,7 @@ impl Compiler {
         // POP opcode to discard condition value from stack
         self.emit_code(OpCode::POP);
 
-        if self.parser.match_next(TokenType::Else) {
+        if self.parser.match_next(TokenType::Else)? {
             self.statement()?;
         }
         self.patch_jump(else_jump)?;
@@ -424,13 +420,13 @@ impl Compiler {
         self.parser.consume(
             TokenType::LeftParen,
             "Expect '(' after 'while' keyword".to_string(),
-        );
+        )?;
         // Parse the condition expression
         self.expression()?;
         self.parser.consume(
             TokenType::RightParen,
             "Expect ')' after 'while' condition".to_string(),
-        );
+        )?;
 
         let exit_jump: usize = self.emit_jump(OpCode::JUMP_IF_FALSE(0));
         // POP opcode to discard condition value from stack
@@ -462,7 +458,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::Semicolon,
             "Expect ';' after expression".to_string(),
-        );
+        )?;
 
         // POP opcode to discard result from the stack
         // This assumes every single type of expression will always leave exactly one value on the stack once executed
@@ -522,7 +518,7 @@ impl Compiler {
         }
         .clone();
 
-        // Get the number of arguments used for this function call
+        // number_of_args here means, 'number of arguements used for this function call'
         let number_of_args: usize = if self.parser.check(TokenType::RightParen) {
             // If function call closed with no arguements, return 0
             0
@@ -534,7 +530,7 @@ impl Compiler {
                 self.expression()?;
                 _number_of_args += 1;
 
-                if !self.parser.match_next(TokenType::Comma) {
+                if !self.parser.match_next(TokenType::Comma)? {
                     break;
                 }
             }
@@ -566,7 +562,8 @@ impl Compiler {
         self.parser.consume(
             TokenType::RightParen,
             "Expected ')' after function arguments".to_string(),
-        );
+        )?;
+
         self.emit_code(OpCode::CALL);
         Ok(())
     }
@@ -602,7 +599,7 @@ impl Compiler {
         self.parser.consume(
             TokenType::RightParen,
             "Expect ')' after expression".to_string(),
-        );
+        )?;
 
         Ok(())
     }
@@ -737,9 +734,8 @@ impl Compiler {
         // Shadow precedence variable to convert it from enum variant to usize for numerical comparison later
         let precedence = precedence as usize;
 
-        // @todo Handle result variant
         // Read the next token
-        self.parser.advance();
+        self.parser.advance()?;
 
         // Look up corresponding ParseRule of the previous token's TokenType, and match to use the prefix parser
         match get_rule(&self.parser.previous.token_type).prefix {
@@ -760,9 +756,8 @@ impl Compiler {
         // BUT ONLY if the call to parse_precedence() has a precedence that is low enough to permit that infix operator.
         // To test if it is low enough, convert ParseRule's precedence into its usize discriminant to compare with the precedence passed in
         while precedence <= get_rule(&self.parser.current.token_type).precedence as usize {
-            // @todo Handle result variant
             // Read the next token
-            self.parser.advance();
+            self.parser.advance()?;
 
             // Look up corresponding ParseRule of the previous token's TokenType, and match to use the infix parser
             match get_rule(&self.parser.previous.token_type).infix {
