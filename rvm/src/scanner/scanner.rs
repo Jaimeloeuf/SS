@@ -1,4 +1,5 @@
 use super::Scanner;
+use super::ScannerError;
 use crate::keywords::get_token_type_if_keyword;
 
 use crate::token::Token;
@@ -13,7 +14,10 @@ impl Scanner {
         let mut line: isize = -1;
 
         loop {
-            let token = scanner.scan_token();
+            let token = match scanner.scan_token() {
+                Ok(token) => token,
+                Err(err) => panic!(format!("{:?}", err)),
+            };
 
             if token.line != line as usize {
                 // Up to 9999 lines, after that printed values will not align
@@ -43,13 +47,13 @@ impl Scanner {
     }
 
     // Change to Option<Token> or Result type instead of panic directly here
-    pub fn scan_token(&mut self) -> Token {
+    pub fn scan_token(&mut self) -> Result<Token, ScannerError> {
         // Skips none essential characters like whitespaces and comments
         self.skip_none_essentials();
 
         self.start = self.current;
 
-        if self.is_at_end() {
+        Ok(if self.is_at_end() {
             self.make_token(TokenType::Eof)
         } else {
             match self.advance() {
@@ -145,11 +149,18 @@ impl Scanner {
 
                 '\0' => self.make_token(TokenType::Eof),
 
-                _ => {
-                    // @todo Return a err variant of Result
-                    self.make_token(TokenType::Error)
+                // Return ScannerError if couldn't match any valid characters
+                unmatched_character => {
+                    // Since the match statement is wrapped in Ok, we cannot let this evalute to Err variant, must return explicitly instead
+                    return Err(ScannerError {
+                        line: self.line,
+                        description: format!(
+                            "Unexpected character '{}' on line {}",
+                            unmatched_character, self.line
+                        ),
+                    });
                 }
             }
-        }
+        })
     }
 }

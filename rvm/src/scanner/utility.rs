@@ -28,6 +28,9 @@ impl Scanner {
     /// Must be valid char else this will panic during the unwrap.
     pub fn advance(&mut self) -> char {
         self.current += 1;
+        // @todo What if the whole source is stored as a &str instead? Using source.as_str() then we just use the char with slices..? self.source[index..1]
+        // https://stackoverflow.com/a/24542502/13137262
+        // This is slow, as this access the char iteratively, but is neccessary as this allows UTF8 support in SS programs
         self.source.chars().nth(self.current - 1).unwrap()
     }
 
@@ -44,7 +47,11 @@ impl Scanner {
 
     /// See what is the current character
     pub fn peek(&self) -> char {
-        self.source.chars().nth(self.current).unwrap()
+        if self.is_at_end() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current).unwrap()
+        }
     }
 
     /// See what is the next character
@@ -54,6 +61,7 @@ impl Scanner {
         if self.is_at_end() {
             '\0'
         } else {
+            // @todo Need another is at end check right? Because there is a plus 1...  -->  self.current + 1 >= self.source.len()
             self.source.chars().nth(self.current + 1).unwrap()
         }
     }

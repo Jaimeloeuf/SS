@@ -1,4 +1,5 @@
 use crate::scanner::Scanner;
+use crate::scanner::ScannerError;
 use crate::token::Token;
 use crate::token::TokenType;
 
@@ -11,8 +12,17 @@ pub struct Parser {
 
 #[derive(Debug)]
 pub enum ParsingError {
+    ScannerError(ScannerError),
+
     /// @todo Change out the blanket error variant used temporarily for now
     error,
+}
+
+// Convert ScannerError to ParsingError automatically
+impl From<ScannerError> for ParsingError {
+    fn from(error: ScannerError) -> Self {
+        ParsingError::ScannerError(error)
+    }
 }
 
 impl Parser {
@@ -51,7 +61,7 @@ impl Parser {
         // That way, the rest of the parser sees only valid tokens. The current and previous token are stored in the struct
         loop {
             // Steps forward through token stream, asking scanner for the next token and storing it
-            self.current = self.scanner.scan_token();
+            self.current = self.scanner.scan_token()?;
 
             // Break once there isnt anymore error tokens
             if self.current.token_type != TokenType::Error {
