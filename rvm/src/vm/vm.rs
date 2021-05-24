@@ -146,9 +146,13 @@ impl VM {
                     }
                 }
 
-                OpCode::CALL => {
-                    match stack.pop() {
-                        Some(Value::Fn(opcode_index)) => {
+                OpCode::CALL(number_of_arguements_on_stack) => {
+                    // 'number of arguments on stack' is used to get function value on stack
+                    // No index check required as this will not panic, since this can never be out of bounds,
+                    // because index used (stack.len() - 1 - usize) is garunteed to be less than stack.len()
+                    // @todo Might go out of lower bounds..
+                    match stack.remove(stack.len() - 1 - number_of_arguements_on_stack) {
+                        Value::Fn(opcode_index) => {
                             // Calculate the return opcode index after function body executes a return instruction
                             // EITHER set as ip + 1 here and return set ip = caller_ip before calling continue to skip end of loop ip increment
                             // OR set to ip, then return set ip = caller_ip, before using end of loop increment of 1
@@ -163,13 +167,10 @@ impl VM {
 
                         // @todo Fix the error message
                         // Runtime type checking
-                        Some(invalid_type) => {
+                        invalid_type => {
                             // panic!("VM tmp Error: Not a function");
                             return Err(RuntimeError::TypeError("Expect Function".to_string()));
                         }
-
-                        // @todo This should be a no value error
-                        None => todo!(),
                     }
                 }
 
@@ -273,7 +274,9 @@ impl VM {
                 }
 
                 OpCode::RETURN => {
-                    println!("RETURN - value:  {:?}", stack.last());
+                    // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
+                    #[cfg(debug_assertions)]
+                    println!("RETURN_VALUE: {:?}", stack.last());
 
                     // Get opcode index of function caller to set as ip, to resume execution at call site
                     ip = call_stack.pop().unwrap();

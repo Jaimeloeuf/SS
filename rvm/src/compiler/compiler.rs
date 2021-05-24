@@ -569,7 +569,10 @@ impl Compiler {
             "Expected ')' after function arguments".to_string(),
         )?;
 
-        self.emit_code(OpCode::CALL);
+        // Once the argument count has been checked to match the number of parameters defined,
+        // The use of number_of_args here means, 'number of arguements on stack'
+        self.emit_code(OpCode::CALL(number_of_args));
+
         Ok(())
     }
 

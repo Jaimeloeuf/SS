@@ -31,10 +31,12 @@ pub enum OpCode {
     JUMP_IF_FALSE(usize),
 
     /* Function call opcodes */
-    /// @todo
-    // CALL(usize),
-    /// Make a function call, where the last value on stack 'Value::Fn(..)' is the function
-    CALL,
+    /// CALL('number of arguements on stack')
+    ///
+    /// Stack: ... --> Value::Function(..) --> arg1 --> arg2 --> argN
+    ///
+    /// Make a function call, where the 'stack.len() - 1 - number_of_args' value on stack is the function 'Value::Fn(..)'
+    CALL(usize),
 
     /// Special loop opcode, that is basically JUMP, but jumps backwards instead of forward
     LOOP(usize),
