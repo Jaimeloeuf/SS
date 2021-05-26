@@ -284,6 +284,40 @@ impl VM {
                     // To skip rest of the loop body, skipping the ip increment code
                     continue;
                 }
+                // Implemented as a POP_N instruction followed by a RETURN
+                OpCode::RETURN_POP(number_of_pops) => {
+                    // Get return value from stack first before popping locals off the stack, to prevent popping this away too
+                    let return_value = stack.pop().unwrap();
+
+                    // Only do this for debug builds, might add additonal debug flag to run this in vm-verbose mode only
+                    #[cfg(debug_assertions)]
+                    println!("RETURN_VALUE: {:?}", return_value);
+
+                    // Runtime check on debug builds to ensure number of pops less than number of values on stack
+                    #[cfg(debug_assertions)]
+                    if stack.len() < *number_of_pops {
+                        panic!(format!(
+                            "VM Debug Error: Popping {} values from Stack of {} values",
+                            number_of_pops,
+                            stack.len()
+                        ));
+                    }
+
+                    // POP multiple values off the stack at once
+                    // https://stackoverflow.com/questions/28952411/what-is-the-idiomatic-way-to-pop-the-last-n-elements-in-a-mutable-vec
+                    // https://doc.rust-lang.org/std/vec/struct.Vec.html#method.truncate
+                    // https://doc.rust-lang.org/std/primitive.i32.html#method.saturating_sub
+                    stack.truncate(stack.len() - number_of_pops);
+
+                    // Push the return value back onto the stack after popping locals off the stack
+                    stack.push(return_value);
+
+                    // Get opcode index of function caller to set as ip, to resume execution at call site
+                    ip = call_stack.pop().unwrap();
+
+                    // To skip rest of the loop body, skipping the ip increment code
+                    continue;
+                }
 
                 #[allow(unreachable_patterns)]
                 ref instruction => println!("VM Error: Unknown OpCode {:?}\n", instruction),

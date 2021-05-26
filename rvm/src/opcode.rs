@@ -12,6 +12,8 @@ pub enum OpCode {
     POP_N(usize),
     /// Return from current function body. A.k.a go back once in the call stack
     RETURN,
+    /// Return from current function body. A.k.a go back once in the call stack, and POP locals off the stack
+    RETURN_POP(usize),
 
     /* Opcodes dealing with values/identifiers/variables */
     /// Load a Value onto the stack
