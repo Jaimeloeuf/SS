@@ -217,21 +217,24 @@ impl Compiler {
         // Decrement number of function scopes once function body is compiled
         self.function_scopes -= 1;
 
-        // Check if there is a return at the end of the function body and add a default return if there isn't
+        // Check if there is a return type opcode at the end of function body, and add a default return if there isn't
         // NOTE:
         // 1) This is just an optimization since adding an extra default return does not actually change the semantics of the code
         // 2) This also does not account for the fact that a function can have all execution paths covered by ending them in return statements,
         //    without having a return statement at the end of the function body. See example function definition below.
         //    function test(condition) { if (condition) { return 1; } else { return 2; } }
         //    In this case, due to the single pass nature of this compiler, there is no way to know and no way to optimize away the default return
-        if let Some(OpCode::RETURN) = self.chunk.codes.last() {
-            // Do nothing if the last opcode is a return
-        } else {
-            // Add a default return to mark the end of the function body
+        match self.chunk.codes.last() {
+            // Do nothing if the last opcode is a type of RETURN opcode
+            Some(OpCode::RETURN) | Some(OpCode::RETURN_POP(_)) => {}
+
+            // For any other opcode, Add a default return to mark the end of the function body
             // Usually there will be a return, but in case the function does not have any, this will break out of the function
             // Default return is a Null, since a function call is an expression and always expects a value to be left on stack
-            self.emit_constant(Value::Null);
-            self.emit_code(OpCode::RETURN);
+            _ => {
+                self.emit_constant(Value::Null);
+                self.emit_code(OpCode::RETURN);
+            }
         }
 
         // Patch the jump over function body once it has been compiled
