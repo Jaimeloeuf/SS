@@ -225,6 +225,7 @@ impl Compiler {
         //    function test(condition) { if (condition) { return 1; } else { return 2; } }
         //    In this case, due to the single pass nature of this compiler, there is no way to know and no way to optimize away the default return
         if let Some(OpCode::RETURN) = self.chunk.codes.last() {
+            // Do nothing if the last opcode is a return
         } else {
             // Add a default return to mark the end of the function body
             // Usually there will be a return, but in case the function does not have any, this will break out of the function
@@ -354,7 +355,6 @@ impl Compiler {
         Ok(())
     }
 
-    // @todo Error when outside of a function body. Should be a compile error instead of runtime error
     /// Compile user's return statements, that can happen anywhere in a function body to stop execution. NOT USED for default return in function
     fn return_statement(&mut self) -> Result<(), CompileError> {
         // Error if return is found but compiler is not enclosed by any function scope, regardless of how many level up is that function scope
@@ -376,7 +376,32 @@ impl Compiler {
             TokenType::Semicolon,
             "Expect ';' after return statement".to_string(),
         )?;
-        self.emit_code(OpCode::RETURN);
+
+        // Temporarily reduce scope depth to find all locals to be popped off by the RETURN_POP statement
+        // Temporarily only, as there can still be function code after this statement, so scope depth needs to be restored for them to work
+        // Destroy the current block scope by decrementing compiler's scope depth
+        self.scope_depth -= 1;
+
+        // The POP(s) generated are for the locals, including function arguments and new locals defined between the start of the function
+        // and this return statement in the body. Does not account for other locals in function body that are not created before this return.
+        let mut number_of_pops = 0;
+        while self.locals.len() > 0 && self.locals.last().unwrap().depth > self.scope_depth {
+            // Remove the local from compiler's locals vector too
+            self.locals.pop();
+            number_of_pops += 1;
+        }
+
+        // Restore the function's scope depth
+        self.scope_depth += 1;
+
+        // If there are no POP(s) needed, e.g. no function argument and no locals created, optimize and use an empty return
+        if number_of_pops == 0 {
+            // Use RETURN if there is no locals to be popped, as RETURN is more efficient than RETURN_POP
+            self.emit_code(OpCode::RETURN);
+        } else if number_of_pops > 0 {
+            // Use RETURN_POP if there are local(s) to pop off the stack before returning to caller
+            self.emit_code(OpCode::RETURN_POP(number_of_pops));
+        }
 
         Ok(())
     }

@@ -63,7 +63,7 @@ impl Compiler {
         }
 
         if number_of_pops == 1 {
-            // Use POP if there is exactly 1 local to pop off stack, as POP is more efficient than POP_N
+            // Use POP if there is exactly 1 local to pop off stack, as POP is more efficient than POP_N for single removals
             self.emit_code(OpCode::POP);
         } else if number_of_pops > 0 {
             // Use POP_N if there are more than 1 local to pop off the stack
