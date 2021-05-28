@@ -5,10 +5,10 @@ module.exports.SymbolTableImpl = class SymbolTableImpl {
   push(scope) {
     this.table.push(scope);
   }
-  lookup(x) {
-    // Huh can liddat meh....
+  lookup(key) {
+    // Go up the scopes from the current innermost scope to look for the value
     for (let i = this.table.length - 1; i >= 0; i--) {
-      const val = this.table[i].get(x);
+      const val = this.table[i].get(key);
       if (val !== undefined) return val;
     }
 
@@ -21,10 +21,10 @@ module.exports.Scope = class Scope {
     // Key/Value pair of Name/Type pair
     this.map = {};
   }
-  add(x, val) {
-    this.map[x] = val;
+  add(key, val) {
+    this.map[key] = val;
   }
-  get(x) {
-    return this.map[x];
+  get(key) {
+    return this.map[key];
   }
 };

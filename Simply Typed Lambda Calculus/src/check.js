@@ -4,21 +4,20 @@ const { ASTNodes, Types } = require("./ast");
 const SymbolTable = new SymbolTableImpl();
 
 // Check if the 2 given types are the same
-const typeEq = (a, b) => {
+function typeEq(a, b) {
   // If both are arrays, it means that both are functions types
   if (a instanceof Array && b instanceof Array) {
     // Check if the length/depth of the functions/abstractions are the same, if not same, means diff type
-    if (a.length !== b.length) {
+    if (a.length !== b.length)
       return false;
-    } else {
-      // Check every type of the functions/abstractions individually and recursively to ensure that they are all the same type
-      // If any type in the array is different, then not equal types
-      for (let i = 0; i < a.length; i += 1)
-        if (!typeEq(a[i], b[i])) return false;
 
-      // If all the same, then the functions/abstractions are of the same type
-      return true;
-    }
+    // Check every type of the functions/abstractions individually and recursively to ensure that they are all the same type
+    // If any type in the array is different, then not equal types
+    for (let i = 0; i < a.length; i += 1)
+      if (!typeEq(a[i], b[i])) return false;
+
+    // If all the same, then the functions/abstractions are of the same type
+    return true;
   }
 
   // If both values are type info encoded as a string, then compare them directly
@@ -28,7 +27,7 @@ const typeEq = (a, b) => {
   // If one value is function type and the other is primitive, then they are automatically different types
   // This is the default type equality value, where all cases that are not tested for or skipped are of unequal type
   return false;
-};
+}
 
 // Check method which is returned, and used recursively to travers the AST
 module.exports.Check = function Check(ast, diagnostics = []) {
