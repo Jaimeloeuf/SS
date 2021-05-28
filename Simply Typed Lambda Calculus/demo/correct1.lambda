@@ -1,0 +1,1 @@
+(λ a: Nat → a) if (λ a: Nat → iszero a) pred 0 then succ 0 else 0

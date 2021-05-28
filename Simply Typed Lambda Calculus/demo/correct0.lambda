@@ -1,0 +1,1 @@
+(λ a: Nat → succ succ a) 0
