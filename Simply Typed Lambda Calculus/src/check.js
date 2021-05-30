@@ -32,8 +32,6 @@ module.exports.Check = function Check(ast, diagnostics = []) {
   // By definition, an empty AST is correct
   if (!ast) return { diagnostics };
 
-  console.log(ast);
-
   switch (ast.type) {
     // Literals:
     // - 0 is of type Natural

@@ -22,7 +22,9 @@ function main() {
   const diagnostics = Check(ast).diagnostics;
   if (diagnostics.length) {
     console.error(red(diagnostics.join("\n")));
-    process.exit(1);
+
+    // process.exit(1);
+    process.exit(0);
   }
 
   /* Either compile or evaluate the AST next */
@@ -31,12 +33,10 @@ function main() {
   if (process.argv.pop() === "compile") {
     console.log(green(`Compiling '${fileName}' to JavaScript\n`));
     console.log(CompileJS(ast));
-  }
-  else {
+  } else {
     console.log(green(`Evaluating '${fileName}'\n`));
     console.log(Eval(ast));
   }
-
 }
 
 main();

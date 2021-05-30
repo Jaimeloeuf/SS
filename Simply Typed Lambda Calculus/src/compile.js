@@ -47,14 +47,13 @@ const CompileJS = (ast) => {
           return `(${val} - 1 >= 0) ? ${val} - 1 : 0\n`;
 
         default:
-          console.log("ERROR Unknown opcode: ", op);
+          console.log("ERROR Unknown arithmetic operator: ", op);
           return "";
       }
     }
 
     // The application compiles to:
-    // Invocation of the compiled left expression over
-    // the compiled right expression.
+    // Invocation of the compiled left expression over the compiled right expression.
     case ASTNodes.Application: {
       const l = CompileJS(ast.left);
       const r = CompileJS(ast.right);
