@@ -15,6 +15,13 @@ pub struct Environment {
     enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
+/*
+    @todo Test this idea out
+    Instead of multi level environment and closure cloning to freeze data method,
+    Store all data in a single place for all scopes.
+    Then when cloning env, only clone the pointers to the data...
+    The environment will be used to enforce scoping rules rather then to do that and store data.
+*/
 impl Environment {
     // Requires a reference to the enclosing environment, global environment will be the grand parent, and first to enclose on a scope
     pub fn new(enclosing: Option<Rc<RefCell<Environment>>>) -> Environment {
@@ -35,6 +42,10 @@ impl Environment {
             "clock".to_string(),
             Value::Func(Rc::new(native::ClockFunc {})),
         );
+        // env.define(
+        //     "assert".to_string(),
+        //     Value::Func(Rc::new(native::assert::new())),
+        // );
 
         env
     }
@@ -101,10 +112,14 @@ impl Environment {
         }
     }
 
+    // Private method to get a parent scope using distance value
+    // Expect a value 1 or bigger, 0 should be handled by caller
+    // @todo Technically dont need to check for None, since if at global scope, then distance will be 0 and this will not get called
     fn get_scope(&self, distance: usize) -> Rc<RefCell<Environment>> {
         let mut environment = Rc::clone(self.enclosing.as_ref().unwrap());
         for _ in 1..distance {
             // Split into 2 lines to satisfy borrow checker rules.
+            // Can be sure to unwrap as 1..distance will never exceed global scope
             let parent_env = Rc::clone(environment.borrow().enclosing.as_ref().unwrap());
             environment = parent_env;
         }

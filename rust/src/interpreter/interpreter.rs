@@ -321,6 +321,11 @@ impl Interpreter {
     // a mutable ref to the interpreter struct is needed.
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
+            // @todo Optimize this
+            // Right now this involves copying or cloning over a value from a Expr::Literal to Value:: variant
+            // This can be removed by constructing Value variants directly in the parser, and wrapping them
+            // in Expr::Literal. Then when interpreted, just return the Value variant within Expr::Literal.
+            //
             // Using *Literal, to get the value from within the variant
             Expr::Literal(literal) => match *literal {
                 Literal::Number(number) => Ok(Value::Number(number)),
@@ -680,6 +685,7 @@ impl Interpreter {
                 }
             }
 
+            #[allow(unreachable_patterns)]
             unmatched => Err(RuntimeError::InternalError(format!(
                 "Unimplemented expr type -> {}",
                 unmatched

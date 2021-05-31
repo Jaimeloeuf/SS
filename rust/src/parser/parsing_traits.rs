@@ -70,6 +70,12 @@ impl Parser {
         let name = name.clone();
 
         if self.is_next_token(TokenType::Equal) {
+            // For variables, implementation with Null default value
+            // let initial_value = if self.is_next_token(TokenType::Equal) {
+            //     self.expression()?
+            // } else {
+            //     Expr::Literal(Literal::Null)
+            // };
             let initial_value = self.expression()?;
             self.consume(TokenType::Semicolon, "Expect ';' after const declaration")?;
             Ok(Stmt::Const(name, initial_value))
@@ -90,6 +96,8 @@ impl Parser {
         // Get the function parameters
         let parameters: Vec<Token> = self.parameters(
             // @todo Makes String into &'static str by LEAKING THE MEMORY!!! --> https://stackoverflow.com/a/30527289/13137262
+            // @todo try 'as_str' instead of the box then leak memory method
+            // format!("Expect '(' after function name '{}'", name).as_str(),
             Box::leak(format!("Expect '(' after function name '{}'", name).into_boxed_str()),
         )?;
 
@@ -180,6 +188,7 @@ impl Parser {
         let keyword = self.previous().clone();
 
         // Return value can either be an expression or Null if nothing is specified
+        // @todo Alternatively, store value as Option<Value> in Stmt::Return and let interpreter deal with it
         let value = if !self.check(TokenType::Semicolon) {
             self.expression()?
         } else {
@@ -322,6 +331,7 @@ impl Parser {
         }
     }
 
+    // Handles both function call and array access
     fn call(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.primary()?;
 
@@ -477,6 +487,7 @@ impl Parser {
                 Ok(Expr::Grouping(Box::new(expr)))
             }
         } else if self.is_next_token(TokenType::LeftBracket) {
+            // @todo Allow treating strings as an array, where "string"[2] === "r"
             // Parsing for array definition only, array access parsing is handled as an identifier expression
 
             // Get the vector elements in the array

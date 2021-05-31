@@ -44,7 +44,7 @@ const CompileJS = (ast) => {
         case "succ":
           return `${val} + 1\n`;
         case "pred":
-          return `(${val} - 1 >= 0) ? ${val} - 1 : 0\n`;
+          return `${val} === 0 ? ${val} : ${val} - 1\n`;
 
         default:
           console.log("ERROR Unknown arithmetic operator: ", op);

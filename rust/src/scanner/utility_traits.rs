@@ -13,6 +13,10 @@ impl Scanner {
     // Must be valid char else this will panic during the unwrap
     pub fn advance(&mut self) -> char {
         self.current += 1;
+        // @todo Optimize this
+        // This is slow, as this gets char iteratively instead of doing a direct array access/lookup
+        // But is neccessary as this allows UTF8 support in SS programs
+        // Reference: https://stackoverflow.com/a/24542502/13137262
         self.source.chars().nth(self.current - 1).unwrap()
 
         // If needed, push current character back into source as advance methods removes it.

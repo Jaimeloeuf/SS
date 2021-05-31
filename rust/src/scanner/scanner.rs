@@ -23,7 +23,8 @@ impl Scanner {
             line: 1,
         };
 
-        // Each turn of the loop, we scan a single token.
+        // Scan token by token
+        // @todo See if can avoid is_at_end() check as it is very inefficient
         while !scanner.is_at_end() {
             // At the start of every loop, reset start of the current "line" to the current character's index
             scanner.start = scanner.current;
@@ -33,6 +34,7 @@ impl Scanner {
             match scanner.scan_token() {
                 Ok(Some(token)) => tokens.push(token),
                 Ok(None) => {}
+
                 // @todo Question is should we continue to scan if there is an error?
                 // yes right? For things like LSP, since we still want to be able to parse?
                 // Do we need to syncrhonize too?
@@ -151,12 +153,29 @@ impl Scanner {
 
             // Block Comment, comment that can span multiline lines
             '/' if self.conditional_advance('*') => {
-                while self.peek() != '*' && self.peek_next() != '/' && !self.is_at_end() {
+                // Loop till the end of comment block
+                loop {
+                    // Stop if the next 2 characters are '*/', OR if it is at EOF
+                    if (self.peek() == '*' && self.peek_next() == '/') || self.is_at_end() {
+                        break;
+                    }
+
                     // Advance, AND if current char is a newline, increment line count
                     if self.advance() == '\n' {
                         self.line += 1;
                     }
                 }
+
+                // Alternative that is semantically equivalent using the while loop, which defines condition to continue,
+                // instead of the condition to stop, which makes it harder to understand in this case.
+                //
+                // Keep scanning as long as next 2 characters are not '*/'
+                // while (self.peek() != '*' || self.peek_next() != '/') && !self.is_at_end() {
+                //     // Advance, AND if current char is a newline, increment line count
+                //     if self.advance() == '\n' {
+                //         self.line += 1;
+                //     }
+                // }
 
                 // Advance current character pointer 2 more times to eat the ending star and slash characters.
                 self.current += 1;

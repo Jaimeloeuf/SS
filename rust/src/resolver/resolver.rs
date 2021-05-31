@@ -100,8 +100,8 @@ impl Resolver {
                 self.resolve_statement(body)?;
             }
 
-            // @todo
-            ref unmatched_stmt_variant => panic!("oops"),
+            #[allow(unreachable_patterns)]
+            ref unmatched_stmt_variant => panic!(unmatched_stmt_variant),
         })
     }
 
@@ -160,20 +160,8 @@ impl Resolver {
             Expr::Unary(_, ref expr) => {
                 self.resolve_expression(expr)?;
             }
-            // Expr::Get(ref target, _) => {
-            //     self.resolve_expression(target)?;
-            // }
-            // Expr::Set(ref target, _, ref value) => {
-            //     self.resolve_expression(target)?;
-            //     self.resolve_expression(value)?;
-            // }
-            // Expr::Assign(ref token, ref  expr, ref  distance) => {
-            //     self.resolve_expression(expr)?;
-            //     *distance = self.resolve_identifier_distance(token.lexeme.clone());
-            // }
-
-            // @todo
-            ref unmatched_expr_variant => panic!("oops"),
+            #[allow(unreachable_patterns)]
+            ref unmatched_expr_variant => panic!(unmatched_expr_variant),
         };
 
         Ok(())

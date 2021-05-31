@@ -79,3 +79,16 @@ impl std::fmt::Display for Expr {
         }
     }
 }
+
+// Alternative with Lifetime assigned to the values
+// #[derive(Debug)]
+// pub enum Expr<'a> {
+//     Binary(Box<Expr<'a>>, &'a Token, Box<Expr<'a>>),
+//     Grouping(Box<Expr<'a>>),
+//     Literal(Literal),
+//     Unary(&'a Token, Box<Expr<'a>>),
+//     Const(&'a Token, Option<usize>),
+//     Assign(&'a Token, Box<Expr<'a>>, Option<usize>),
+//     Logical(Box<Expr<'a>>, &'a Token, Box<Expr<'a>>),
+//     Call(Box<Expr<'a>>, Vec<Expr<'a>>, &'a Token),
+// }

@@ -20,9 +20,21 @@ use parser::parser_struct::Parser;
 use resolver::resolver::Resolver;
 use scanner::scanner_struct::Scanner;
 
+// Macro wrapping around println! macro that only prints in debug builds or if verbose/debugging flag is set
+#[macro_export]
+macro_rules! verbosePrintln {
+    // Accept any number of arguments
+    ($($string:expr), *) => {{
+        // Only do this for debug builds, might add additonal debug flag to run this in verbose/debugging mode only
+        #[cfg(debug_assertions)]
+        println!($($string,)*); // Use all arguments and seperate them with a comma
+    }};
+}
+
 fn main() {
     let start_of_main = Instant::now();
 
+    verbosePrintln!("SS version: 0.0.1");
     let args: Vec<String> = env::args().collect();
 
     // Use this to get flags as args
@@ -30,20 +42,24 @@ fn main() {
     // println!("Searching for {}", arg);
 
     let filename = &args[1];
+    // @todo Get the full file name instead of the relative path
     println!("Entering file '{}'", filename);
 
     read_file(&filename);
 
     // @todo To also ran before running the interpreter
-    println!("Completed in: {:?}", start_of_main.elapsed());
+    verbosePrintln!("Completed in: {:?}", start_of_main.elapsed());
 }
 
+// @todo Should return a Result variant too! Can be a Runtime Variant?
 fn read_file(filename: &String) {
-    let source = fs::read_to_string(filename).expect("Cannot read file");
+    let source = fs::read_to_string(filename).expect("RuntimeError - File not found");
 
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
+    // @todo Instead use ? operator, to let it bubble up
+    // And these components, scanner, parser, resolver, interpreter, will have their errors converted to a SSError enum
     let tokens = Scanner::scan_tokens(source);
 
     if let Err(e) = tokens {
@@ -72,19 +88,17 @@ fn read_file(filename: &String) {
             for error in e.iter() {
                 println!("{}\n", error);
             }
-        } else if let Ok(ast) = abstract_syntax_tree {
+        } else if let Ok(mut ast) = abstract_syntax_tree {
             // @todo Should be named statements instead of ast
-            println!("AST generated");
+            verbosePrintln!("AST generated");
 
             // for stmt in ast.iter() {
             //     println!("{:?}", stmt);
             // }
             // println!();
 
-            // What about the return value...
-            // Mut was used to modify Expr::Const distance value
-            // let mut resolver = Resolver::resolve(&mut ast);
-            let mut resolver = Resolver::resolve(&ast);
+            // Mut is used to modify Expr::Const distance value
+            let resolver = Resolver::resolve(&mut ast);
             if let Err(e) = resolver {
                 println!("{}", e);
                 panic!("Resolver failed");
