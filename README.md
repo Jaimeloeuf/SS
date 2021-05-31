@@ -57,13 +57,13 @@ Currently:
 
 ## Project layout & Commit style
 This mono repo contains the following sub repos and their commit prefixes:
-- [rust](./rust)
+- [ri](./ri)
     - Interpreter written in Rust
     - Commits prefixed with ```[rust-i]``` or ```rust-i:```
 - [rvm](./rvm)
     - Bytecode virtual machine written in Rust
     - Commits prefixed with ```[rvm]``` or ```rvm:```
-- [Simply Typed Lambda Calculus](<./Simply Typed Lambda Calculus>)
+- [Simply Typed Lambda Calculus](./Simply%20Typed%20Lambda%20Calculus)
     - Simply Typed Lambda Calculus implemented in JavaScript, with a focus on type inference
     - Commits prefixed with ```[stlc]``` or ```stlc:```
 

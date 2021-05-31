@@ -1,4 +1,4 @@
-# Rust interpreter
+# ri (Rust interpreter)
 NOTE: This is not the final interpreter for SS.
 
 This folder contains a Rust interpreter for a modified version of the lox language inspired by [rlox](https://github.com/julioolvr/rlox).  
