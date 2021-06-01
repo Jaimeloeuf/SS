@@ -139,9 +139,7 @@ impl Resolver {
                     self.resolve_expression(arg)?;
                 }
             }
-            Expr::Grouping(ref expr) => {
-                self.resolve_expression(expr)?;
-            }
+            Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
             Expr::Literal(_) => {}
             Expr::Array(_, ref elements) => {
                 // Resolve for every single element in the array, where all elements are expressions

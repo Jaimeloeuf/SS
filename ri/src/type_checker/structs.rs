@@ -51,6 +51,7 @@ pub enum ASTNode {
 }
 
 /// An enum of all possible types of values in SS
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Number,
     String,
@@ -63,3 +64,5 @@ pub enum Type {
     /// Func(vector_of_parameter_types, return_type)
     Func(Vec<Box<Type>>, Box<Type>),
 }
+
+// @todo Manually implement PartialEq for the higher level types like Functions and Arrays..?
