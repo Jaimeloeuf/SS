@@ -59,7 +59,7 @@ Currently:
 This mono repo contains the following sub repos and their commit prefixes:
 - [ri](./ri)
     - Interpreter written in Rust
-    - Commits prefixed with ```[rust-i]``` or ```rust-i:```
+    - Commits prefixed with ```ri:``` or ```[rust-i]```
 - [rvm](./rvm)
     - Bytecode virtual machine written in Rust
     - Commits prefixed with ```[rvm]``` or ```rvm:```

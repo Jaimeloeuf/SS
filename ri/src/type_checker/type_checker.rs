@@ -1,32 +1,20 @@
-use super::error::ResolvingError;
+use super::error::TypeCheckerError;
+use super::TypeChecker;
 
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Stmt;
 use crate::token::Token;
 
-use std::collections::hash_map::HashMap;
-
-// Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
-pub struct Resolver {
-    // Using a vec as a "Stack" data structure
-    // @todo Might change this to a LinkedList
-    // Pub to make this accessible by utility module
-    pub scopes: Vec<HashMap<String, bool>>,
-
-    // Tracker to see if currently in a function or not
-    // Used to see if return statements are valid
-    in_function: bool,
-
-    // Field holding a vector of global identifiers
-    // Used by declare utility method to check if the identifier is a global identifier to give users a more specific error message
-    pub globals: Vec<&'static str>,
+// Might need to use macro for the diff types...?
+fn is_equal() -> bool {
+    false
 }
 
-impl Resolver {
+impl TypeChecker {
     // Associated function to resolve a AST
-    pub fn resolve(ast: &Vec<Stmt>) -> Result<(), ResolvingError> {
-        // Create resolver instance internally
-        let mut resolver = Resolver {
+    pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeCheckerError> {
+        // Create TypeChecker instance internally
+        let mut type_checker = TypeChecker {
             scopes: Vec::new(),
             in_function: false,
 
@@ -35,20 +23,20 @@ impl Resolver {
         };
 
         // Create first new scope for the global scope and insert in identifiers
-        resolver.begin_scope();
+        type_checker.begin_scope();
 
-        // @todo Make it better then.. Cloning it because cannot have ref and mut ref to resolver at the same time....
-        resolver.define_globals(resolver.globals.clone());
+        // @todo Make it better then.. Cloning it because cannot have ref and mut ref to type_checker at the same time....
+        type_checker.define_globals(type_checker.globals.clone());
 
-        resolver.resolve_ast(ast)?;
-        resolver.end_scope();
+        type_checker.resolve_ast(ast)?;
+        type_checker.end_scope();
 
         Ok(())
     }
 
     // Resolve statements 1 by 1
     // Change name to resolve node? Cause we start from a single node and then can be called recursively for every node
-    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<(), ResolvingError> {
+    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<(), TypeCheckerError> {
         for ref stmt in ast {
             self.resolve_statement(stmt)?;
         }
@@ -57,7 +45,7 @@ impl Resolver {
     }
 
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
-    fn resolve_statement(&mut self, stmt: &Stmt) -> Result<(), ResolvingError> {
+    fn resolve_statement(&mut self, stmt: &Stmt) -> Result<(), TypeCheckerError> {
         Ok(match *stmt {
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             Stmt::Block(ref stmts) => {
@@ -90,7 +78,7 @@ impl Resolver {
             Stmt::Return(ref token, ref expr) => {
                 // If not in any function, return statements are not allowed
                 if !self.in_function {
-                    return Err(ResolvingError::ReturnOutsideFunction(token.clone()));
+                    return Err(TypeCheckerError::ReturnOutsideFunction(token.clone()));
                 }
 
                 self.resolve_expression(expr)?;
@@ -105,7 +93,7 @@ impl Resolver {
         })
     }
 
-    fn resolve_expression(&mut self, expr: &Expr) -> Result<(), ResolvingError> {
+    fn resolve_expression(&mut self, expr: &Expr) -> Result<(), TypeCheckerError> {
         match *expr {
             Expr::Const(ref token, ref distance_value_in_ast_node) => {
                 let distance = self.resolve_identifier_distance(token)?;
@@ -123,6 +111,8 @@ impl Resolver {
                 // Perhaps use the string and line number? But this will prevent minification....
                 // let identifier = token.lexeme.as_ref().unwrap();
                 // side_table.insert(identifier.clone(), self.resolve_identifier_distance(identifier.clone()));
+
+                // println!("t {:?} -> {}", token.lexeme, distance_value_in_ast_node);
             }
             Expr::AnonymousFunc(ref stmt) => {
                 // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use resolve_statement to handle Stmt::AnonymousFunc
@@ -170,13 +160,14 @@ impl Resolver {
     // Returns the Number of scope to traverse up to find the identifier's definition
     // E.g. 0 means defined in the same scope and 2, means defined 2 scopes above current scope.
     //
+    // should it be definition instead? So prevent const a = a;  (not definition)
     // This will go up through all the scopes looking for the identifier's "declaration"
     // If the definition is still not found after reaching the global scope, return an Undefined Identifier error
-    fn resolve_identifier_distance(&self, token: &Token) -> Result<usize, ResolvingError> {
+    fn resolve_identifier_distance(&self, token: &Token) -> Result<usize, TypeCheckerError> {
         let identifier = token.lexeme.as_ref().unwrap().clone();
 
         // Simple optimization, as identifiers are usually defined in the same scope more often than not
-        // Ok to unwrap, as 'scopes' vector will never be empty in this method as global scope only deleted in resolver::resolve()
+        // Ok to unwrap, as 'scopes' vector will never be empty in this method as global scope only deleted in type_checker::resolve()
         if self.scopes.last().unwrap().contains_key(&identifier) {
             return Ok(0);
         }
@@ -186,21 +177,23 @@ impl Resolver {
         // Then enumerate it to get both the scope and the index (which is the number of scopes from current local scope)
         for (i, ref scope) in self.scopes.iter().rev().skip(1).enumerate() {
             if scope.contains_key(&identifier) {
+                // println!("foound! {} -> {}", identifier, i + 1);
                 // Return 'i + 1', instead of 'i', because we skipped the first one, but i still starts from 0
                 // Where scope distance of 0, means current local scope.
                 return Ok(i + 1);
             }
+            // println!("NO FIND! {} -> {}", identifier, i + 1);
         }
 
         // If identifier is not found in all scopes (even in global scope) then it is undefined.
-        Err(ResolvingError::UndefinedIdentifier(token.clone()))
+        Err(TypeCheckerError::UndefinedIdentifier(token.clone()))
     }
 
     fn resolve_function(
         &mut self,
         param_tokens: &Vec<Token>,
         body: &Stmt,
-    ) -> Result<(), ResolvingError> {
+    ) -> Result<(), TypeCheckerError> {
         // Save parent status first before assigning in_function as true
         let is_parent_in_function = self.in_function;
         self.in_function = true;
@@ -222,7 +215,7 @@ impl Resolver {
             }
 
             _ => {
-                return Err(ResolvingError::InternalError(
+                return Err(TypeCheckerError::InternalError(
                     "Function body can only be Stmt::Block",
                 ))
             }
