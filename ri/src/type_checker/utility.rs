@@ -1,4 +1,5 @@
 use super::error::TypeCheckerError;
+use super::structs::Type;
 use super::TypeChecker;
 
 use crate::token::Token;
@@ -13,52 +14,49 @@ use std::collections::hash_map::HashMap;
 
 impl TypeChecker {
     pub fn begin_scope(&mut self) {
-        self.scopes.push(HashMap::<String, bool>::new());
+        self.scopes.push(HashMap::<String, Type>::new());
     }
 
     pub fn end_scope(&mut self) {
         self.scopes.pop();
     }
 
-    // Method to define identifiers used in the global scope
-    pub fn define_globals(&mut self, identifiers: Vec<&str>) {
-        for id in identifiers {
-            self.scopes.last_mut().unwrap().insert(id.to_string(), true);
-        }
-    }
-
-    // Declare that a identifier was found in the current scope
-    pub fn declare(&mut self, token: &Token) -> Result<(), TypeCheckerError> {
+    // @todo Add lifetime specifier so dont need to clone Type out
+    pub fn get_type(&mut self, token: &Token) -> Type {
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();
 
         // Get lexeme as identifier from token
         let identifier = token.lexeme.as_ref().unwrap();
 
-        if scope.contains_key(identifier) {
-            // Check if there is only 1 scope, meaning in global scope right now
-            // Then check if the identifier is a global identifier introduced by the language runtime
-            // If true, means user tried to reuse global identifier, thus show specific error type
-            // Else it is a identifier reuse error
-            Err(if self.scopes.len() == 1
-                && self
-                    .globals
-                    .iter()
-                    .any(|&global_identifier| global_identifier == identifier)
-            {
-                TypeCheckerError::IdentifierAlreadyUsedGlobally
-            } else {
-                TypeCheckerError::IdentifierAlreadyUsed
-            }(token.clone(), identifier.clone()))
-        } else {
-            // Indicate initializer not resolved
-            scope.insert(identifier.clone(), false);
-            Ok(())
+        // Get type from scope hashmap, unwrap directly as resolver has already garunteed that the value exists
+        scope.get(identifier).unwrap().clone()
+    }
+
+    // Method to define identifiers used in the global scope
+    pub fn define_globals(&mut self, identifiers: Vec<&str>) {
+        for id in identifiers {
+            self.scopes
+                .last_mut()
+                .unwrap()
+                .insert(id.to_string(), Type::Null);
         }
     }
 
+    // Declare that a identifier was found in the current scope
+    pub fn declare(&mut self, token: &Token) {
+        // A scope is always expected to exists, including the global top level scope
+        let scope = self.scopes.last_mut().unwrap();
+
+        // Get lexeme as identifier from token
+        let identifier = token.lexeme.as_ref().unwrap();
+
+        // Indicate initializer not resolved
+        scope.insert(identifier.clone(), Type::Null);
+    }
+
     // Acknowledge that the identifier completed its initialization phase
-    pub fn define(&mut self, token: &Token) {
+    pub fn define(&mut self, token: &Token, value_type: Type) {
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();
 
@@ -66,7 +64,7 @@ impl TypeChecker {
         let identifier = token.lexeme.as_ref().unwrap();
 
         // Indicate initializer resolved
-        scope.insert(identifier.clone(), true);
+        scope.insert(identifier.clone(), value_type);
     }
 
     // Declare that a identifier was found in the current scope
@@ -84,7 +82,7 @@ impl TypeChecker {
             ))
         } else {
             // Indicate initializer resolved
-            scope.insert(identifier.clone(), true);
+            scope.insert(identifier.clone(), Type::Null);
             Ok(())
         }
     }

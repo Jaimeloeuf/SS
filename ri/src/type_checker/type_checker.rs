@@ -117,29 +117,8 @@ impl TypeChecker {
 
     fn resolve_expression(&mut self, expr: &Expr) -> Result<Type, TypeCheckerError> {
         Ok(match *expr {
-            // Expr::Const(ref token, ref distance_value_in_ast_node) => {
-            //     //
-            // }
+            Expr::Const(ref token, _) => self.get_type(token),
 
-            // Expr::Const(ref token, ref distance_value_in_ast_node) => {
-            //     let distance = self.resolve_identifier_distance(token)?;
-
-            //     // @todo UNSAFE WAY used temporarily for testing! See alternatives below
-            //     unsafe {
-            //         let mutable_pointer = distance_value_in_ast_node as *const usize as *mut usize;
-            //         *mutable_pointer = distance;
-            //     }
-            //     // Alternative 1 is to call resolve_expression with mut reference to the expression
-            //     // *distance_value_in_ast_node = self.resolve_identifier_distance(token.lexeme.as_ref().unwrap().clone());
-
-            //     // Alternative 2 is to save distance value into a side table instead of saving directly into the AST node
-            //     // Problem with this is we cannot have identifiers of the same name, even in different scopes if using identifier string as key
-            //     // Perhaps use the string and line number? But this will prevent minification....
-            //     // let identifier = token.lexeme.as_ref().unwrap();
-            //     // side_table.insert(identifier.clone(), self.resolve_identifier_distance(identifier.clone()));
-
-            //     // println!("t {:?} -> {}", token.lexeme, distance_value_in_ast_node);
-            // }
             // Expr::AnonymousFunc(ref stmt) => {
             //     // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use resolve_statement to handle Stmt::AnonymousFunc
             //     self.resolve_statement(stmt)?;
@@ -258,38 +237,6 @@ impl TypeChecker {
             #[allow(unreachable_patterns)]
             ref unmatched_expr_variant => panic!("{}", unmatched_expr_variant),
         })
-    }
-
-    // Returns the Number of scope to traverse up to find the identifier's definition
-    // E.g. 0 means defined in the same scope and 2, means defined 2 scopes above current scope.
-    //
-    // should it be definition instead? So prevent const a = a;  (not definition)
-    // This will go up through all the scopes looking for the identifier's "declaration"
-    // If the definition is still not found after reaching the global scope, return an Undefined Identifier error
-    fn resolve_identifier_distance(&self, token: &Token) -> Result<usize, TypeCheckerError> {
-        let identifier = token.lexeme.as_ref().unwrap().clone();
-
-        // Simple optimization, as identifiers are usually defined in the same scope more often than not
-        // Ok to unwrap, as 'scopes' vector will never be empty in this method as global scope only deleted in type_checker::resolve()
-        if self.scopes.last().unwrap().contains_key(&identifier) {
-            return Ok(0);
-        }
-
-        // Convert scopes vector into Iter type and reverse it to traverse up from local scope all the way to top level global scope
-        // Skip the first scope, which is the local scope since we already check the local scope in the if statement above.
-        // Then enumerate it to get both the scope and the index (which is the number of scopes from current local scope)
-        for (i, ref scope) in self.scopes.iter().rev().skip(1).enumerate() {
-            if scope.contains_key(&identifier) {
-                // println!("foound! {} -> {}", identifier, i + 1);
-                // Return 'i + 1', instead of 'i', because we skipped the first one, but i still starts from 0
-                // Where scope distance of 0, means current local scope.
-                return Ok(i + 1);
-            }
-            // println!("NO FIND! {} -> {}", identifier, i + 1);
-        }
-
-        // If identifier is not found in all scopes (even in global scope) then it is undefined.
-        Err(TypeCheckerError::UndefinedIdentifier(token.clone()))
     }
 
     fn resolve_function(

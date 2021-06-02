@@ -4,8 +4,7 @@ use std::collections::hash_map::HashMap;
 pub struct TypeChecker {
     // Using a vec as a "Stack" data structure
     // @todo Might change this to a LinkedList
-    // Pub to make this accessible by utility module
-    pub scopes: Vec<HashMap<String, bool>>,
+    pub scopes: Vec<HashMap<String, Type>>,
 
     // Tracker to see if currently in a function or not
     // Used to see if return statements are valid
@@ -17,7 +16,9 @@ pub struct TypeChecker {
 }
 
 /// An enum of all possible types of values in SS
-#[derive(Debug, PartialEq)]
+///
+/// Need clone trait tmp in TypeChecker's symbol table
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Number,
     String,
@@ -29,6 +30,10 @@ pub enum Type {
 
     /// Func(vector_of_parameter_types, return_type)
     Func(Vec<Box<Type>>, Box<Type>),
+
+    /// Return is a special type that wraps a Type,
+    /// The point of the Return type is to allow type checker to know and let it bubble up till a handler
+    Return(Box<Type>),
 }
 
 // @todo Manually implement PartialEq for the higher level types like Functions and Arrays..?
