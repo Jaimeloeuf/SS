@@ -44,30 +44,6 @@ impl TypeChecker {
     }
 
     // Declare that a identifier was found in the current scope
-    pub fn declare(&mut self, token: &Token) {
-        // A scope is always expected to exists, including the global top level scope
-        let scope = self.scopes.last_mut().unwrap();
-
-        // Get lexeme as identifier from token
-        let identifier = token.lexeme.as_ref().unwrap();
-
-        // Indicate initializer not resolved
-        scope.insert(identifier.clone(), Type::Null);
-    }
-
-    // Acknowledge that the identifier completed its initialization phase
-    pub fn define(&mut self, token: &Token, value_type: Type) {
-        // A scope is always expected to exists, including the global top level scope
-        let scope = self.scopes.last_mut().unwrap();
-
-        // Get lexeme as identifier from token
-        let identifier = token.lexeme.as_ref().unwrap();
-
-        // Indicate initializer resolved
-        scope.insert(identifier.clone(), value_type);
-    }
-
-    // Declare that a identifier was found in the current scope
     pub fn declare_and_define(&mut self, token: &Token) -> Result<(), TypeCheckerError> {
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();

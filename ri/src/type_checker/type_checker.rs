@@ -56,10 +56,15 @@ impl TypeChecker {
                 self.resolve_ast(stmts)?;
                 self.end_scope();
             }
-            Stmt::Const(ref token, ref expr) => {
-                self.declare(token)?;
-                self.resolve_expression(expr)?;
-                self.define(token);
+            Stmt::Const(ref identifier_token, ref expr) => {
+                let expr_type = self.resolve_expression(expr)?;
+
+                // Save type of expression into scope using the identifier_token's lexeme as key
+                // - A scope is always expected to exists, including the global top level scope
+                self.scopes
+                    .last_mut()
+                    .unwrap()
+                    .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
             Stmt::Func(ref token, ref params, ref body) => {
                 // Declare and define to allow function to refer to itself recursively
