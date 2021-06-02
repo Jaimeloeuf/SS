@@ -16,40 +16,6 @@ pub struct TypeChecker {
     pub globals: Vec<&'static str>,
 }
 
-/// An enum of all possible types of AST nodes in SS, which is basically all the Stmt and Expr types
-pub enum ASTNode {
-    // Abstraction,
-    // Condition,
-    // Identifier,
-    // Literal,
-    // Arithmetic,
-    // IsZero,
-    // Application,
-
-    // Stmt types
-    // Print,
-    // Expr,
-    // Const,
-    // Block,
-    // If,
-    // While,
-    // Func,
-    // AnonymousFunc,
-    // Return,
-
-    // Expr types
-    Literal,
-    Binary,
-    Grouping,
-    Unary,
-    Const,
-    AnonymousFunc,
-    Array,
-    ArrayAccess,
-    Logical,
-    Call,
-}
-
 /// An enum of all possible types of values in SS
 #[derive(Debug, PartialEq)]
 pub enum Type {

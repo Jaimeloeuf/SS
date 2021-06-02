@@ -75,6 +75,7 @@ impl std::fmt::Display for Stmt {
                 write!(f, "(return {})", expr)
             }
 
+            #[allow(unreachable_patterns)]
             _ => write!(f, "Unimplemented display trait for Stmt::{:?}", self),
         }
     }

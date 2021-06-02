@@ -26,14 +26,17 @@ impl Interpreter {
 
         // Loop through all Expr/Stmt to evaluate and run them, returning any errors
         for stmt in stmts.iter() {
-            match interpreter.interpret_stmt(stmt) {
-                // This value is technically only meaningful when using the repl/toplevel
-                // Ok(value) => println!("Evaluated to {:?}", value),
-                Ok(value) => {}
-
-                // Interpreter stop interpreting code once there is any runtime error
-                Err(err) => return Some(err),
+            // Interpreter to stop if there is any runtime error
+            if let Err(err) = interpreter.interpret_stmt(stmt) {
+                return Some(err);
             }
+
+            // The returned value is only meaningful when using as a repl
+            // match interpreter.interpret_stmt(stmt) {
+            //     Ok(value) => println!("> {:?}", value),
+            //     // Interpreter stop interpreting code once there is any runtime error
+            //     Err(err) => return Some(err),
+            // }
         }
 
         None

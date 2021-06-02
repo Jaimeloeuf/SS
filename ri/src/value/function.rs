@@ -51,10 +51,7 @@ impl Callable for Function {
             //     "Function must be Stmt::Func, found: {:?}",
             //     unmatched_stmt_variant,
             // )));
-            panic!(format!(
-                "Function must be Stmt::Func, found: {:?}",
-                self.declaration,
-            ))
+            panic!("Function must be Stmt::Func, found: {:?}", self.declaration)
         }
     }
 
