@@ -10,25 +10,38 @@ use crate::token::Token;
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Print(Expr),
+
+    /// A stmt that is just an expression with a semicolon.
+    /// Usually evaluated for its side effects, e.g. a function call
     Expr(Expr),
+
+    /// Const(identifier_token, initial_value)
     Const(Token, Expr),
-    // Var(Token, Expr),
+
+    /// A block stmt is just a vector of all the stmts defined in that block
     Block(Vec<Stmt>),
 
-    // Rlox did If(Expr, Box<Stmt>, Box<Option<Stmt>>), instead
-    // But Option on the outer layer was easier to unwrap in the interpreter
+    /// If(condition, stmt_to_run_if_condition_is_true, optional_stmt_to_run_if_condition_is_false)
+    ///
+    /// Note that the stmts are not necessarily block stmts, as they can be single line stmts without brackets
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
 
+    /// While(condition, loop_body_stmt)
+    ///
+    /// Note that loop_body_stmt is not necessarily a block stmt, it can be a single line loop
     While(Expr, Box<Stmt>),
 
-    // The only difference between Func and AnonymousFunc is that AnonymousFunc dont have the name token
-    // AnonymousFunc will be wrapped in the Expr::AnonymousFunc variant since it is treated as an expression
+    /// Func(name_token, parameter_tokens, body_as_a_block_stmt)
     Func(Token, Vec<Token>, Box<Stmt>),
+    /// The only difference between Func and AnonymousFunc is that AnonymousFunc dont have the name token
+    ///
+    /// AnonymousFunc will be wrapped in the Expr::AnonymousFunc variant since it is treated as an expression
     AnonymousFunc(Vec<Token>, Box<Stmt>),
 
-    // Class(Token, Option<Expr>, Vec<Stmt>),
-
-    // Return stmt is a special stmt variant that will be evaluated to a Value variant
+    /// Return(keyword_token, return_expression)
+    ///
+    /// Return stmt is a special stmt variant that will be evaluated to a Value variant,
+    /// where the value is the evaluated expr, 'return_expression'
     Return(Token, Box<Expr>),
 }
 

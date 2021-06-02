@@ -13,6 +13,7 @@ mod resolver;
 mod scanner;
 mod token;
 mod token_type;
+mod type_checker;
 mod value;
 
 use interpreter::interpreter::Interpreter;
@@ -102,6 +103,15 @@ fn read_file(filename: &String) {
             if let Err(e) = resolver {
                 println!("{}", e);
                 panic!("Resolver failed");
+            }
+
+            // Mut is used to modify Expr::Const distance value
+            match type_checker::TypeChecker::check(&mut ast) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
+                    panic!("TypeChecker failed");
+                }
             }
 
             // @todo Return errors if any?
