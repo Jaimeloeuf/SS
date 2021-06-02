@@ -6,6 +6,7 @@ use crate::literal::Literal;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Stmt;
 use crate::token::Token;
+use crate::token_type::TokenType;
 
 impl TypeChecker {
     // Associated function to resolve a AST
@@ -70,8 +71,15 @@ impl TypeChecker {
                 self.resolve_function(params, body)?;
             }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
-                self.resolve_expression(condition)?;
+                if self.resolve_expression(condition)? != Type::Bool {
+                    return Err(TypeCheckerError::InternalError(
+                        "TESTING - Conditions of If stmts must be bool",
+                    ));
+                }
+
                 self.resolve_statement(then_branch)?;
+
+                // Only type check else branch if it exists
                 if let Some(ref else_branch) = else_branch {
                     self.resolve_statement(else_branch)?;
                 }
@@ -80,14 +88,6 @@ impl TypeChecker {
                 // This cannot be skipped because even though print accepts all types, the expression needs to be type checked first
                 // E.g. the expression can be a 5 == "string", and this needs to be checked, even if the Bool type returned can be ignored
                 // The type returned will be ignored, but the ? operator is used to allow errors to bubble up
-                self.resolve_expression(expr)?;
-            }
-            Stmt::Return(ref token, ref expr) => {
-                // If not in any function, return statements are not allowed
-                if !self.in_function {
-                    return Err(TypeCheckerError::ReturnOutsideFunction(token.clone()));
-                }
-
                 self.resolve_expression(expr)?;
             }
             Stmt::While(ref condition, ref body) => {
@@ -100,10 +100,16 @@ impl TypeChecker {
                 // @todo Check if this is a return Type, if so bubble up...
                 self.resolve_statement(body)?;
             }
+            Stmt::Return(ref token, ref expr) => {
+                // Get the type of the return expression,
+                // Wrap it in a Return type, and Ok variant to bubble it up
+                return Ok(Type::Return(Box::new(self.resolve_expression(expr)?)));
+            }
 
             #[allow(unreachable_patterns)]
             ref unmatched_stmt_variant => panic!("{}", unmatched_stmt_variant),
         };
+
         // Default type of the statement
         // Change to a void type or something
         Ok(Type::Null)
@@ -159,13 +165,17 @@ impl TypeChecker {
                     return Err(TypeCheckerError::InternalError("TESTING - Binary"));
                 }
             }
-            // Expr::Call(ref callee, ref arguments, _) => {
-            //     self.resolve_expression(callee)?;
+            Expr::Call(ref callee, ref arguments, _) => {
+                if self.resolve_expression(callee)? != Type::Func(_, _) {
+                    //
+                }
 
-            //     for ref arg in arguments {
-            //         self.resolve_expression(arg)?;
-            //     }
-            // }
+                // Create a fixed length vec of arg types and get the arg types by resolving the args individually
+                let mut argument_types: Vec<Type> = Vec::with_capacity(arguments.len());
+                for ref arg in arguments {
+                    argument_types.push(self.resolve_expression(arg)?);
+                }
+            }
             Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
             Expr::Literal(ref literal) => match literal {
                 // @todo Might need to split into signed and unsigned num
@@ -194,13 +204,57 @@ impl TypeChecker {
 
             //     self.resolve_expression(array)?;
             // }
-            // Expr::Logical(ref left, _, ref right) => {
-            //     self.resolve_expression(left)?;
-            //     self.resolve_expression(right)?;
-            // }
-            // Expr::Unary(_, ref expr) => {
-            //     self.resolve_expression(expr)?;
-            // }
+            Expr::Logical(ref left, _, ref right) => {
+                let l_type = self.resolve_expression(left)?;
+                let r_type = self.resolve_expression(right)?;
+
+                // Check that the first type is Bool, and if so, check if second type is bool
+                // Doing this because Rust does not support comparison operator chaining 'l_type == r_type == Type::Bool'
+                if (l_type == Type::Bool) && (r_type == Type::Bool) {
+                    // Logical expressions always evaluate to a value of Boolean type
+                    Type::Bool
+                } else {
+                    return Err(TypeCheckerError::InternalError(
+                        "TESTING - Logical expressions must be bool",
+                    ));
+                }
+            }
+            Expr::Unary(ref operator, ref expr) => {
+                let expr_type = self.resolve_expression(expr)?;
+
+                match &operator.token_type {
+                    TokenType::Bang => {
+                        if expr_type == Type::Bool {
+                            Type::Bool
+                        } else {
+                            return Err(TypeCheckerError::InternalError(
+                                "TESTING - Unary NOT expressions must be bool",
+                            ));
+                        }
+                    }
+                    TokenType::Minus => {
+                        if expr_type == Type::Number {
+                            Type::Number
+                        } else {
+                            return Err(TypeCheckerError::InternalError(
+                                "TESTING - Unary NEGATE expressions must be Number",
+                            ));
+                        }
+                    }
+                    // Alternative syntax
+                    // TokenType::Minus if expr_type == Type::Number => Type::Number,
+                    // TokenType::Minus => {
+                    //     return Err(TypeCheckerError::InternalError(
+                    //         "TESTING - Logical expressions must be bool",
+                    //     ));
+                    // }
+                    invalid_token_type => panic!(
+                        "Internal Error: Found {:?} in Expr::Unary",
+                        invalid_token_type
+                    ),
+                }
+            }
+
             #[allow(unreachable_patterns)]
             ref unmatched_expr_variant => panic!("{}", unmatched_expr_variant),
         })
@@ -263,11 +317,7 @@ impl TypeChecker {
                 }
             }
 
-            _ => {
-                return Err(TypeCheckerError::InternalError(
-                    "Function body can only be Stmt::Block",
-                ))
-            }
+            _ => panic!("Internal Error: Function body can only be Stmt::Block"),
         }
 
         self.end_scope();
