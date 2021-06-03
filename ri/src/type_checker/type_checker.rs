@@ -180,14 +180,25 @@ impl TypeChecker {
 
                 Type::Array(Box::new(array_element_type))
             }
-            // Expr::ArrayAccess(ref array, ref index_expression) => {
-            // // @todo Ensure that the indexing expression is a unsigned integer, not just a number
-            //     if self.resolve_expression(index_expression)? != Type::Number {
-            //         return Err(TypeCheckerError::InternalError("TESTING"));
-            //     }
+            Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
+                // @todo Ensure that the indexing expression is a unsigned integer, not just a number
+                if self.resolve_expression(index_expression)? != Type::Number {
+                    return Err(TypeCheckerError::InternalError("TESTING"));
+                }
 
-            //     self.resolve_expression(array)?;
-            // }
+                // This is the same as parsing out token from, Box<Expr::Const(token, _)> and calling self.get_type(token)
+                // If this resolves to a valid Type::Array(..) type, then extract the 'array_element_type'
+                match self.resolve_expression(array_identifier_expr)? {
+                    Type::Array(array_element_type) => *array_element_type,
+
+                    value_type => {
+                        // @todo fix error and show the actual value type used
+                        return Err(TypeCheckerError::InternalError(
+                            "TESTING - cannot access 'value_type' as an array",
+                        ));
+                    }
+                }
+            }
             Expr::Logical(ref left, _, ref right) => {
                 let l_type = self.resolve_expression(left)?;
                 let r_type = self.resolve_expression(right)?;

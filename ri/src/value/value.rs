@@ -4,7 +4,6 @@ use crate::interpreter::error::RuntimeError;
 
 use std::rc::Rc;
 
-// #[derive(Debug, PartialEq, Clone)]
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
