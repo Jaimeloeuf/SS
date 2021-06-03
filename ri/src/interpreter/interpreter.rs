@@ -430,15 +430,17 @@ impl Interpreter {
                 if let Value::Array(ref actual_array) = array {
                     // Check that the index is a Value::Number variant
                     if let Value::Number(ref index_number) = index {
-                        // Check if index is within bounds
-                        // Doing all this casting right now because we want to check the index before usize casting, which casts neg number to 0
-                        if index_number > &0.0 && index_number < &((actual_array.len() - 1) as f64)
-                        {
-                            // @todo Since number is always f64 at least for now, we have to convert it into usize before access
-                            let index_number = *index_number as usize;
+                        // Since number is always f64 at least for now, it needs to be converted into usize to access an array
+                        // Ref on using 'as' for casting: https://stackoverflow.com/a/28280042/13137262
+                        let usize_index = *index_number as usize;
 
+                        // Check if index is within bounds
+                        // Since index_number is f64 type, it can be a negative number, thus need to ensure it is above the 0 lower limit
+                        // Testing for 0 lower limit using index_number instead of usize_index as casting to usize will cause it to lose any neg. sign
+                        // Test the array length upper limit using usize_index to ensure that it must be less than array length
+                        if index_number >= &0.0 && usize_index < actual_array.len() {
                             // @todo Since value cannot be moved out of vec, element is cloned, alternative is to clone with Rc?
-                            Ok(actual_array[index_number].clone())
+                            Ok(actual_array[usize_index].clone())
                         } else {
                             // @todo Find a way to include line number
                             Err(RuntimeError::ArrayOutOfBounds(format!(
