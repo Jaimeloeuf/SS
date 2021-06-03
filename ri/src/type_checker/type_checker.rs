@@ -129,25 +129,52 @@ impl TypeChecker {
             //     self.resolve_statement(stmt)?;
             // }
 
-            // @todo Add new arithmetic expr
+            // @todo Add new arithmetic expr to split this up, so that the operator check can be skipped
             // Binary expressions holds both equality/inequality checks, and arithmetic operations
-            Expr::Binary(ref left, _, ref right) => {
+            Expr::Binary(ref left, ref operator, ref right) => {
                 let l_type = self.resolve_expression(left)?;
                 let r_type = self.resolve_expression(right)?;
 
-                // Plus,
-                // Slash,
-                // Star,
-                // if operator.token_type == TokenType::Minus {
-                //     return Type::Number
-                // }
-
+                // Regardless of their types, operands of binary expressions must always have the SAME type
                 if l_type == r_type {
-                    // Need to return here too?
-                    l_type
+                    // Return a type based on the binary operator
+                    match &operator.token_type {
+                        // Comparison expressions allow operands to be of any types as long as they are the same,
+                        // And will always be evaluated to a value of Type::Bool
+                        TokenType::EqualEqual | TokenType::BangEqual => Type::Bool,
+
+                        // Arithmetic and Numeric comparison expressions ONLY ALLOW Type::Number operands,
+                        // And will always be evaluated to a value of Type::Number
+                        // @todo Might need to change handling of arithmetic operators if supporting different number types like unsigned int
+                        // @todo Change Plus type to allow strings, as Plus operator is overloaded to support string concat in the interpreter
+                        TokenType::Plus
+                        | TokenType::Minus
+                        | TokenType::Slash
+                        | TokenType::Star
+                        | TokenType::Greater
+                        | TokenType::GreaterEqual
+                        | TokenType::Less
+                        | TokenType::LessEqual => {
+                            if l_type == Type::Number {
+                                Type::Number
+                            } else {
+                                return Err(TypeCheckerError::InternalError(
+                                    "TESTING - Binary - Expect number for '&operator.token_type'",
+                                ));
+                            }
+                        }
+
+                        unmatched_token_type => {
+                            panic!("Internal Error: Invalid token_type {:?} found in Expr::Binary of TypeChecker", unmatched_token_type)
+                        }
+                    }
                 } else {
-                    return Err(TypeCheckerError::InternalError("TESTING - Binary"));
+                    // @todo Fix error msg, add a, 'found type {l_type} and {r_type}'
+                    return Err(TypeCheckerError::InternalError(
+                        "TESTING - Binary - operands of binary expressions must have the SAME type",
+                    ));
                 }
+            }
             }
             Expr::Call(ref callee, ref arguments, _) => {
                 if self.resolve_expression(callee)? != Type::Func(_, _) {
@@ -171,8 +198,8 @@ impl TypeChecker {
             Expr::Array(_, ref elements) => {
                 let array_element_type = self.resolve_expression(&elements[0])?;
 
-                // Resolve for every single element in the array, where all elements are expressions
-                for element in elements {
+                // Resolve for elements[1..] of the array, where all elements are expressions
+                for element in elements.into_iter().skip(1) {
                     if self.resolve_expression(element)? != array_element_type {
                         return Err(TypeCheckerError::InternalError("TESTING - Array"));
                     }
@@ -181,7 +208,7 @@ impl TypeChecker {
                 Type::Array(Box::new(array_element_type))
             }
             Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
-                // @todo Ensure that the indexing expression is a unsigned integer, not just a number
+                // @todo Ensure that the indexing expression is a unsigned integer, not just a number, to remove the runtime check
                 if self.resolve_expression(index_expression)? != Type::Number {
                     return Err(TypeCheckerError::InternalError("TESTING"));
                 }
