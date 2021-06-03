@@ -66,15 +66,27 @@ impl TypeChecker {
                     .unwrap()
                     .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
-            Stmt::Func(ref token, ref params, ref body) => {
-                // Declare and define to allow function to refer to itself recursively
-                self.declare_and_define(token)?;
-                self.resolve_function(params, body)?;
+            Stmt::Func(ref identifier_token, ref params, ref body) => {
+                // Add function to scope before resolving function body to allow function to refer to itself recursively
+                let function_type = Type::Func(params.len(), Box::new(Type::Lazy));
+                self.scopes.last_mut().unwrap().insert(
+                    identifier_token.lexeme.as_ref().unwrap().clone(),
+                    function_type.clone(),
+                );
+
+                let return_type = self.resolve_function(params, body)?;
+
+                let function_type = Type::Func(params.len(), Box::new(return_type));
+                self.scopes.last_mut().unwrap().insert(
+                    identifier_token.lexeme.as_ref().unwrap().clone(),
+                    function_type.clone(),
+                );
+                return Ok(function_type);
             }
-            Stmt::AnonymousFunc(ref params, ref body) => {
-                // Unlike Stmt::Func, dont need to declare and define since Anonymous Functions are nameless, and will be bound to a Const identifier
-                self.resolve_function(params, body)?;
-            }
+            // Stmt::AnonymousFunc(ref params, ref body) => {
+            //     // Unlike Stmt::Func, dont need to declare and define since Anonymous Functions are nameless, and will be bound to a Const identifier
+            //     self.resolve_function(params, body)?;
+            // }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
                 if self.resolve_expression(condition)? != Type::Bool {
                     return Err(TypeCheckerError::InternalError(
@@ -286,32 +298,57 @@ impl TypeChecker {
         &mut self,
         param_tokens: &Vec<Token>,
         body: &Stmt,
-    ) -> Result<(), TypeCheckerError> {
+    ) -> Result<Type, TypeCheckerError> {
         // Save parent status first before assigning in_function as true
         let is_parent_in_function = self.in_function;
         self.in_function = true;
 
         self.begin_scope();
 
-        // Declare and define every token
-        for token in param_tokens {
-            self.declare_and_define(token)?;
+        // A scope is always expected to exists, including the global top level scope
+        let scope = self.scopes.last_mut().unwrap();
+        for param_token in param_tokens {
+            // Save type of every parameter into scope as Type::Lazy during this function definition type checking process,
+            // To defer type checking for statements that use these parameters till function call type checks,
+            // And during which the type of the arguments will be available
+            scope.insert(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
         }
+
+        // Assuming most functions only have 1 return statement
+        let mut return_types = Vec::<Type>::with_capacity(1);
 
         // Body must be a block statement, even for anonymous arrow functions
         // arrow functions is just syntatic sugar in this implementation, so they are actually also parsed into block statements
-        match body {
-            &Stmt::Block(ref stmts) => {
-                for stmt in stmts {
-                    self.resolve_statement(stmt)?;
+        if let &Stmt::Block(ref stmts) = body {
+            for stmt in stmts {
+                let stmt_type = self.resolve_statement(stmt)?;
+                if let Type::Return(_) = stmt_type {
+                    return_types.push(stmt_type);
                 }
             }
-
-            _ => panic!("Internal Error: Function body can only be Stmt::Block"),
-        }
+        } else {
+            panic!("Internal Error: Function body can only be Stmt::Block");
+        };
 
         self.end_scope();
         self.in_function = is_parent_in_function;
-        Ok(())
+
+        Ok(
+            // If there are no return statements, default return type is Null
+            if return_types.is_empty() {
+                Type::Null
+            } else {
+                for return_type in &return_types {
+                    if return_type == &return_types[0] {
+                        return Err(TypeCheckerError::InternalError(
+                            "TESTING - Function must have the same return type throughout the function body"
+                        ));
+                    }
+                }
+
+                // If all return types are the same, then use first type as function return type
+                return_types[0].clone()
+            },
+        )
     }
 }
