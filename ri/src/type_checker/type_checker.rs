@@ -26,6 +26,7 @@ impl TypeChecker {
         // @todo Make it better then.. Cloning it because cannot have ref and mut ref to type_checker at the same time....
         type_checker.define_globals(type_checker.globals.clone());
 
+        // @todo Add a synchronization method, to prevent type checker from quitting on first error, and instead, check other errors and return all via an array
         type_checker.resolve_ast(ast)?;
         type_checker.end_scope();
 
@@ -67,16 +68,28 @@ impl TypeChecker {
                     .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
             Stmt::Func(ref identifier_token, ref params, ref body) => {
-                // Add function to scope before resolving function body to allow function to refer to itself recursively
-                let function_type = Type::Func(params.len(), Box::new(Type::Lazy));
-                self.scopes.last_mut().unwrap().insert(
-                    identifier_token.lexeme.as_ref().unwrap().clone(),
-                    function_type.clone(),
+                let function_stmt = stmt.clone();
+
+                let function_type = Type::Func(
+                    params.len(),
+                    Box::new(Type::Lazy),
+                    Box::new(function_stmt.clone()),
                 );
 
-                let return_type = self.resolve_function(params, body)?;
+                // Add function to scope before type checking function body to allow function to refer to itself recursively
+                self.scopes.last_mut().unwrap().insert(
+                    identifier_token.lexeme.as_ref().unwrap().clone(),
+                    function_type,
+                );
 
-                let function_type = Type::Func(params.len(), Box::new(return_type));
+                let return_type = self.resolve_function(
+                    identifier_token.lexeme.as_ref().unwrap().clone(),
+                    params,
+                    body,
+                )?;
+
+                let function_type =
+                    Type::Func(params.len(), Box::new(return_type), Box::new(function_stmt));
                 self.scopes.last_mut().unwrap().insert(
                     identifier_token.lexeme.as_ref().unwrap().clone(),
                     function_type.clone(),
@@ -296,6 +309,7 @@ impl TypeChecker {
 
     fn resolve_function(
         &mut self,
+        function_name: String,
         param_tokens: &Vec<Token>,
         body: &Stmt,
     ) -> Result<Type, TypeCheckerError> {

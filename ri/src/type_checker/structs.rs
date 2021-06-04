@@ -1,5 +1,7 @@
 use std::collections::hash_map::HashMap;
 
+use crate::parser::stmt::Stmt;
+
 // Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
 pub struct TypeChecker {
     // Using a vec as a "Stack" data structure
@@ -30,8 +32,9 @@ pub enum Type {
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
-    /// Func(number_of_parameters, return_type)
-    Func(usize, Box<Type>),
+    // The Function's AST node is stored so that it can be used to type check again when a function call is made
+    /// Func(function_stmt, number_of_parameters, return_type)
+    Func(usize, Box<Type>, Box<Stmt>),
 
     /// Return is a special type that wraps a Type,
     /// The point of the Return type is to allow type checker to know and let it bubble up till a handler
