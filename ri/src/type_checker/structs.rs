@@ -4,16 +4,22 @@ use crate::parser::stmt::Stmt;
 
 // Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
 pub struct TypeChecker {
-    // Using a vec as a "Stack" data structure
-    // @todo Might change this to a LinkedList
+    /// Using a vec as a "Stack" data structure
+    ///
+    /// @todo Might change this to a LinkedList
     pub scopes: Vec<HashMap<String, Type>>,
 
-    // Tracker to see if currently in a function or not
-    // Used to see if return statements are valid
-    pub in_function: bool,
+    /// Store the current function's identifier string in order to break out of recursive type checking
+    ///
+    /// Recursive type checking will occur because the type checker will see that it is a function call,
+    /// and try to type check the function, even though the function is in the midst of being defined.
+    /// Thus this type helps to defer type checking by making all checks against this type as valid,
+    /// till an actual function call is made.
+    pub current_function: Option<String>,
 
-    // Field holding a vector of global identifiers
-    // Used by declare utility method to check if the identifier is a global identifier to give users a more specific error message
+    /// Field holding a vector of global identifiers
+    ///
+    /// Used by declare utility method to check if the identifier is a global identifier to give users a more specific error message
     pub globals: Vec<&'static str>,
 }
 
@@ -27,13 +33,17 @@ pub enum Type {
     Bool,
     Null,
 
+    /// Special type that is equal to all other types
+    ///
+    /// Used to defer type checking for types within a function definition, to when the types are available, such as during a function call
     Lazy,
 
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
-    // The Function's AST node is stored so that it can be used to type check again when a function call is made
     /// Func(function_stmt, number_of_parameters, return_type)
+    ///
+    /// The Function's AST node is stored so that it can be used to type check again when a function call is made
     Func(usize, Box<Type>, Box<Stmt>),
 
     /// Return is a special type that wraps a Type,
@@ -45,7 +55,7 @@ pub enum Type {
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            // Every type is Equals to Lazy, since the Lazy type is just a place holder
+            // Every type is Equals to Lazy as the Lazy type is used to defer type checking till a later time
             (&Type::Lazy, _) | (_, &Type::Lazy) => true,
 
             // For primitive types, as long as they are the same, they are equal

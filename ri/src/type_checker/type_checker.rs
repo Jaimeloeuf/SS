@@ -14,7 +14,7 @@ impl TypeChecker {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
             scopes: Vec::new(),
-            in_function: false,
+            current_function: None,
 
             // @todo A better way other than hardcoding all identifiers in
             globals: vec!["clock"],
@@ -50,10 +50,12 @@ impl TypeChecker {
         // Any stmt that resolves into a Type, will have to manually return it
         match *stmt {
             Stmt::Expr(ref expr) => {
+                // @todo Why need to return here? Is it because a return stmt can be nested?
                 return self.resolve_expression(expr);
             }
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
+                // @todo Handle returns
                 self.resolve_ast(stmts)?;
                 self.end_scope();
             }
@@ -313,9 +315,9 @@ impl TypeChecker {
         param_tokens: &Vec<Token>,
         body: &Stmt,
     ) -> Result<Type, TypeCheckerError> {
-        // Save parent status first before assigning in_function as true
-        let is_parent_in_function = self.in_function;
-        self.in_function = true;
+        // Save parent function's name first if any before assigning the name of the current function
+        let parent_function_name = self.current_function.clone();
+        self.current_function = Some(function_name);
 
         self.begin_scope();
 
@@ -345,13 +347,16 @@ impl TypeChecker {
         };
 
         self.end_scope();
-        self.in_function = is_parent_in_function;
+
+        // Restore the name of the parent function
+        self.current_function = parent_function_name;
 
         Ok(
             // If there are no return statements, default return type is Null
             if return_types.is_empty() {
                 Type::Null
             } else {
+                // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
                     if return_type == &return_types[0] {
                         return Err(TypeCheckerError::InternalError(
