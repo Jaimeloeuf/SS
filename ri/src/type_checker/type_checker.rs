@@ -202,10 +202,54 @@ impl TypeChecker {
                     ));
                 }
             }
-            }
-            Expr::Call(ref callee, ref arguments, _) => {
-                if self.resolve_expression(callee)? != Type::Func(_, _) {
-                    //
+            Expr::Call(ref callee_identifier_expr, ref arguments, _) => {
+                /*
+                    Type check callee_identifier_expr, and get back function type,
+                    to type check the function again with the types of the arguments for THIS CALL
+                    Which means to say a function can be used with multiple types of arguments,
+                    as long as they can pass the type check for each instance of function call.
+                    Which means this allows for safe generics without any explicit annotations
+
+                    Example 1: In this example the use of any type is permitted because print accepts all types
+                    fn test(val) {
+                        print val; // Print accepts values of any type
+                    }
+                    // Both works since both arguments, when used as the function's parameter type passes the type check
+                    test(1);
+                    test("string");
+
+
+                    Example 2: In this example the use of any types is permitted, AS LONG AS the given types are the same
+                    fn check(a, b) {
+                        return a == b;
+                    }
+                    check(1, 1);
+                    check("s1", "s2");
+
+                    Extra Notes:
+                    Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
+                    If this resolves to a valid Type::Func(..), then extract the tuple's value.
+                */
+                let (number_of_parameters, return_type, function_stmt) =
+                    match self.resolve_expression(callee_identifier_expr)? {
+                        Type::Func(number_of_parameters, return_type, function_stmt) => {
+                            (number_of_parameters, return_type, function_stmt)
+                        }
+
+                        value_type => {
+                            // @todo fix error and show the actual value type used
+                            return Err(TypeCheckerError::InternalError(
+                                "TESTING - cannot call 'value_type' as a function",
+                            ));
+                        }
+                    };
+
+                // @todo Add additional check if supporting variadic functions
+                // Ensure that the number of arguments matches the number of parameters defined
+                if arguments.len() != number_of_parameters {
+                    return Err(TypeCheckerError::InternalError(
+                        "TESTING - Call - different numbers of arguments",
+                    ));
                 }
 
                 // Create a fixed length vec of arg types and get the arg types by resolving the args individually
@@ -213,6 +257,18 @@ impl TypeChecker {
                 for ref arg in arguments {
                     argument_types.push(self.resolve_expression(arg)?);
                 }
+
+                // Type check the function again, this time with the types of the arguments as types of the parameters
+                if let Stmt::Func(ref identifier_token, ref params, ref body) = *function_stmt {
+                    // @todo
+                    let return_type =
+                        self.check_function(identifier_token, params, argument_types, body)?;
+                } else {
+                    panic!("Internal Error: Expected Stmt::Func to be stored in Type::Func")
+                }
+
+                // The type of a call expression is the return type of the function that is called
+                *return_type
             }
             Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
             Expr::Literal(ref literal) => match literal {
@@ -350,6 +406,70 @@ impl TypeChecker {
 
         // Restore the name of the parent function
         self.current_function = parent_function_name;
+
+        Ok(
+            // If there are no return statements, default return type is Null
+            if return_types.is_empty() {
+                Type::Null
+            } else {
+                // @todo Optimize by skipping the first element, otherwise it will be compared with itself
+                for return_type in &return_types {
+                    if return_type == &return_types[0] {
+                        return Err(TypeCheckerError::InternalError(
+                            "TESTING - Function must have the same return type throughout the function body"
+                        ));
+                    }
+                }
+
+                // If all return types are the same, then use first type as function return type
+                return_types[0].clone()
+            },
+        )
+    }
+
+    fn check_function(
+        &mut self,
+        identifier_token: &Token,
+        param_tokens: &Vec<Token>,
+        argument_types: Vec<Type>,
+        body: &Stmt,
+    ) -> Result<Type, TypeCheckerError> {
+        // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
+        if let Some(ref parent_function_name) = self.current_function {
+            if parent_function_name == identifier_token.lexeme.as_ref().unwrap() {
+                return Ok(Type::Lazy);
+            }
+        }
+        self.current_function = Some(identifier_token.lexeme.as_ref().unwrap().clone());
+
+        self.begin_scope();
+
+        // A scope is always expected to exists, including the global top level scope
+        let scope = self.scopes.last_mut().unwrap();
+        for (i, param_token) in param_tokens.into_iter().enumerate() {
+            scope.insert(
+                param_token.lexeme.as_ref().unwrap().clone(),
+                argument_types[i].clone(),
+            );
+        }
+
+        // Assuming most functions only have 1 return statement
+        let mut return_types = Vec::<Type>::with_capacity(1);
+
+        // Body must be a block statement, even for anonymous arrow functions
+        // arrow functions is just syntatic sugar and are also parsed into block statements
+        if let &Stmt::Block(ref stmts) = body {
+            for stmt in stmts {
+                let stmt_type = self.resolve_statement(stmt)?;
+                if let Type::Return(_) = stmt_type {
+                    return_types.push(stmt_type);
+                }
+            }
+        } else {
+            panic!("Internal Error: Function body can only be Stmt::Block");
+        };
+
+        self.end_scope();
 
         Ok(
             // If there are no return statements, default return type is Null
