@@ -414,7 +414,7 @@ impl TypeChecker {
             } else {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
-                    if return_type == &return_types[0] {
+                    if return_type != &return_types[0] {
                         return Err(TypeCheckerError::InternalError(
                             "TESTING - Function must have the same return type throughout the function body"
                         ));
@@ -478,7 +478,7 @@ impl TypeChecker {
             } else {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
-                    if return_type == &return_types[0] {
+                    if return_type != &return_types[0] {
                         return Err(TypeCheckerError::InternalError(
                             "TESTING - Function must have the same return type throughout the function body"
                         ));

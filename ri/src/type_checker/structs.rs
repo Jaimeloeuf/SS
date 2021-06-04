@@ -66,8 +66,12 @@ impl PartialEq for Type {
 
             // For arrays, ensure that the types of their elements match
             (&Type::Array(ref array_element_type_1), &Type::Array(ref array_element_type_2)) => {
-                // Not too sure if these work, since the ele type are Boxed values
                 array_element_type_1 == array_element_type_2
+            }
+
+            // For return types, ensure that the boxed types match
+            (&Type::Return(ref return_type_1), &Type::Return(ref return_type_2)) => {
+                return_type_1 == return_type_2
             }
 
             // (&Type::Func(ref f), &Type::Func(ref other)) => Rc::ptr_eq(f, other),
