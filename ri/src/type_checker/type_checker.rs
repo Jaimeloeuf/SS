@@ -70,32 +70,36 @@ impl TypeChecker {
                     .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
             Stmt::Func(ref identifier_token, ref params, ref body) => {
+                // Clone the function stmt as it will be stored as part of the Type::Func(..),
+                // So that it can be used to type check the function again during a function call,
+                // When types are available for the parameters by using the types of the arguments.
                 let function_stmt = stmt.clone();
 
-                let function_type = Type::Func(
-                    params.len(),
-                    Box::new(Type::Lazy),
-                    Box::new(function_stmt.clone()),
-                );
+                let identifier_string = identifier_token.lexeme.as_ref().unwrap();
 
-                // Add function to scope before type checking function body to allow function to refer to itself recursively
+                // Add function to scope before type checking function body to allow function to refer to itself recursively.
+                // Since function body is not type checked yet, Return type is unknown therefore this uses Type::Lazy as a placeholder
+                // Num of params is stored to ensure that the number of arguments matches it, instead of param types since there isn't any
                 self.scopes.last_mut().unwrap().insert(
-                    identifier_token.lexeme.as_ref().unwrap().clone(),
-                    function_type,
+                    identifier_string.clone(),
+                    Type::Func(
+                        params.len(),
+                        Box::new(Type::Lazy),
+                        Box::new(function_stmt.clone()),
+                    ),
                 );
 
-                let return_type = self.resolve_function(
-                    identifier_token.lexeme.as_ref().unwrap().clone(),
-                    params,
-                    body,
-                )?;
+                // Call resolve function to continue type checking function body with Type::Lazy for the parameters
+                // Method will return the function's return type IF it is able to resolve it
+                let return_type = self.resolve_function(identifier_string.clone(), params, body)?;
 
+                // Create function type again, this time hopefully with a return type, update scope and return this
                 let function_type =
                     Type::Func(params.len(), Box::new(return_type), Box::new(function_stmt));
-                self.scopes.last_mut().unwrap().insert(
-                    identifier_token.lexeme.as_ref().unwrap().clone(),
-                    function_type.clone(),
-                );
+                self.scopes
+                    .last_mut()
+                    .unwrap()
+                    .insert(identifier_string.clone(), function_type.clone());
                 return Ok(function_type);
             }
             // Stmt::AnonymousFunc(ref params, ref body) => {
@@ -260,15 +264,11 @@ impl TypeChecker {
 
                 // Type check the function again, this time with the types of the arguments as types of the parameters
                 if let Stmt::Func(ref identifier_token, ref params, ref body) = *function_stmt {
-                    // @todo
-                    let return_type =
-                        self.check_function(identifier_token, params, argument_types, body)?;
+                    // The type of the call expression is the return type of the function called after resolving it
+                    self.check_function(identifier_token, params, argument_types, body)?
                 } else {
                     panic!("Internal Error: Expected Stmt::Func to be stored in Type::Func")
                 }
-
-                // The type of a call expression is the return type of the function that is called
-                *return_type
             }
             Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
             Expr::Literal(ref literal) => match literal {
