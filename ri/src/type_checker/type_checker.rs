@@ -440,6 +440,8 @@ impl TypeChecker {
                 return Ok(Type::Lazy);
             }
         }
+        // Save parent function's name first if any before assigning the name of the current function
+        let parent_function_name = self.current_function.clone();
         self.current_function = Some(identifier_token.lexeme.as_ref().unwrap().clone());
 
         self.begin_scope();
@@ -470,6 +472,9 @@ impl TypeChecker {
         };
 
         self.end_scope();
+
+        // Restore the name of the parent function
+        self.current_function = parent_function_name;
 
         Ok(
             // If there are no return statements, default return type is Null
