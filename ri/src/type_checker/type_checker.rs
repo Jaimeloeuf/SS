@@ -33,11 +33,16 @@ impl TypeChecker {
         Ok(())
     }
 
-    // Resolve statements 1 by 1
-    // Change name to resolve node? Cause we start from a single node and then can be called recursively for every node
+    /// resolve_ast(Vec_of_stmts)
+    ///
+    /// Resolve statements 1 by 1 by iterating through the vec of statements instead of calling this recursively for efficiency
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeCheckerError> {
         for ref stmt in ast {
-            self.resolve_statement(stmt)?;
+            let stmt_type = self.resolve_statement(stmt)?;
+            if let Type::Return(_) = stmt_type {
+                // Stop and bubble up stmt_type if Type::Return, to bubble through everything and let function checker handle it
+                return Ok(stmt_type);
+            }
         }
 
         // Default type of the statement
