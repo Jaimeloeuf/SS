@@ -370,12 +370,22 @@ impl TypeChecker {
         })
     }
 
-    fn resolve_function(
+    fn check_function(
         &mut self,
-        function_name: String,
+        identifier_token: &Token,
         param_tokens: &Vec<Token>,
+        argument_types: Option<Vec<Type>>,
         body: &Stmt,
     ) -> Result<Type, TypeCheckerError> {
+        let function_name: String = identifier_token.lexeme.as_ref().unwrap().clone();
+
+        // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
+        if let Some(ref parent_function_name) = self.current_function {
+            if parent_function_name == &function_name {
+                return Ok(Type::Lazy);
+            }
+        }
+
         // Save parent function's name first if any before assigning the name of the current function
         let parent_function_name = self.current_function.clone();
         self.current_function = Some(function_name);
@@ -384,80 +394,26 @@ impl TypeChecker {
 
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();
-        for param_token in param_tokens {
-            // Save type of every parameter into scope as Type::Lazy during this function definition type checking process,
-            // To defer type checking for statements that use these parameters till function call type checks,
-            // And during which the type of the arguments will be available
-            scope.insert(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
-        }
-
-        // Assuming most functions only have 1 return statement
-        let mut return_types = Vec::<Type>::with_capacity(1);
-
-        // Body must be a block statement, even for anonymous arrow functions
-        // arrow functions is just syntatic sugar in this implementation, so they are actually also parsed into block statements
-        if let &Stmt::Block(ref stmts) = body {
-            for stmt in stmts {
-                let stmt_type = self.resolve_statement(stmt)?;
-                if let Type::Return(_) = stmt_type {
-                    return_types.push(stmt_type);
+        match argument_types {
+            // If argument types are given (type checking function call), use them to type check function body
+            Some(mut argument_types) => {
+                for (i, param_token) in param_tokens.into_iter().enumerate() {
+                    scope.insert(
+                        param_token.lexeme.as_ref().unwrap().clone(),
+                        // Remove instead of cloning as vec is no longer needed after this operation
+                        argument_types.remove(i),
+                    );
                 }
             }
-        } else {
-            panic!("Internal Error: Function body can only be Stmt::Block");
-        };
-
-        self.end_scope();
-
-        // Restore the name of the parent function
-        self.current_function = parent_function_name;
-
-        Ok(
-            // If there are no return statements, default return type is Null
-            if return_types.is_empty() {
-                Type::Null
-            } else {
-                // @todo Optimize by skipping the first element, otherwise it will be compared with itself
-                for return_type in &return_types {
-                    if return_type != &return_types[0] {
-                        return Err(TypeCheckerError::InternalError(
-                            "TESTING - Function must have the same return type throughout the function body"
-                        ));
-                    }
+            // If argument types not given (type checking function definition), use Type::Lazy to defer some type checking
+            None => {
+                for param_token in param_tokens {
+                    // Save type of every parameter into scope as Type::Lazy during this function definition type checking process,
+                    // To defer type checking for statements that use these parameters till function call type checks,
+                    // And during which the type of the arguments will be available
+                    scope.insert(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
                 }
-
-                // If all return types are the same, then use first type as function return type
-                return_types[0].clone()
-            },
-        )
-    }
-
-    fn check_function(
-        &mut self,
-        identifier_token: &Token,
-        param_tokens: &Vec<Token>,
-        argument_types: Vec<Type>,
-        body: &Stmt,
-    ) -> Result<Type, TypeCheckerError> {
-        // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
-        if let Some(ref parent_function_name) = self.current_function {
-            if parent_function_name == identifier_token.lexeme.as_ref().unwrap() {
-                return Ok(Type::Lazy);
             }
-        }
-        // Save parent function's name first if any before assigning the name of the current function
-        let parent_function_name = self.current_function.clone();
-        self.current_function = Some(identifier_token.lexeme.as_ref().unwrap().clone());
-
-        self.begin_scope();
-
-        // A scope is always expected to exists, including the global top level scope
-        let scope = self.scopes.last_mut().unwrap();
-        for (i, param_token) in param_tokens.into_iter().enumerate() {
-            scope.insert(
-                param_token.lexeme.as_ref().unwrap().clone(),
-                argument_types[i].clone(),
-            );
         }
 
         // Assuming most functions only have 1 return statement
@@ -485,6 +441,10 @@ impl TypeChecker {
             // If there are no return statements, default return type is Null
             if return_types.is_empty() {
                 Type::Null
+            } else if return_types.len() == 1 {
+                // If there is only a single return, use the type immediately without further checks
+                // Move out from vec since vec is no longer needed
+                return_types.remove(0)
             } else {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
@@ -495,8 +455,8 @@ impl TypeChecker {
                     }
                 }
 
-                // If all return types are the same, then use first type as function return type
-                return_types[0].clone()
+                // If all return types are the same, then move out first type as function return type
+                return_types.remove(0)
             },
         )
     }
