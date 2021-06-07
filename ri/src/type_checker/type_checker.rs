@@ -402,14 +402,17 @@ impl TypeChecker {
 
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();
+
+        // Hard to merge with closures, thus 2 seperate loop
         match argument_types {
             // If argument types are given (type checking function call), use them to type check function body
             Some(mut argument_types) => {
-                for (i, param_token) in param_tokens.into_iter().enumerate() {
+                for param_token in param_tokens {
                     scope.insert(
                         param_token.lexeme.as_ref().unwrap().clone(),
                         // Remove instead of cloning as vec is no longer needed after this operation
-                        argument_types.remove(i),
+                        // Always remove the first element, since after each remove all elements will be shifted left
+                        argument_types.remove(0),
                     );
                 }
             }
