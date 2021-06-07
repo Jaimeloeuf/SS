@@ -94,9 +94,9 @@ impl TypeChecker {
                     ),
                 );
 
-                // Call resolve function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve it
-                let return_type = self.resolve_function(identifier_string.clone(), params, body)?;
+                // Call check function to continue type checking function body with Type::Lazy for the parameters
+                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
+                let return_type = self.check_function(identifier_token, params, None, body)?;
 
                 // Create function type again, this time hopefully with a return type, update scope and return this
                 let function_type =
@@ -270,7 +270,15 @@ impl TypeChecker {
                 // Type check the function again, this time with the types of the arguments as types of the parameters
                 if let Stmt::Func(ref identifier_token, ref params, ref body) = *function_stmt {
                     // The type of the call expression is the return type of the function called after resolving it
-                    self.check_function(identifier_token, params, argument_types, body)?
+                    let return_type =
+                        self.check_function(identifier_token, params, Some(argument_types), body)?;
+
+                    // Must parse out inner type as call expr itself should not be able to bubble up the return
+                    if let Type::Return(returned_type) = return_type {
+                        *returned_type
+                    } else {
+                        return_type
+                    }
                 } else {
                     panic!("Internal Error: Expected Stmt::Func to be stored in Type::Func")
                 }
