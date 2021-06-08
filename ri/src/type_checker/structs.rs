@@ -41,10 +41,10 @@ pub enum Type {
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
-    /// Func(function_stmt, number_of_parameters, return_type)
+    /// Func(number_of_parameters, function_stmt)
     ///
     /// The Function's AST node is stored so that it can be used to type check again when a function call is made
-    Func(usize, Box<Type>, Box<Stmt>),
+    Func(usize, Box<Stmt>),
 
     /// Return is a special type that wraps a Type,
     /// The point of the Return type is to allow type checker to know and let it bubble up till a handler

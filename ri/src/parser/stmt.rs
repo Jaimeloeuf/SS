@@ -15,7 +15,7 @@ pub enum Stmt {
     /// Usually evaluated for its side effects, e.g. a function call
     Expr(Expr),
 
-    /// Const(identifier_token, initial_value)
+    /// Const(identifier_token, value)
     Const(Token, Expr),
 
     /// A block stmt is just a vector of all the stmts defined in that block

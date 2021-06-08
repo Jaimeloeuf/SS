@@ -80,31 +80,27 @@ impl TypeChecker {
                 // When types are available for the parameters by using the types of the arguments.
                 let function_stmt = stmt.clone();
 
+                let function_type = Type::Func(params.len(), Box::new(function_stmt));
+
                 let identifier_string = identifier_token.lexeme.as_ref().unwrap();
 
                 // Add function to scope before type checking function body to allow function to refer to itself recursively.
-                // Since function body is not type checked yet, Return type is unknown therefore this uses Type::Lazy as a placeholder
-                // Num of params is stored to ensure that the number of arguments matches it, instead of param types since there isn't any
-                self.scopes.last_mut().unwrap().insert(
-                    identifier_string.clone(),
-                    Type::Func(
-                        params.len(),
-                        Box::new(Type::Lazy),
-                        Box::new(function_stmt.clone()),
-                    ),
-                );
-
-                // Call check function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
-                let return_type = self.check_function(identifier_token, params, None, body)?;
-
-                // Create function type again, this time hopefully with a return type, update scope and return this
-                let function_type =
-                    Type::Func(params.len(), Box::new(return_type), Box::new(function_stmt));
+                // Num of params is stored to ensure number of arguments matches in function call.
+                // Param types are not available as the language has no type annotations, thus all param types are "generic",
+                // And are only type checked when function is called, with arguments' types as param types for checking.
+                // Since function body is not type checked yet, Return type is unknown therefore it is not stored
                 self.scopes
                     .last_mut()
                     .unwrap()
                     .insert(identifier_string.clone(), function_type.clone());
+
+                // Call check function to continue type checking function body with Type::Lazy for the parameters
+                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
+                // HOWEVER, the return type is not needed, since return type of a function is only used during the,
+                // type checking process of a function call, to determine the type of the function call expression.
+                let _return_type = self.check_function(identifier_token, params, None, body)?;
+
+                // Return function_type as the type of this function definition
                 return Ok(function_type);
             }
             // Stmt::AnonymousFunc(ref params, ref body) => {
