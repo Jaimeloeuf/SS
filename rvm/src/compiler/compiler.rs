@@ -194,7 +194,7 @@ impl Compiler {
         // Essentially, 'reserving' the stack slots here first when parameters are defined, and generate opcodes to push these values onto stack later in the call method
         //
         // When compiling a function call, its arguments will be compiled into codes that will push values onto the stack,
-        // in the order that arguements are used, which will align with the defined stack index created here
+        // in the order that arguments are used, which will align with the defined stack index created here
         for parameter_identifier in parameter_identifiers {
             self.declare_const(&parameter_identifier)?;
         }
@@ -551,9 +551,9 @@ impl Compiler {
         }
         .clone();
 
-        // number_of_args here means, 'number of arguements used for this function call'
+        // number_of_args here means, 'number of arguments used for this function call'
         let number_of_args: usize = if self.parser.check(TokenType::RightParen) {
-            // If function call closed with no arguements, return 0
+            // If function call closed with no arguments, return 0
             0
         } else {
             let mut _number_of_args = 0;
@@ -598,7 +598,7 @@ impl Compiler {
         )?;
 
         // Once the argument count has been checked to match the number of parameters defined,
-        // The use of number_of_args here means, 'number of arguements on stack'
+        // The use of number_of_args here means, 'number of arguments on stack'
         self.emit_code(OpCode::CALL(number_of_args));
 
         Ok(())

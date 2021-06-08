@@ -5,12 +5,6 @@ use crate::token::Token;
 
 use std::collections::hash_map::HashMap;
 
-// enum Action {
-//     Declare,
-//     Define,
-//     DeclareAndDefine,
-// }
-
 impl TypeChecker {
     pub fn begin_scope(&mut self) {
         self.scopes.push(HashMap::<String, Type>::new());
@@ -54,42 +48,4 @@ impl TypeChecker {
                 .insert(id.to_string(), Type::Null);
         }
     }
-
-    // Unified function to
-    // self.scope(Action::Declare, token)?;
-    // self.scope(Action::Define, token)?;
-    // self.scope(Action::DeclareAndDefine, token)?;
-    //
-    // Instead of having seperate method calls
-    // fn scope(&mut self, action: Action, token: &Token) -> Result<(), TypeCheckerError> {
-    //     // A scope is always expected to exists, including the global top level scope
-    //     let scope = self.scopes.last_mut().unwrap();
-
-    //     // Get lexeme as identifier from token
-    //     let identifier = token.lexeme.as_ref().unwrap();
-
-    //     Ok(match action {
-    //         Action::Define => {
-    //             // Indicate initializer resolved
-    //             scope.insert(identifier.clone(), true);
-    //         }
-    //         Action::Declare | Action::DeclareAndDefine => {
-    //             if scope.contains_key(identifier) {
-    //                 return Err(TypeCheckerError::IdentifierAlreadyUsed(
-    //                     token.clone(),
-    //                     identifier.clone(),
-    //                 ));
-    //             } else {
-    //                 scope.insert(
-    //                     identifier.clone(),
-    //                     match action {
-    //                         Action::Declare => false, // Indicate initializer not resolved
-    //                         Action::DeclareAndDefine => true, // Indicate initializer resolved
-    //                         Action::Define => panic!("Internal Error Action::Define?!?"),
-    //                     },
-    //                 );
-    //             };
-    //         }
-    //     })
-    // }
 }

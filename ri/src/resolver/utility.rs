@@ -69,7 +69,7 @@ impl Resolver {
         scope.insert(identifier.clone(), true);
     }
 
-    // Declare that a identifier was found in the current scope
+    // Declare that a identifier was found in the current scope, and set it to have completed initialization
     pub fn declare_and_define(&mut self, token: &Token) -> Result<(), ResolvingError> {
         // A scope is always expected to exists, including the global top level scope
         let scope = self.scopes.last_mut().unwrap();

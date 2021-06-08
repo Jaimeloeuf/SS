@@ -360,7 +360,7 @@ impl Parser {
         Ok(expr)
     }
 
-    // Refactored out function to handle function calls by parsing their arguements
+    // Handle function calls by parsing for any arguments
     fn finish_call(&mut self, callee: Expr) -> Result<Expr, ParsingError> {
         let mut arguments: Vec<Expr> = Vec::new();
 

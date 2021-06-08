@@ -74,9 +74,7 @@ impl VM {
                     // Runtime check on debug builds to ensure number of pops less than number of values on stack
                     #[cfg(debug_assertions)]
                     if stack.len() == 0 {
-                        panic!(format!(
-                            "VM Debug Error: Attempt to pop value from empty Stack"
-                        ));
+                        panic!("VM Debug Error: Attempt to pop value from empty Stack");
                     }
 
                     stack.pop();
@@ -86,11 +84,11 @@ impl VM {
                     // Runtime check on debug builds to ensure number of pops less than number of values on stack
                     #[cfg(debug_assertions)]
                     if stack.len() < *number_of_pops {
-                        panic!(format!(
+                        panic!(
                             "VM Debug Error: Popping {} values from Stack of {} values",
                             number_of_pops,
                             stack.len()
-                        ));
+                        );
                     }
 
                     // https://stackoverflow.com/questions/28952411/what-is-the-idiomatic-way-to-pop-the-last-n-elements-in-a-mutable-vec
@@ -146,12 +144,12 @@ impl VM {
                     }
                 }
 
-                OpCode::CALL(number_of_arguements_on_stack) => {
+                OpCode::CALL(number_of_arguments_on_stack) => {
                     // 'number of arguments on stack' is used to get function value on stack
                     // No index check required as this will not panic, since this can never be out of bounds,
                     // because index used (stack.len() - 1 - usize) is garunteed to be less than stack.len()
                     // @todo Might go out of lower bounds..
-                    match stack.remove(stack.len() - 1 - number_of_arguements_on_stack) {
+                    match stack.remove(stack.len() - 1 - number_of_arguments_on_stack) {
                         Value::Fn(opcode_index) => {
                             // Calculate the return opcode index after function body executes a return instruction
                             // EITHER set as ip + 1 here and return set ip = caller_ip before calling continue to skip end of loop ip increment
@@ -296,11 +294,11 @@ impl VM {
                     // Runtime check on debug builds to ensure number of pops less than number of values on stack
                     #[cfg(debug_assertions)]
                     if stack.len() < *number_of_pops {
-                        panic!(format!(
+                        panic!(
                             "VM Debug Error: Popping {} values from Stack of {} values",
                             number_of_pops,
                             stack.len()
-                        ));
+                        );
                     }
 
                     // POP multiple values off the stack at once

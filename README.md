@@ -50,8 +50,9 @@ Currently:
 - Working on different implementations
     1. [An interpreter](./rust) in Rust for a modified lox language, inspired by this [book](https://craftinginterpreters.com/) and [rlox](https://github.com/julioolvr/rlox)
         - The interpreter is not (at least, not yet) for SS, it is for a modified version of of the lox language, which I am building to learn more about building interpreters.
+        - Currently works with basic static type checking using type inference
     2. A [bytecode virtual machine](./rvm) written in rust
-        - Just like the interpreter, this is probably not the final version of SS, mainly a modified version of the lox language too, used to experiment with VM design
+        - Just like the interpreter, this is not the final version of SS, mainly a modified version of the lox language too, used to experiment with VM design
     3. A [Simply Typed Lambda Calculus](<./Simply Typed Lambda Calculus>) to experiment with lambda calculus and type inference.
 
 
@@ -62,10 +63,10 @@ This mono repo contains the following sub repos and their commit prefixes:
     - Commits prefixed with ```ri:``` or ```[rust-i]```
 - [rvm](./rvm)
     - Bytecode virtual machine written in Rust
-    - Commits prefixed with ```[rvm]``` or ```rvm:```
+    - Commits prefixed with ```rvm:``` or ```[rvm]```
 - [Simply Typed Lambda Calculus](./Simply%20Typed%20Lambda%20Calculus)
     - Simply Typed Lambda Calculus implemented in JavaScript, with a focus on type inference
-    - Commits prefixed with ```[stlc]``` or ```stlc:```
+    - Commits prefixed with ```stlc:``` or ```[stlc]```
 
 
 ## Author, Credits, License, Contributing

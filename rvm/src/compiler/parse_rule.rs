@@ -70,7 +70,7 @@ impl Precedence {
 
 /*
     Type definition for methods on compiler struct
-    There are 2 types of methods, ones that take a can_assign arguement and others that dont
+    There are 2 types of methods, ones that take a can_assign argument and others that dont
     To have both without changing the function signature of the methods that do not need that argument
     These methods will be wrapped in a function with a function signature that takes in the extra argument and discard it
 */

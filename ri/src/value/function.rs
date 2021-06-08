@@ -72,7 +72,7 @@ impl Callable for Function {
     fn call(
         &self,
         interpreter: &mut Interpreter,
-        mut arguements: Vec<Value>,
+        mut arguments: Vec<Value>,
     ) -> Result<Value, RuntimeError> {
         // Destructure out Stmt::Function items to use
         let (parameters, body) = match &self.declaration {
@@ -108,13 +108,13 @@ impl Callable for Function {
         // Insert all the arguments into the new environment/scope of the function
         for (index, token) in parameters.iter().enumerate() {
             if let Some(ref parameter_name) = token.lexeme {
-                // Use clone since parameter_name String is still in the Literal and arguement Values are still owned by the Vector
-                // environment.define(parameter_name.clone(), arguements[index].clone())
+                // Use clone since parameter_name String is still in the Literal and argument Values are still owned by the Vector
+                // environment.define(parameter_name.clone(), arguments[index].clone())
                 //
                 // If I remove from vec instead of clone, I technically dont even need index anymore
                 // And also this will introduce new issues
                 // Need to check if there are parameters but no arguments, then skip it and pass in Null?
-                environment.define(parameter_name.clone(), arguements.remove(0))
+                environment.define(parameter_name.clone(), arguments.remove(0))
             } else {
                 return Err(RuntimeError::InternalError(format!(
                     "Function parameter token missing String literal!"

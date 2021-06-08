@@ -56,7 +56,7 @@ impl Interpreter {
         let parent_env = Rc::clone(&self.env);
 
         // Set the new environment directly onto the struct, so other methods can access it directly
-        // @todo Can be better written, by changing all the methods to take current scope as function arguement,
+        // @todo Can be better written, by changing all the methods to take current scope as function argument,
         // @todo instead of saving current environment temporarily and attaching the new environment to self.
         self.env = Rc::new(RefCell::new(environment));
 
@@ -342,7 +342,7 @@ impl Interpreter {
             // Expr::Call is a function call, which is an expression that evaluates to whatever the function returns
             // Checks to ensure the expression is a callable object
             // Evaluate and store all the arguments
-            // Use callable.call and pass in the arguements
+            // Use callable.call and pass in the arguments
             //
             // This only takes care of checking the function expression callable part and arguments,
             // Calling/invoking/executing the function including creating a new scope is all taken care of in the call method
@@ -351,7 +351,7 @@ impl Interpreter {
                 // Evaluate expression and ensure that the result is a callable function
                 let callable = self.interpret_expr(callee)?.callable(token.line)?;
 
-                // Create evaluated arguments list using length of arguements
+                // Create evaluated arguments list using length of arguments
                 // @todo If supporting variadic functions or what not, then dont use with capacity since can change
                 // @todo And also dont use it if we dont check for arity
                 // @todo Arity should be checked for in parser too right?
