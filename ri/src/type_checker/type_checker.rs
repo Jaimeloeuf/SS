@@ -98,7 +98,8 @@ impl TypeChecker {
                 // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
                 // HOWEVER, the return type is not needed, since return type of a function is only used during the,
                 // type checking process of a function call, to determine the type of the function call expression.
-                let _return_type = self.check_function(identifier_token, params, None, body)?;
+                let _return_type =
+                    self.check_function(Some(identifier_token), params, None, body)?;
 
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
@@ -392,23 +393,28 @@ impl TypeChecker {
 
     fn check_function(
         &mut self,
-        identifier_token: &Token,
+        identifier_token: Option<&Token>,
         param_tokens: &Vec<Token>,
         argument_types: Option<Vec<Type>>,
         body: &Stmt,
     ) -> Result<Type, TypeCheckerError> {
-        let function_name: String = identifier_token.lexeme.as_ref().unwrap().clone();
-
-        // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
-        if let Some(ref parent_function_name) = self.current_function {
-            if parent_function_name == &function_name {
-                return Ok(Type::Lazy);
-            }
-        }
-
         // Save parent function's name first if any before assigning the name of the current function
         let parent_function_name = self.current_function.clone();
-        self.current_function = Some(function_name);
+
+        if let Some(identifier_token) = identifier_token {
+            let function_name: String = identifier_token.lexeme.as_ref().unwrap().clone();
+
+            // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
+            if let Some(ref parent_function_name) = self.current_function {
+                if parent_function_name == &function_name {
+                    println!("calling itself recursively, returning lazy ",);
+                    return Ok(Type::Lazy);
+                }
+            }
+            self.current_function = Some(function_name);
+        } else {
+            self.current_function = None;
+        }
 
         self.begin_scope();
 
