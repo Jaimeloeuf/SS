@@ -235,10 +235,10 @@ impl TypeChecker {
                     Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
                     If this resolves to a valid Type::Func(..), then extract the tuple's value.
                 */
-                let (number_of_parameters, return_type, function_stmt) =
+                let (number_of_parameters, function_stmt) =
                     match self.resolve_expression(callee_identifier_expr)? {
-                        Type::Func(number_of_parameters, return_type, function_stmt) => {
-                            (number_of_parameters, return_type, function_stmt)
+                        Type::Func(number_of_parameters, function_stmt) => {
+                            (number_of_parameters, function_stmt)
                         }
 
                         value_type => {
