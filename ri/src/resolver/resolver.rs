@@ -184,7 +184,8 @@ impl Resolver {
         // Then enumerate it to get both the scope and the index (which is the number of scopes from current local scope)
         for (i, ref scope) in self.scopes.iter().rev().skip(1).enumerate() {
             if scope.contains_key(&identifier) {
-                // Return 'i + 1', instead of 'i', because we skipped the first one, but i still starts from 0
+                // Set scope_depth to 'i + 1' instead of 'i', because the last scope is skipped,
+                // But because 'i' is the enumerated index, it is unaffected by .skip(1) and starts at 0
                 // Where scope distance of 0, means current local scope.
                 return Ok(i + 1);
             }
@@ -211,20 +212,16 @@ impl Resolver {
         }
 
         // Body must be a block statement, even for anonymous arrow functions
-        // arrow functions is just syntatic sugar in this implementation, so they are actually also parsed into block statements
-        match body {
-            &Stmt::Block(ref stmts) => {
-                for stmt in stmts {
-                    self.resolve_statement(stmt)?;
-                }
+        // arrow functions is just syntatic sugar and are also parsed into block statements
+        if let &Stmt::Block(ref stmts) = body {
+            for stmt in stmts {
+                self.resolve_statement(stmt)?;
             }
-
-            _ => {
-                return Err(ResolvingError::InternalError(
-                    "Function body can only be Stmt::Block",
-                ))
-            }
-        }
+        } else {
+            return Err(ResolvingError::InternalError(
+                "Function body can only be Stmt::Block",
+            ));
+        };
 
         self.end_scope();
         self.in_function = is_parent_in_function;
