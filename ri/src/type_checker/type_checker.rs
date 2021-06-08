@@ -263,20 +263,36 @@ impl TypeChecker {
                     argument_types.push(self.resolve_expression(arg)?);
                 }
 
-                // Type check the function again, this time with the types of the arguments as types of the parameters
-                if let Stmt::Func(ref identifier_token, ref params, ref body) = *function_stmt {
-                    // The type of the call expression is the return type of the function called after resolving it
-                    let return_type =
-                        self.check_function(identifier_token, params, Some(argument_types), body)?;
+                // Get the items needed to type check function from one of the Function type AST node
+                let (optional_identifier_token, param_tokens, argument_types, body) =
+                    match *function_stmt {
+                        Stmt::Func(ref identifier_token, ref params, ref body) => {
+                            println!(
+                                "Calling function {}",
+                                identifier_token.lexeme.as_ref().unwrap().clone()
+                            );
+                            (Some(identifier_token), params, Some(argument_types), body)
+                        }
+                        Stmt::AnonymousFunc(ref params, ref body) => {
+                            (None, params, Some(argument_types), body)
+                        }
+                        _ => panic!("Internal Error: Expected Func type stmt body in Type::Func"),
+                    };
 
-                    // Must parse out inner type as call expr itself should not be able to bubble up the return
-                    if let Type::Return(returned_type) = return_type {
-                        *returned_type
-                    } else {
-                        return_type
-                    }
+                // Type check the function again, this time with the types of the arguments as types of the parameters
+                // The type of the call expression is the return type of the function called after resolving it
+                let return_type = self.check_function(
+                    optional_identifier_token,
+                    param_tokens,
+                    argument_types,
+                    body,
+                )?;
+
+                // Must parse out inner type as call expr itself should not be able to bubble up the return
+                if let Type::Return(returned_type) = return_type {
+                    *returned_type
                 } else {
-                    panic!("Internal Error: Expected Stmt::Func to be stored in Type::Func")
+                    return_type
                 }
             }
             Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
