@@ -15,6 +15,34 @@ pub struct Interpreter {
     env: Rc<RefCell<Environment>>,
 }
 
+// Macro to perform a binary arithmetic operation (+, -, *, /) on 2 operands
+macro_rules! arithmetic_binary_op {
+    // $operator    -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    // $left_value  -> Left operand
+    // $right_value -> Right operand
+    // $op_name     -> String literal name for the actual binary operation, used in error output for debugging
+    ($operator:tt, $left_value:expr, $right_value:expr, $op_name:literal) => {
+        match ($left_value, $right_value) {
+            (Value::Number(left_number), Value::Number(right_number)) => Ok(Value::Number(left_number $operator right_number)),
+            _ => Err(RuntimeError::TypeError($op_name.to_string())),
+        }
+    };
+}
+
+// Macro to perform a numeric comparison operation (>, >=, <, <=) on 2 operands
+macro_rules! numeric_comparison_op {
+    // $operator    -> accepts a TokenTree -> Single Token -> Punctuation -> https://doc.rust-lang.org/reference/tokens.html#punctuation
+    // $left_value  -> Left operand
+    // $right_value -> Right operand
+    // $op_name     -> String literal name for the actual binary operation, used in error output for debugging
+    ($operator:tt, $left_value:expr, $right_value:expr, $op_name:literal) => {
+        match ($left_value, $right_value) {
+            (Value::Number(left_number), Value::Number(right_number)) => Ok(Value::Bool(left_number $operator right_number)),
+            _ => Err(RuntimeError::TypeError($op_name.to_string())),
+        }
+    };
+}
+
 impl Interpreter {
     // pub fn interpret( stmts: Vec<Stmt>, writer: Rc<RefCell<mut io::Write>>) -> Option<RuntimeError> {
     pub fn interpret(stmts: Vec<Stmt>) -> Option<RuntimeError> {
@@ -92,7 +120,7 @@ impl Interpreter {
                 // Value::Return variant will be bubbled up all the way to Function's call method, where it first called interpret_block
                 // Inside the call method, it will unwrap actual return value out from Value::Return and pass it back to interpret_expr!
                 //
-                // Using _ as we just need to match for this pattern, and dont want to move out the value inside
+                // Using _ to just match this pattern without using/moving out the nested value
                 if let Some(Value::Return(_)) = return_value {
                     break;
                 }
@@ -127,8 +155,8 @@ impl Interpreter {
         Ok(return_value)
     }
 
-    // Expects ref to a Stmt rather than a Stmt, because sometimes we want caller to keep ownership of the Stmt value,
-    // even after calling interpret_stmt to call interpret_stmt multiple times with the same Stmt.
+    // Expects ref to a Stmt rather than a Stmt, as caller might need to keep ownership of the Stmt value sometimes,
+    // even after calling interpret_stmt, e.g. to call interpret_stmt multiple times with the same Stmt.
     // Examples include the body of a loop and body of a function.
     //
     // Returns a Value Option because not every statement evaluates to a Value
@@ -160,10 +188,10 @@ impl Interpreter {
             // Create a new Value of Function type and insert into environment
             Stmt::Func(ref name_token, _, _) => {
                 // Although the token definitely have a string lexeme if scanned correctly,
-                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Rust treats this as a pattern matching context with a refutable pattern, so else case must be handled,
                 // Which only happens if scanner failed to save String lexeme for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                // Since this is a token of Identifier type, we can use the lexeme directly
+                // Since this is a token of Identifier type, lexeme can be used directly
                 if let Some(ref function_name) = name_token.lexeme {
                     //
                     // Pass in current environment/scope as the function's closure
@@ -190,7 +218,6 @@ impl Interpreter {
                 }
             }
 
-            // @todo Does return stmt really need to store the token?
             // Return statement calls intepret_expr to interpret the expression on its right.
             // Wrap the value of the evaluated expression, inside the special Value::Return variant
             // So as to differentiate this from a normal expression statement value.
@@ -198,20 +225,7 @@ impl Interpreter {
             // 'return;' will be auto parsed to 'return Value::Null;' by parser
             Stmt::Return(_, ref expr) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
 
-            // @todo Maybe do a pre-check in parser somehow to ensure that the evaluated Value must be a Bool
             Stmt::If(ref condition, ref true_branch, ref else_branch) => {
-                // If/Else version using bool_or_err method on Value
-                // self.interpret_stmt(if self.interpret_expr(condition)?.bool_or_err(
-                //     "Invalid condition value type, only Boolean values can be used as conditionals!"
-                // )? {
-                //     true_branch
-                // } else {
-                //     // Only return else_branch if any, else end function
-                //     match else_branch {
-                //         Some(ref else_branch) => else_branch,
-                //         _ => return Ok(None), // Return to break out of this expr passed into interpret_stmt method call
-                //     }
-                // })?
                 let branch = if self.interpret_expr(condition)?.bool_or_err(
                     "Invalid condition value type, only Boolean values can be used as conditionals!"
                 )? {
@@ -257,10 +271,10 @@ impl Interpreter {
             // Constant definition statement, saves a Value into environment with the Const identifier as key
             Stmt::Const(ref token, ref expr) => {
                 // Although the token definitely have a string lexeme if scanned correctly,
-                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Rust treats this as a pattern matching context with a refutable pattern, so else case must be handled,
                 // Which only happens if scanner failed to save String lexeme for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                // Since this is a token of Identifier type, we can use the lexeme directly
+                // Since this is a token of Identifier type, lexeme can be used directly
                 if let Some(ref identifier) = token.lexeme {
                     // @todo This should be done in scanner/parser and not be a RuntimeError
                     // Check if the Const identifier has already been used in current scope
@@ -276,13 +290,13 @@ impl Interpreter {
                         Cannot compress code like above, because when running call to define method,
                         interpret_expr is ran first, and if the expr is a Expr::Const or something that accesses env,
                         with a borrow() or borrow_mut() then there will be a borrow error and panic.
-                        Although it isn't very intuitive, since we expect self.interpret_expr(expr)? to run to completion
+                        Although it isn't very intuitive, since self.interpret_expr(expr)? is expected to run to completion
                         before control is handed over to the define method call, it will not work if chained.
 
                         // The above code will cause SS code on the Next line to fail with a
                         // thread 'main' panicked at 'already mutably borrowed: BorrowError', src\interpreter\interpreter.rs
                         const a = 1;
-                        const b = a + 2; // Fails when we try to access a value from env to assign to a new key in env
+                        const b = a + 2; // Fails when accessing a value from env to assign to a new key in env
                     */
                     let expression = self.interpret_expr(expr)?;
                     self.env
@@ -291,7 +305,7 @@ impl Interpreter {
                     None
                 } else {
                     // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,
-                    // Because it attempts to print out the string literal which we know is missing, thus print with debug symbol instead
+                    // Because it attempts to print out the string literal which is missing, thus print with debug symbol instead
                     return Err(RuntimeError::InternalError(format!(
                         "Runtime Error: Unable to set value on const identifier -> {:?}\n{}",
                         token, "Parsing error: Const identifier missing string literal\n"
@@ -311,17 +325,15 @@ impl Interpreter {
 
             unmatched_stmt_variant => {
                 return Err(RuntimeError::InternalError(format!(
-                    // @todo Using debug symbol to print as stmt does not implement Display trait yet
-                    "Failed to interpret statement.\nUnimplemented Stmt variant: {:?}",
+                    "Failed to interpret statement.\nUnimplemented Stmt variant: {:#?}",
                     unmatched_stmt_variant
                 )));
             }
         })
     }
 
-    // Mutable ref to self needed because we are passing interpreter into the call method of callable trait
-    // and since the call method calls the interpret_block method which modifies the interpreter struct,
-    // a mutable ref to the interpreter struct is needed.
+    // Since interpreter might be passed into call method of callable trait, and it calls 'interpret_block',
+    // which can modify the interpreter struct, a mutable ref to self (interpreter struct) is needed.
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             // @todo Optimize this
@@ -385,17 +397,19 @@ impl Interpreter {
             // So unless we change this to Expr::Identifier / Expr::Value or we change the definition of Expr::Const, to one that points to all identifiers
             Expr::Const(ref token, ref distance) => {
                 // Although the token definitely have a string lexeme if scanned correctly,
-                // Rust treats this as a pattern matching context with a refutable pattern, so we have to deal with the else case,
+                // Rust treats this as a pattern matching context with a refutable pattern, so else case must be handled,
                 // Which only happens if scanner failed to save String lexeme for Identifier type Token
                 // Reference: https://stackoverflow.com/questions/41573764
-                // Since this is a token of Identifier type, we can use the lexeme directly
+                // Since this is a token of Identifier type, lexeme can be used directly
                 if let Some(ref identifier) = token.lexeme {
                     // @todo
                     // Reference: https://stackoverflow.com/questions/30414424
                     // Should use get_ref here instead of get to avoid cloning the value
                     // But that would require changing the method's return type
-                    // Should we even move out a Value in the first place? Shouldnt all the values be immutable?
+                    //  Should Value even be moved out in the first place? Shouldnt all the values be immutable?
                     // Or perhaps return a mutable ref from env hashmap and every modification is made directly on the hashmap without needing additional update logic?
+                    //
+                    // Match is used here to convert error type from EnvError to RuntimeError, instead of using ? operator to bubble it up directly
                     match self.env.borrow().get(identifier, *distance) {
                         Ok(value) => Ok(value),
                         // @todo When not found, should it be an environment error or runtime error?
@@ -411,7 +425,7 @@ impl Interpreter {
                     // Unlikely to happen because this will probably be caught by interpret_stmt's Const logic when setting a value
                     //
                     // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,
-                    // Because it attempts to print out the string literal which we know is missing, thus print with debug symbol instead
+                    // Because it attempts to print out the string literal which is missing, thus print with debug symbol instead
                     Err(RuntimeError::InternalError(format!(
                         "Runtime Error: Unable to read value on const identifier -> {:?}\n{}",
                         token, "Parsing error: Const identifier missing string literal\n"
@@ -497,6 +511,7 @@ impl Interpreter {
                         )),
                     },
 
+                    // @todo Not needed as case is covered in TypeChecker
                     operator => Err(RuntimeError::InternalError(format!(
                         "Invalid unary operator: {:?}",
                         operator
@@ -507,12 +522,13 @@ impl Interpreter {
             // Binary expression with an operator and 2 operands
             Expr::Binary(ref left, ref operator, ref right) => {
                 // This evaluates the Binary expression from left to right
-                // In certain cases, we might want to change this, to support bool short circuiting
+                // @todo Might want to change this for certain cases to support bool short circuiting
                 let left_value = self.interpret_expr(left)?;
                 let right_value = self.interpret_expr(right)?;
 
                 match &operator.token_type {
                     TokenType::Plus => {
+                        // arithmetic_binary_op!(+, left_value, right_value, "Invalid types used for addition!")
                         match (left_value, right_value) {
                             (Value::Number(left_number), Value::Number(right_number)) => {
                                 Ok(Value::Number(left_number + right_number))
@@ -534,43 +550,20 @@ impl Interpreter {
                     }
 
                     TokenType::Minus => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Number(left_number - right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for subtraction!",
-                                "Invalid types used for subtraction!".to_string(),
-                            )),
-                        }
+                        arithmetic_binary_op!(-, left_value, right_value, "Invalid types used for subtraction!")
                     }
 
                     TokenType::Star => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Number(left_number * right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for multiplication!",
-                                "Invalid types used for multiplication!".to_string(),
-                            )),
-                        }
+                        arithmetic_binary_op!(*, left_value, right_value, "Invalid types used for multiplication!")
                     }
 
                     TokenType::Slash => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Number(left_number / right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for division!",
-                                "Invalid types used for division!".to_string(),
-                            )),
-                        }
+                        arithmetic_binary_op!(/, left_value, right_value, "Invalid types used for division!")
                     }
 
-                    // @todo Can we add a try/catch? Then if fail, we return the Err(InternalErro or TypeErroor for cannot compare)
+                    // @todo Can we add a try/catch? Then if fail, return the Err(InternalError or TypeError for cannot compare)
                     // @todo Allows for comparison of primitive types and string so far, but might want to test for complex types like Functions
+                    // @todo Once type inference is done, only allow equality checks between item of same time, else panic
                     TokenType::EqualEqual => {
                         // Can do direct comparison here as long as Value enum derives the PartialEq trait
                         Ok(Value::Bool(left_value == right_value))
@@ -581,56 +574,27 @@ impl Interpreter {
                     }
 
                     TokenType::Greater => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Bool(left_number > right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for comparison!",
-                                "Invalid types used for comparison!".to_string(),
-                            )),
-                        }
+                        numeric_comparison_op!(>, left_value, right_value, "Invalid types used for Greater!")
                     }
 
                     TokenType::GreaterEqual => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Bool(left_number >= right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for comparison!",
-                                "Invalid types used for comparison!".to_string(),
-                            )),
-                        }
+                        numeric_comparison_op!(>=, left_value, right_value, "Invalid types used for Greater Equal!")
                     }
 
                     TokenType::Less => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Bool(left_number < right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for comparison!",
-                                "Invalid types used for comparison!".to_string(),
-                            )),
-                        }
+                        numeric_comparison_op!(<, left_value, right_value, "Invalid types used for Less!")
                     }
 
                     TokenType::LessEqual => {
-                        match (left_value, right_value) {
-                            (Value::Number(left_number), Value::Number(right_number)) => {
-                                Ok(Value::Bool(left_number <= right_number))
-                            }
-                            _ => Err(RuntimeError::TypeError(
-                                // "Invalid types used for comparison!",
-                                "Invalid types used for comparison!".to_string(),
-                            )),
-                        }
+                        numeric_comparison_op!(<=, left_value, right_value, "Invalid types used for Less Equal!")
                     }
-                    _ => Err(RuntimeError::InternalError(format!(
-                        "Invalid binary operator: {}",
-                        operator
-                    ))),
+
+                    unmatched_token_type => {
+                        panic!(
+                            "Internal Error: Invalid binary operator {:?}",
+                            unmatched_token_type
+                        )
+                    }
                 }
             }
 

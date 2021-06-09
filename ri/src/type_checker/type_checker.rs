@@ -371,13 +371,6 @@ impl TypeChecker {
                             ));
                         }
                     }
-                    // Alternative syntax
-                    // TokenType::Minus if expr_type == Type::Number => Type::Number,
-                    // TokenType::Minus => {
-                    //     return Err(TypeCheckerError::InternalError(
-                    //         "TESTING - Logical expressions must be bool",
-                    //     ));
-                    // }
                     invalid_token_type => panic!(
                         "Internal Error: Found {:?} in Expr::Unary",
                         invalid_token_type
