@@ -102,10 +102,27 @@ impl TypeChecker {
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
             }
-            // Stmt::AnonymousFunc(ref params, ref body) => {
-            //     // Unlike Stmt::Func, dont need to declare and define since Anonymous Functions are nameless, and will be bound to a Const identifier
-            //     self.resolve_function(params, body)?;
-            // }
+            Stmt::AnonymousFunc(ref params, ref body) => {
+                // Clone the function stmt as it will be stored as part of the Type::Func(..),
+                // So that it can be used to type check the function again during a function call,
+                // When types are available for the parameters by using the types of the arguments.
+                let function_stmt = stmt.clone();
+
+                let function_type = Type::Func(params.len(), Box::new(function_stmt));
+
+                // Function is not added to scope before type checking function body,
+                // Because anonymous functions cannot "directly" refer to itself recursively.
+                // They can do so by referencing the identifier this Expr::AnonymousFunc is binded to.
+
+                // Call check function to continue type checking function body with Type::Lazy for the parameters
+                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
+                // HOWEVER, the return type is not needed, since return type of a function is only used during the,
+                // type checking process of a function call, to determine the type of the function call expression.
+                let _return_type = self.check_function(None, params, None, body)?;
+
+                // Return function_type as the type of this function definition
+                return Ok(function_type);
+            }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
                 if self.check_expression(condition)? != Type::Bool {
                     return Err(TypeCheckerError::InternalError(
@@ -326,7 +343,9 @@ impl TypeChecker {
             Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
                 // @todo Ensure that the indexing expression is a unsigned integer, not just a number, to remove the runtime check
                 if self.check_expression(index_expression)? != Type::Number {
-                    return Err(TypeCheckerError::InternalError("TESTING"));
+                    return Err(TypeCheckerError::InternalError(
+                        "TESTING - index expression must be uint",
+                    ));
                 }
 
                 // This is the same as parsing out token from, Box<Expr::Const(token, _)> and calling self.get_type(token)
