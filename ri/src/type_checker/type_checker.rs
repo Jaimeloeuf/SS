@@ -9,7 +9,7 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 impl TypeChecker {
-    // Associated function to resolve a AST
+    // Associated function to type check a AST (where AST in this case is a vec of Stmt variants)
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeCheckerError> {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
@@ -33,12 +33,10 @@ impl TypeChecker {
         Ok(())
     }
 
-    /// resolve_ast(Vec_of_stmts)
-    ///
-    /// Resolve statements 1 by 1 by iterating through the vec of statements instead of calling this recursively for efficiency
+    /// Type check statements 1 by 1 by iterating through the vec of statements instead of calling this recursively for efficiency
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeCheckerError> {
         for ref stmt in ast {
-            let stmt_type = self.resolve_statement(stmt)?;
+            let stmt_type = self.check_statement(stmt)?;
             if let Type::Return(_) = stmt_type {
                 // Stop and bubble up stmt_type if Type::Return, to bubble through everything and let function checker handle it
                 return Ok(stmt_type);
@@ -50,13 +48,13 @@ impl TypeChecker {
         Ok(Type::Null)
     }
 
-    // @todo Use reference to the string instead of having to own it for lexeme.clone()
-    fn resolve_statement(&mut self, stmt: &Stmt) -> Result<Type, TypeCheckerError> {
+    // Type check a given statement, and return the statement's inferred type if any
+    fn check_statement(&mut self, stmt: &Stmt) -> Result<Type, TypeCheckerError> {
         // Any stmt that resolves into a Type, will have to manually return it
         match *stmt {
             Stmt::Expr(ref expr) => {
                 // @todo Why need to return here? Is it because a return stmt can be nested?
-                return self.resolve_expression(expr);
+                return self.check_expression(expr);
             }
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
@@ -65,7 +63,7 @@ impl TypeChecker {
                 self.end_scope();
             }
             Stmt::Const(ref identifier_token, ref expr) => {
-                let expr_type = self.resolve_expression(expr)?;
+                let expr_type = self.check_expression(expr)?;
 
                 // Save type of expression into scope using the identifier_token's lexeme as key
                 // - A scope is always expected to exists, including the global top level scope
@@ -109,39 +107,39 @@ impl TypeChecker {
             //     self.resolve_function(params, body)?;
             // }
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
-                if self.resolve_expression(condition)? != Type::Bool {
+                if self.check_expression(condition)? != Type::Bool {
                     return Err(TypeCheckerError::InternalError(
                         "TESTING - Conditions of If stmts must be bool",
                     ));
                 }
 
-                self.resolve_statement(then_branch)?;
+                self.check_statement(then_branch)?;
 
                 // Only type check else branch if it exists
                 if let Some(ref else_branch) = else_branch {
-                    self.resolve_statement(else_branch)?;
+                    self.check_statement(else_branch)?;
                 }
             }
             Stmt::Print(ref expr) => {
                 // This cannot be skipped because even though print accepts all types, the expression needs to be type checked first
                 // E.g. the expression can be a 5 == "string", and this needs to be checked, even if the Bool type returned can be ignored
                 // The type returned will be ignored, but the ? operator is used to allow errors to bubble up
-                self.resolve_expression(expr)?;
+                self.check_expression(expr)?;
             }
             Stmt::While(ref condition, ref body) => {
-                if self.resolve_expression(condition)? != Type::Bool {
+                if self.check_expression(condition)? != Type::Bool {
                     return Err(TypeCheckerError::InternalError(
                         "Expect boolean condition for While statements",
                     ));
                 }
 
                 // @todo Check if this is a return Type, if so bubble up...
-                self.resolve_statement(body)?;
+                self.check_statement(body)?;
             }
             Stmt::Return(ref token, ref expr) => {
                 // Get the type of the return expression,
                 // Wrap it in a Return type, and Ok variant to bubble it up
-                return Ok(Type::Return(Box::new(self.resolve_expression(expr)?)));
+                return Ok(Type::Return(Box::new(self.check_expression(expr)?)));
             }
 
             #[allow(unreachable_patterns)]
@@ -149,24 +147,25 @@ impl TypeChecker {
         };
 
         // Default type of the statement
-        // Change to a void type or something
+        // @todo Change to a void type or something
         Ok(Type::Null)
     }
 
-    fn resolve_expression(&mut self, expr: &Expr) -> Result<Type, TypeCheckerError> {
+    // Type check a given expression, and return the expression's inferred type
+    fn check_expression(&mut self, expr: &Expr) -> Result<Type, TypeCheckerError> {
         Ok(match *expr {
             Expr::Const(ref token, _) => self.get_type(token),
 
-            // Expr::AnonymousFunc(ref stmt) => {
-            //     // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use resolve_statement to handle Stmt::AnonymousFunc
-            //     self.resolve_statement(stmt)?;
-            // }
+            Expr::AnonymousFunc(ref stmt) => {
+                // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use check_statement to handle Stmt::AnonymousFunc
+                self.check_statement(stmt)?
+            }
 
             // @todo Add new arithmetic expr to split this up, so that the operator check can be skipped
             // Binary expressions holds both equality/inequality checks, and arithmetic operations
             Expr::Binary(ref left, ref operator, ref right) => {
-                let l_type = self.resolve_expression(left)?;
-                let r_type = self.resolve_expression(right)?;
+                let l_type = self.check_expression(left)?;
+                let r_type = self.check_expression(right)?;
 
                 // Regardless of their types, operands of binary expressions must always have the SAME type
                 if l_type == r_type {
@@ -237,7 +236,7 @@ impl TypeChecker {
                     If this resolves to a valid Type::Func(..), then extract the tuple's value.
                 */
                 let (number_of_parameters, function_stmt) =
-                    match self.resolve_expression(callee_identifier_expr)? {
+                    match self.check_expression(callee_identifier_expr)? {
                         Type::Func(number_of_parameters, function_stmt) => {
                             (number_of_parameters, function_stmt)
                         }
@@ -261,7 +260,7 @@ impl TypeChecker {
                 // Create a fixed length vec of arg types and get the arg types by resolving the args individually
                 let mut argument_types: Vec<Type> = Vec::with_capacity(arguments.len());
                 for ref arg in arguments {
-                    argument_types.push(self.resolve_expression(arg)?);
+                    argument_types.push(self.check_expression(arg)?);
                 }
 
                 // Get the items needed to type check function from one of the Function type AST node
@@ -296,7 +295,7 @@ impl TypeChecker {
                     return_type
                 }
             }
-            Expr::Grouping(ref expr) => self.resolve_expression(expr)?,
+            Expr::Grouping(ref expr) => self.check_expression(expr)?,
             Expr::Literal(ref literal) => match literal {
                 // @todo Might need to split into signed and unsigned num
                 Literal::Number(_) => Type::Number,
@@ -305,11 +304,11 @@ impl TypeChecker {
                 Literal::Null => Type::Null,
             },
             Expr::Array(_, ref elements) => {
-                let array_element_type = self.resolve_expression(&elements[0])?;
+                let array_element_type = self.check_expression(&elements[0])?;
 
                 // Resolve for elements[1..] of the array, where all elements are expressions
                 for element in elements.into_iter().skip(1) {
-                    if self.resolve_expression(element)? != array_element_type {
+                    if self.check_expression(element)? != array_element_type {
                         return Err(TypeCheckerError::InternalError("TESTING - Array"));
                     }
                 }
@@ -318,13 +317,13 @@ impl TypeChecker {
             }
             Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
                 // @todo Ensure that the indexing expression is a unsigned integer, not just a number, to remove the runtime check
-                if self.resolve_expression(index_expression)? != Type::Number {
+                if self.check_expression(index_expression)? != Type::Number {
                     return Err(TypeCheckerError::InternalError("TESTING"));
                 }
 
                 // This is the same as parsing out token from, Box<Expr::Const(token, _)> and calling self.get_type(token)
                 // If this resolves to a valid Type::Array(..) type, then extract the 'array_element_type'
-                match self.resolve_expression(array_identifier_expr)? {
+                match self.check_expression(array_identifier_expr)? {
                     Type::Array(array_element_type) => *array_element_type,
 
                     value_type => {
@@ -336,8 +335,8 @@ impl TypeChecker {
                 }
             }
             Expr::Logical(ref left, _, ref right) => {
-                let l_type = self.resolve_expression(left)?;
-                let r_type = self.resolve_expression(right)?;
+                let l_type = self.check_expression(left)?;
+                let r_type = self.check_expression(right)?;
 
                 // Check that the first type is Bool, and if so, check if second type is bool
                 // Doing this because Rust does not support comparison operator chaining 'l_type == r_type == Type::Bool'
@@ -351,7 +350,7 @@ impl TypeChecker {
                 }
             }
             Expr::Unary(ref operator, ref expr) => {
-                let expr_type = self.resolve_expression(expr)?;
+                let expr_type = self.check_expression(expr)?;
 
                 match &operator.token_type {
                     TokenType::Bang => {
@@ -452,7 +451,7 @@ impl TypeChecker {
         // arrow functions is just syntatic sugar and are also parsed into block statements
         if let &Stmt::Block(ref stmts) = body {
             for stmt in stmts {
-                let stmt_type = self.resolve_statement(stmt)?;
+                let stmt_type = self.check_statement(stmt)?;
                 if let Type::Return(_) = stmt_type {
                     return_types.push(stmt_type);
                 }
