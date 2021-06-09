@@ -175,20 +175,28 @@ impl TypeChecker {
                         // And will always be evaluated to a value of Type::Bool
                         TokenType::EqualEqual | TokenType::BangEqual => Type::Bool,
 
-                        // Arithmetic and Numeric comparison expressions ONLY ALLOW Type::Number operands,
+                        // Arithmetic expressions ONLY ALLOW Type::Number operands,
                         // And will always be evaluated to a value of Type::Number
                         // @todo Might need to change handling of arithmetic operators if supporting different number types like unsigned int
                         // @todo Change Plus type to allow strings, as Plus operator is overloaded to support string concat in the interpreter
-                        TokenType::Plus
-                        | TokenType::Minus
-                        | TokenType::Slash
-                        | TokenType::Star
-                        | TokenType::Greater
+                        TokenType::Plus | TokenType::Minus | TokenType::Slash | TokenType::Star => {
+                            if l_type == Type::Number {
+                                Type::Number
+                            } else {
+                                return Err(TypeCheckerError::InternalError(
+                                    "TESTING - Binary - Expect number for '&operator.token_type'",
+                                ));
+                            }
+                        }
+
+                        // Numeric comparison expressions ONLY ALLOW Type::Number operands,
+                        // And will always be evaluated to a value of Type::Bool
+                        TokenType::Greater
                         | TokenType::GreaterEqual
                         | TokenType::Less
                         | TokenType::LessEqual => {
                             if l_type == Type::Number {
-                                Type::Number
+                                Type::Bool
                             } else {
                                 return Err(TypeCheckerError::InternalError(
                                     "TESTING - Binary - Expect number for '&operator.token_type'",
