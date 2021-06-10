@@ -65,8 +65,8 @@ impl TypeChecker {
             Stmt::Const(ref identifier_token, ref expr) => {
                 let expr_type = self.check_expression(expr)?;
 
+                // A scope is always expected to exists, including the global top level scope
                 // Save type of expression into scope using the identifier_token's lexeme as key
-                // - A scope is always expected to exists, including the global top level scope
                 self.scopes
                     .last_mut()
                     .unwrap()
@@ -153,7 +153,7 @@ impl TypeChecker {
                 // @todo Check if this is a return Type, if so bubble up...
                 self.check_statement(body)?;
             }
-            Stmt::Return(ref token, ref expr) => {
+            Stmt::Return(_, ref expr) => {
                 // Get the type of the return expression,
                 // Wrap it in a Return type, and Ok variant to bubble it up
                 return Ok(Type::Return(Box::new(self.check_expression(expr)?)));
@@ -306,19 +306,12 @@ impl TypeChecker {
 
                 // Type check the function again, this time with the types of the arguments as types of the parameters
                 // The type of the call expression is the return type of the function called after resolving it
-                let return_type = self.check_function(
+                self.check_function(
                     optional_identifier_token,
                     param_tokens,
                     argument_types,
                     body,
-                )?;
-
-                // Must parse out inner type as call expr itself should not be able to bubble up the return
-                if let Type::Return(returned_type) = return_type {
-                    *returned_type
-                } else {
-                    return_type
-                }
+                )?
             }
             Expr::Grouping(ref expr) => self.check_expression(expr)?,
             Expr::Literal(ref literal) => match literal {
@@ -471,9 +464,11 @@ impl TypeChecker {
         // arrow functions is just syntatic sugar and are also parsed into block statements
         if let &Stmt::Block(ref stmts) = body {
             for stmt in stmts {
-                let stmt_type = self.check_statement(stmt)?;
-                if let Type::Return(_) = stmt_type {
-                    return_types.push(stmt_type);
+                // Destructure out the inner type and push onto return_types array to do return type, type checking later.
+                // Return types are usually bubbled up in block statements to let the function call type checking method handle it,
+                // And since this check_function method is the highest level a return_type should be bubbled up to, it is unwrapped here.
+                if let Type::Return(return_type) = self.check_statement(stmt)? {
+                    return_types.push(*return_type);
                 }
             }
         } else {
