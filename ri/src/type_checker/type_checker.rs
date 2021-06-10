@@ -27,14 +27,14 @@ impl TypeChecker {
         type_checker.define_globals(type_checker.globals.clone());
 
         // @todo Add a synchronization method, to prevent type checker from quitting on first error, and instead, check other errors and return all via an array
-        type_checker.resolve_ast(ast)?;
+        type_checker.check_ast(ast)?;
         type_checker.end_scope();
 
         Ok(())
     }
 
     /// Type check statements 1 by 1 by iterating through the vec of statements instead of calling this recursively for efficiency
-    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeCheckerError> {
+    fn check_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeCheckerError> {
         for ref stmt in ast {
             let stmt_type = self.check_statement(stmt)?;
             if let Type::Return(_) = stmt_type {
@@ -43,8 +43,7 @@ impl TypeChecker {
             }
         }
 
-        // Default type of the statement
-        // Change to a void type or something
+        // @todo Default type of an AST, Change to a void type or something to indicate that this is not a valid usable type
         Ok(Type::Null)
     }
 
@@ -59,7 +58,7 @@ impl TypeChecker {
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
                 // @todo Handle returns
-                self.resolve_ast(stmts)?;
+                self.check_ast(stmts)?;
                 self.end_scope();
             }
             Stmt::Const(ref identifier_token, ref expr) => {
@@ -358,15 +357,14 @@ impl TypeChecker {
                 let l_type = self.check_expression(left)?;
                 let r_type = self.check_expression(right)?;
 
-                // Check that the first type is Bool, and if so, check if second type is bool
-                // Doing this because Rust does not support comparison operator chaining 'l_type == r_type == Type::Bool'
-                if (l_type == Type::Bool) && (r_type == Type::Bool) {
-                    // Logical expressions always evaluate to a value of Boolean type
-                    Type::Bool
-                } else {
-                    return Err(TypeCheckerError::InternalError(
-                        "TESTING - Logical expressions must be bool",
-                    ));
+                // Both operand types in Logical expressions must be Type::Bool and always evaluate to a Boolean value
+                match (l_type, r_type) {
+                    (Type::Bool, Type::Bool) => Type::Bool,
+                    _ => {
+                        return Err(TypeCheckerError::InternalError(
+                            "TESTING - Logical expressions must be bool",
+                        ))
+                    }
                 }
             }
             Expr::Unary(ref operator, ref expr) => {
