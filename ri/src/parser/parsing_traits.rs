@@ -362,20 +362,25 @@ impl Parser {
 
     // Handle function calls by parsing for any arguments
     fn finish_call(&mut self, callee: Expr) -> Result<Expr, ParsingError> {
-        let mut arguments: Vec<Expr> = Vec::new();
+        // Only create none empty vec for holding argument expressions if there are argument(s)
+        let arguments: Vec<Expr> = if !self.check(TokenType::RightParen) {
+            let mut _arguments: Vec<Expr> = Vec::new();
 
-        if !self.check(TokenType::RightParen) {
-            // @todo Might want to limit arguement size, based on spec, which can be a problem for VM implementations.
+            // @todo Might want to limit argument size, based on spec, which can be a problem for VM implementations.
             // "Do while loop"
-            arguments.push(self.expression()?);
+            _arguments.push(self.expression()?);
             while self.is_next_token(TokenType::Comma) {
-                arguments.push(self.expression()?);
+                _arguments.push(self.expression()?);
             }
-        }
 
-        // @todo Is there a need for the returned parenthesis?
+            _arguments
+        } else {
+            Vec::with_capacity(0)
+        };
+
         // Check if there is a ")" to close the function call
-        let parenthesis = self.consume(TokenType::RightParen, "Expect ')' after arguements.")?;
+        // The returned parenthesis token is used for line info later as needed during debug
+        let parenthesis = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
 
         Ok(Expr::Call(Box::new(callee), arguments, parenthesis.clone()))
     }
