@@ -1,9 +1,9 @@
 use crate::literal::Literal;
 use crate::token_type::TokenType;
 
-// Debug trait to allow debug printing in the error handling code.
-// Tmp add clone trait for parser utiltiy_traits' "consume" method
-#[derive(Debug, Clone)]
+/// Debug trait to allow debug printing in the error handling code.
+/// PartialEq trait is used to allow comparing of Token's in TypeChecker
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
 

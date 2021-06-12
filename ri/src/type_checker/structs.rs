@@ -1,6 +1,7 @@
 use std::collections::hash_map::HashMap;
 
 use crate::parser::stmt::Stmt;
+use crate::token::Token;
 
 // Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
 pub struct TypeChecker {
@@ -9,13 +10,16 @@ pub struct TypeChecker {
     /// @todo Might change this to a LinkedList
     pub scopes: Vec<HashMap<String, Type>>,
 
-    /// Store the current function's identifier string in order to break out of recursive type checking
+    /// Store the current function's identifier token in order to break out of recursive type checking
     ///
     /// Recursive type checking will occur because the type checker will see that it is a function call,
-    /// and try to type check the function, even though the function is in the midst of being defined.
-    /// Thus this type helps to defer type checking by making all checks against this type as valid,
-    /// till an actual function call is made.
-    pub current_function: Option<String>,
+    /// and try to type check the function, even though the exact function is in the midst of being defined.
+    ///
+    /// Thus this field is used to defer type checking by comparing if TypeChecker is type checking the function definition,
+    /// of the function that is being called, if the tokens are the same (fn name and line) it means that it is a recursive call,
+    /// and thus the type checker should return Type::Lazy immediately as the type of the recursive function call,
+    /// to make all checks against this recursive function call as valid, until it can actually be type checked with concrete types.
+    pub current_function: Option<Token>,
 
     /// Field holding a vector of global identifiers
     ///

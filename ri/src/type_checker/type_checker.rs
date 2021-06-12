@@ -403,28 +403,27 @@ impl TypeChecker {
 
     fn check_function(
         &mut self,
-        identifier_token: Option<&Token>,
+        optional_identifier_token: Option<&Token>,
         param_tokens: &Vec<Token>,
         argument_types: Option<Vec<Type>>,
         body: &Stmt,
     ) -> Result<Type, TypeCheckerError> {
         // Save parent function's name first if any before assigning the name of the current function
-        let parent_function_name = self.current_function.clone();
+        let parent_identifier_token = self.current_function.clone();
 
-        if let Some(identifier_token) = identifier_token {
-            let function_name: String = identifier_token.lexeme.as_ref().unwrap().clone();
-
-            // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
-            if let Some(ref parent_function_name) = self.current_function {
-                if parent_function_name == &function_name {
-                    println!("calling itself recursively, returning lazy ",);
-                    return Ok(Type::Lazy);
+        self.current_function = match optional_identifier_token {
+            Some(identifier_token) => {
+                // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
+                if let Some(ref parent_identifier_token) = self.current_function {
+                    if parent_identifier_token == identifier_token {
+                        println!("calling itself recursively, returning lazy ",);
+                        return Ok(Type::Lazy);
+                    }
                 }
+                Some(identifier_token.clone())
             }
-            self.current_function = Some(function_name);
-        } else {
-            self.current_function = None;
-        }
+            None => None,
+        };
 
         self.begin_scope();
 
