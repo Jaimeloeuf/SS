@@ -173,14 +173,15 @@ impl TypeChecker {
                 self.check_expression(expr)?;
             }
             Stmt::While(ref condition, ref body) => {
-                if self.check_expression(condition)? != Type::Bool {
-                    return Err(TypeCheckerError::InternalError(
-                        "Expect boolean condition for While statements",
-                    ));
-                }
+                return match self.check_expression(condition)? {
+                    // If there are any return statements within loop, the type will be bubbled up.
+                    Type::Bool => Ok(self.check_statement(body)?),
 
-                // @todo Check if this is a return Type, if so bubble up...
-                self.check_statement(body)?;
+                    // Only Bools can be used for loop condition
+                    unexpected_type => Err(TypeCheckerError::InternalError(
+                        "Expect boolean condition for While statements, found 'unexpected_type'",
+                    )),
+                };
             }
             Stmt::Return(_, ref expr) => {
                 // Get the type of the return expression,
