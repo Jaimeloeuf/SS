@@ -57,9 +57,14 @@ impl TypeChecker {
             }
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
-                // @todo Handle returns
-                self.check_ast(stmts)?;
+                // Store block stmt type to type check for return types after ending current scope
+                let block_stmt_type = self.check_ast(stmts)?;
                 self.end_scope();
+
+                // Bubble up block_stmt_type if it is Type::Return to let function checker handle it
+                if let Type::Return(_) = block_stmt_type {
+                    return Ok(block_stmt_type);
+                }
             }
             Stmt::Const(ref identifier_token, ref expr) => {
                 let expr_type = self.check_expression(expr)?;
