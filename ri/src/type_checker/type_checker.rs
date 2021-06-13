@@ -129,11 +129,41 @@ impl TypeChecker {
                     ));
                 }
 
-                self.check_statement(then_branch)?;
+                // Assuming most if/else blocks either have return stmts within both bodies or none.
+                let mut return_types = Vec::<Type>::with_capacity(2);
 
-                // Only type check else branch if it exists
+                let if_body_type = self.check_statement(then_branch)?;
+                if let Type::Return(_) = if_body_type {
+                    println!("return stmt found in if body {:#?}", if_body_type);
+                    return_types.push(if_body_type);
+                }
+
+                // Only type check else branch if there is an else branch
                 if let Some(ref else_branch) = else_branch {
-                    self.check_statement(else_branch)?;
+                    let else_body_type = self.check_statement(else_branch)?;
+                    if let Type::Return(_) = else_body_type {
+                        println!("return stmt found in else body {:#?}", else_body_type);
+                        return_types.push(else_body_type);
+                    }
+                }
+
+                // Type check return values, and bubble them up if any
+                if !return_types.is_empty() {
+                    return Ok(if return_types.len() == 1 {
+                        // If there is only a single return, use the type immediately without further checks
+                        // Move out from vec since vec is no longer needed
+                        return_types.remove(0)
+                    } else {
+                        for return_type in &return_types {
+                            if return_type != &return_types[0] {
+                                return Err(TypeCheckerError::InternalError(
+                                    "TESTING - Function must have the same return type throughout the function body"
+                                ));
+                            }
+                        }
+                        // If all return types are the same, then move out first type as function return type
+                        return_types.remove(0)
+                    });
                 }
             }
             Stmt::Print(ref expr) => {
