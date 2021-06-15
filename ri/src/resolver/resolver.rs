@@ -214,9 +214,7 @@ impl Resolver {
         // Body must be a block statement, even for anonymous arrow functions
         // arrow functions is just syntatic sugar and are also parsed into block statements
         if let &Stmt::Block(ref stmts) = body {
-            for stmt in stmts {
-                self.resolve_statement(stmt)?;
-            }
+            self.resolve_ast(stmts)?;
         } else {
             return Err(ResolvingError::InternalError(
                 "Function body can only be Stmt::Block",
