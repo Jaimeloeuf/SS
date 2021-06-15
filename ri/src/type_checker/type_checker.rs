@@ -116,7 +116,8 @@ impl TypeChecker {
 
                 // Function is not added to scope before type checking function body,
                 // Because anonymous functions cannot "directly" refer to itself recursively.
-                // They can do so by referencing the identifier this Expr::AnonymousFunc is binded to.
+                // @todo They can do so by referencing the identifier this Expr::AnonymousFunc is binded to. Will this be an issue?? Yes unfortunately... ML deals with this using a rec keyword
+                // @todo Alternatively, inside the parser, it can be an error to refer to itself recursively if it is an anonymous function
 
                 // Call check function to continue type checking function body with Type::Lazy for the parameters
                 // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
@@ -139,7 +140,6 @@ impl TypeChecker {
 
                 let if_body_type = self.check_statement(then_branch)?;
                 if let Type::Return(_) = if_body_type {
-                    println!("return stmt found in if body {:#?}", if_body_type);
                     return_types.push(if_body_type);
                 }
 
@@ -147,7 +147,6 @@ impl TypeChecker {
                 if let Some(ref else_branch) = else_branch {
                     let else_body_type = self.check_statement(else_branch)?;
                     if let Type::Return(_) = else_body_type {
-                        println!("return stmt found in else body {:#?}", else_body_type);
                         return_types.push(else_body_type);
                     }
                 }
@@ -190,7 +189,7 @@ impl TypeChecker {
             }
             Stmt::Return(_, ref expr) => {
                 // Get the type of the return expression,
-                // Wrap it in a Return type, and Ok variant to bubble it up
+                // Wrap it in a Return type and Ok variant to bubble it up
                 return Ok(Type::Return(Box::new(self.check_expression(expr)?)));
             }
 
@@ -267,34 +266,35 @@ impl TypeChecker {
                     ));
                 }
             }
+
+            /*  How Expr::Call is type checked:
+                ---
+                Type check callee_identifier_expr, and get back function type,
+                to type check the function again with the types of the arguments for THIS CALL
+                Which means to say a function can be used with multiple types of arguments,
+                as long as they can pass the type check for each instance of function call.
+                Which means this allows for safe generics without any explicit annotations
+                ---
+
+                Example 1: In this example the use of any type is permitted because print accepts all types
+                fn test(val) {
+                    print val; // Print accepts values of any type
+                }
+                // Both works since both arguments, when used as the function's parameter type passes the type check
+                test(1);
+                test("string");
+
+
+                Example 2: In this example the use of any types is permitted, AS LONG AS the given types are the same
+                fn check(a, b) {
+                    return a == b;
+                }
+                check(1, 1);
+                check("s1", "s2");
+            */
             Expr::Call(ref callee_identifier_expr, ref arguments, _) => {
-                /*
-                    Type check callee_identifier_expr, and get back function type,
-                    to type check the function again with the types of the arguments for THIS CALL
-                    Which means to say a function can be used with multiple types of arguments,
-                    as long as they can pass the type check for each instance of function call.
-                    Which means this allows for safe generics without any explicit annotations
-
-                    Example 1: In this example the use of any type is permitted because print accepts all types
-                    fn test(val) {
-                        print val; // Print accepts values of any type
-                    }
-                    // Both works since both arguments, when used as the function's parameter type passes the type check
-                    test(1);
-                    test("string");
-
-
-                    Example 2: In this example the use of any types is permitted, AS LONG AS the given types are the same
-                    fn check(a, b) {
-                        return a == b;
-                    }
-                    check(1, 1);
-                    check("s1", "s2");
-
-                    Extra Notes:
-                    Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
-                    If this resolves to a valid Type::Func(..), then extract the tuple's value.
-                */
+                // @todo Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
+                // If this resolves to a valid Type::Func(..), then extract the tuple's value.
                 let (number_of_parameters, function_stmt) =
                     match self.check_expression(callee_identifier_expr)? {
                         Type::Func(number_of_parameters, function_stmt) => {
@@ -309,7 +309,6 @@ impl TypeChecker {
                         }
                     };
 
-                // @todo Add additional check if supporting variadic functions
                 // Ensure that the number of arguments matches the number of parameters defined
                 if arguments.len() != number_of_parameters {
                     return Err(TypeCheckerError::InternalError(
@@ -327,10 +326,6 @@ impl TypeChecker {
                 let (optional_identifier_token, param_tokens, argument_types, body) =
                     match *function_stmt {
                         Stmt::Func(ref identifier_token, ref params, ref body) => {
-                            println!(
-                                "Calling function {}",
-                                identifier_token.lexeme.as_ref().unwrap().clone()
-                            );
                             (Some(identifier_token), params, Some(argument_types), body)
                         }
                         Stmt::AnonymousFunc(ref params, ref body) => {
@@ -452,7 +447,6 @@ impl TypeChecker {
                 // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
                 if let Some(ref parent_identifier_token) = self.current_function {
                     if parent_identifier_token == identifier_token {
-                        println!("calling itself recursively, returning lazy ",);
                         return Ok(Type::Lazy);
                     }
                 }
@@ -510,8 +504,8 @@ impl TypeChecker {
 
         self.end_scope();
 
-        // Restore the name of the parent function
-        self.current_function = parent_function_name;
+        // Restore the parent function's identifier token now that the call has been type checked
+        self.current_function = parent_identifier_token;
 
         Ok(
             // If there are no return statements, default return type is Null
