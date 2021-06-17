@@ -46,11 +46,20 @@ impl Resolver {
         Ok(())
     }
 
-    // Resolve statements 1 by 1
-    // Change name to resolve node? Cause we start from a single node and then can be called recursively for every node
+    /// Resolve statements 1 by 1
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<(), ResolvingError> {
-        for ref stmt in ast {
+        // Loop through all the statements in the block statement with index starting from 0
+        for (index, ref stmt) in ast.iter().enumerate() {
             self.resolve_statement(stmt)?;
+
+            // Regardless if function or none function block, make sure that the return statement is the last stmt of the block,
+            // As no other code can be executed after return, if there is any, it is an unreachable code error
+            if let Stmt::Return(ref token, _) = stmt {
+                // Index + 1 as index is 0 indexed while len is 1 indexed
+                if index + 1 != ast.len() {
+                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()));
+                }
+            }
         }
 
         Ok(())
