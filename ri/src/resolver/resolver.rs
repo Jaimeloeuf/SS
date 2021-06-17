@@ -78,6 +78,7 @@ impl Resolver {
         match *stmt {
             // No expression is halting, so by extension, the expression stmt is not halting
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
+            // A block stmt can contain nested return statements, therefore a block stmt can be halting
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
                 self.resolve_ast(stmts)?;
@@ -88,6 +89,9 @@ impl Resolver {
                 self.resolve_expression(expr)?;
                 self.define(token);
             }
+
+            // Functions are self contained, so they are not halting, even if there is a return statement within it.
+            // That return statement means that it is halting at that point in the inner function body, not the outer block.
             Stmt::Func(ref token, ref params, ref body) => {
                 // Declare and define to allow function to refer to itself recursively
                 self.declare_and_define(token)?;
@@ -97,6 +101,14 @@ impl Resolver {
                 // Unlike Stmt::Func, dont need to declare and define since Anonymous Functions are nameless, and will be bound to a Const identifier
                 self.resolve_function(params, body)?;
             }
+
+            // A if statement is only halting, if both the if and else blocks are halting.
+            //
+            // Because by definition, a standalone if statement (no else branch) may or may not execute its body,
+            // so even if the if block is halting, it does not garuntee that the statement itself is halting,
+            // since the condition may be evaluated to false.
+            // However if both if and else branches are defined, it means that the execution path MUST go down either of the branches.
+            // In that case the statement as a whole is halting, if both the if and else branches are halting.
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
                 self.resolve_expression(condition)?;
                 self.resolve_statement(then_branch)?;
@@ -112,7 +124,13 @@ impl Resolver {
                 }
 
                 self.resolve_expression(expr)?;
+
+                // A return statement is the only statement that is halting by definition.
+                // All other statements, are only halting if it has a nested return statement somewhere.
+                return Ok(true);
             }
+
+            // While loops are halting if the loop body is halting. i.e. if there is a return statement within the loop body
             Stmt::While(ref condition, ref body) => {
                 self.resolve_expression(condition)?;
                 self.resolve_statement(body)?;
