@@ -7,6 +7,9 @@ pub enum ResolvingError {
     IdentifierAlreadyUsed(Token, String),
     IdentifierAlreadyUsedGlobally(Token, String),
     ReturnOutsideFunction(Token),
+
+    /// There should not be any unreachable code after a return statement
+    UnreachableCodeAfterReturn(Token),
 }
 
 impl std::fmt::Display for ResolvingError {
@@ -33,6 +36,12 @@ impl std::fmt::Display for ResolvingError {
                 f,
                 "[line {}] Cannot use `return` outside a function",
                 token.line
+            ),
+            ResolvingError::UnreachableCodeAfterReturn(ref token) => write!(
+                f,
+                "[line {}] Cannot have unreachable code after a `return` statement",
+                // Line number is the line after the return statement
+                token.line + 1
             ),
         }
     }
