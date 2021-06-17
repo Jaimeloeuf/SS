@@ -47,7 +47,10 @@ impl Resolver {
     }
 
     /// Resolve statements 1 by 1
-    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<(), ResolvingError> {
+    ///
+    /// Since statements can be halting, this method checks for unreachable statements if a statement is halting.
+    /// Errors on unreachable code, else bubbles up the halting status of these statements.
+    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
         // Loop through all the statements in the block statement with index starting from 0
         for (index, ref stmt) in ast.iter().enumerate() {
             self.resolve_statement(stmt)?;
@@ -62,7 +65,8 @@ impl Resolver {
             }
         }
 
-        Ok(())
+        // By default if there is no return statement within a block stmt, then this block is not halting.
+        Ok(false)
     }
 
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
