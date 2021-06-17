@@ -66,8 +66,13 @@ impl Resolver {
     }
 
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
-    fn resolve_statement(&mut self, stmt: &Stmt) -> Result<(), ResolvingError> {
-        Ok(match *stmt {
+    /// This method returns a bool indicating if the statement is halting and is used to determine if there is unreachable code.
+    ///
+    /// Halting, refers to whether any other statements can still be executed after this statement.
+    /// Halting statements contain return statements either directly or nested within, and all statements after return is unreachable.
+    fn resolve_statement(&mut self, stmt: &Stmt) -> Result<bool, ResolvingError> {
+        match *stmt {
+            // No expression is halting, so by extension, the expression stmt is not halting
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
@@ -111,9 +116,13 @@ impl Resolver {
 
             #[allow(unreachable_patterns)]
             ref unmatched_stmt_variant => panic!("{}", unmatched_stmt_variant),
-        })
+        };
+
+        // By default most statements are not halting
+        Ok(false)
     }
 
+    // All expressions are none halting, so there is no need for this method to return a halting indicator
     fn resolve_expression(&mut self, expr: &Expr) -> Result<(), ResolvingError> {
         match *expr {
             Expr::Const(ref token, ref distance_value_in_ast_node) => {
