@@ -81,8 +81,12 @@ impl Resolver {
             // A block stmt can contain nested return statements, therefore a block stmt can be halting
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
-                self.resolve_ast(stmts)?;
+                // The returned value does not need to be unwrapped since it is bubbled up immediately
+                let halting = self.resolve_ast(stmts);
                 self.end_scope();
+
+                // Bubble up the halting status of the block statement
+                return halting;
             }
             Stmt::Const(ref token, ref expr) => {
                 self.declare(token)?;
@@ -111,9 +115,13 @@ impl Resolver {
             // In that case the statement as a whole is halting, if both the if and else branches are halting.
             Stmt::If(ref condition, ref then_branch, ref else_branch) => {
                 self.resolve_expression(condition)?;
-                self.resolve_statement(then_branch)?;
+                // Unwrap to get halting status of branch body for comparison
+                let then_branch_is_halting = self.resolve_statement(then_branch)?;
                 if let Some(ref else_branch) = else_branch {
-                    self.resolve_statement(else_branch)?;
+                    // Unwrap to get halting status of branch body for comparison
+                    let else_branch_is_halting = self.resolve_statement(else_branch)?;
+                    // If both branches are halting then this if stmt is halting, where True && True == True
+                    return Ok(then_branch_is_halting && else_branch_is_halting);
                 }
             }
             Stmt::Print(ref expr) => self.resolve_expression(expr)?,
@@ -133,7 +141,8 @@ impl Resolver {
             // While loops are halting if the loop body is halting. i.e. if there is a return statement within the loop body
             Stmt::While(ref condition, ref body) => {
                 self.resolve_expression(condition)?;
-                self.resolve_statement(body)?;
+                // The returned value does not need to be unwrapped since it is bubbled up immediately
+                return self.resolve_statement(body);
             }
 
             #[allow(unreachable_patterns)]
