@@ -40,6 +40,7 @@ impl Resolver {
         // @todo Make it better then.. Cloning it because cannot have ref and mut ref to resolver at the same time....
         resolver.define_globals(resolver.globals.clone());
 
+        // @todo Store all the errors and add synchronization point so that multiple errors can be found at once
         resolver.resolve_ast(ast)?;
         resolver.end_scope();
 
@@ -88,6 +89,10 @@ impl Resolver {
                 // Bubble up the halting status of the block statement
                 return halting;
             }
+
+            // Const definitions are not halting, even when used to bind an anonymous function.
+            // Because nested return(s) within anonymous functions does not halt the code within the const binding's scope.
+            // i.e. a const definition is not halting at its scope depth as it is unaffected by nested halting code.
             Stmt::Const(ref token, ref expr) => {
                 self.declare(token)?;
                 self.resolve_expression(expr)?;
