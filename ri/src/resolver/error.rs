@@ -10,6 +10,8 @@ pub enum ResolvingError {
 
     /// There should not be any unreachable code after a return statement
     UnreachableCodeAfterReturn(Token),
+    /// A more generic rrror for any unreachable code
+    UnreachableCode(Token),
 }
 
 impl std::fmt::Display for ResolvingError {
@@ -40,6 +42,12 @@ impl std::fmt::Display for ResolvingError {
             ResolvingError::UnreachableCodeAfterReturn(ref token) => write!(
                 f,
                 "[line {}] Cannot have unreachable code after a `return` statement",
+                // Line number is the line after the return statement
+                token.line + 1
+            ),
+            ResolvingError::UnreachableCode(ref token) => write!(
+                f,
+                "[line {}] Unreachable code found",
                 // Line number is the line after the return statement
                 token.line + 1
             ),
