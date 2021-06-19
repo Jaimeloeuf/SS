@@ -7,14 +7,23 @@ use std;
 // @todo Specify lifetime for Tokens instead of taking ownership, which requires .clone() of token
 #[derive(Debug)]
 pub enum ParsingError {
-    // Static string message are hardcoded compiler error messages
+    /// Static string message are hardcoded parser error messages
     UnexpectedTokenError(Token, &'static str),
+
     UnexpectedEofError(Token),
-    InvalidAssignmentError(Token),
-    TooManyArgumentsError,
-    TooManyParametersError,
-    // Static string message are hardcoded parser error messages
+
+    /// EmptyBlockStatement(token_of_closing_right_brace)
+    EmptyBlockStatement(Token),
+
+    /// InternalError(line_number, error_message),
+    ///
+    /// Static string message are hardcoded parser error messages
     InternalError(usize, &'static str),
+    /*
+        Unused
+    */
+    // For if assignments are supported
+    // InvalidAssignmentError(Token),
 }
 
 impl std::fmt::Display for ParsingError {
@@ -28,18 +37,17 @@ impl std::fmt::Display for ParsingError {
             ParsingError::UnexpectedEofError(ref token) => {
                 write!(f, "[line {}] Unexpected end of input", token.line)
             }
-            ParsingError::InvalidAssignmentError(ref token) => {
-                write!(f, "[line {}] Invalid assignment target", token.line)
-            }
             ParsingError::InternalError(line, ref message) => {
                 write!(f, "[line {}] Internal error: {}", line, message)
             }
-            ParsingError::TooManyArgumentsError => {
-                f.write_str("Too many arguments, max number is 8")
-            }
-            ParsingError::TooManyParametersError => {
-                f.write_str("Too many parameters, max number is 8")
-            }
+            ParsingError::EmptyBlockStatement(ref token) => write!(
+                f,
+                "[line {}] Empty block statements are not allowed",
+                token.line
+            ),
+            // ParsingError::InvalidAssignmentError(ref token) => {
+            //     write!(f, "[line {}] Invalid assignment target", token.line)
+            // }
         }
     }
 }

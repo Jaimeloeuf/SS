@@ -147,8 +147,17 @@ impl Parser {
             statements.push(self.declaration()?);
         }
 
-        self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
-        Ok(Stmt::Block(statements))
+        let right_brace_token =
+            self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
+
+        // Empty block statements are not allowed.
+        // Check here instead of checking in resolver.
+        // As a side effect, a "no-op" function cannot be defined in SS therefore if needed, it must be a native function
+        if statements.is_empty() {
+            Err(ParsingError::EmptyBlockStatement(right_brace_token.clone()))
+        } else {
+            Ok(Stmt::Block(statements))
+        }
     }
 
     // @todo Support else if
