@@ -49,29 +49,32 @@ impl Resolver {
 
     /// Resolve statements 1 by 1
     ///
-    /// Since statements can be halting, this method checks for unreachable statements if a statement is halting.
+    /// Since statements can be halting, this method checks for unreachable statements if a statement is halting,
+    /// regardless if function or none function block, make sure only the last stmt of this block is halting.
     /// Errors on unreachable code, else bubbles up the halting status of these statements.
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
         // Loop through all the statements in the block statement with index starting from 0
-        for (index, ref stmt) in ast.iter().enumerate() {
+        for (index, stmt) in ast.iter().enumerate() {
             let halting = self.resolve_statement(stmt)?;
 
             // Do unreachable code check
             // Index + 1 as index is 0 indexed while len is 1 indexed
+            // @todo Optimize by making the loop stop at the second last element...
             match (index + 1 != ast.len(), stmt, halting) {
+                // If it is the last statement and a return statement is used, return true to indicate this block is halting
+                (false, Stmt::Return(_, _), _) => return Ok(true),
+
                 // If not last statement and a return statement is used
                 (true, Stmt::Return(ref token, _), _) => {
                     return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
                 }
-
-                // This arm has to be placed after the first arm, if not it will match it and make first arm unmatchable
-                (_, Stmt::Return(_, _), _) => return Ok(true),
 
                 // If not last statement and the current statement is halting
                 (true, _, true) => {
                     return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
                 }
 
+                // Do nothing for all other combinations
                 _ => {}
             };
 
