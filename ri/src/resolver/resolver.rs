@@ -53,48 +53,34 @@ impl Resolver {
     /// regardless if function or none function block, make sure only the last stmt of this block is halting.
     /// Errors on unreachable code, else bubbles up the halting status of these statements.
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
-        // Loop through all the statements in the block statement with index starting from 0
-        for (index, stmt) in ast.iter().enumerate() {
+        // Do not need to check if ast is empty, as empty block statements is a parser error.
+        // Alternatively, if empty blocks are accepted, then this block is not halting as there is no return.
+        // if ast.is_empty() {
+        //     return Ok(false);
+        // }
+
+        // Loop through all the statements in the block statement till the second last one,
+        // The last statement will be resolved and checked seperately.
+        for stmt in ast[..ast.len() - 1].iter() {
             let halting = self.resolve_statement(stmt)?;
 
             // Do unreachable code check
-            // Index + 1 as index is 0 indexed while len is 1 indexed
-            // @todo Optimize by making the loop stop at the second last element...
-            match (index + 1 != ast.len(), stmt, halting) {
-                // If it is the last statement and a return statement is used, return true to indicate this block is halting
-                (false, Stmt::Return(_, _), _) => return Ok(true),
+            match (stmt, halting) {
+                // Do nothing for all combinations where the statement is not halting
+                (_, false) => {}
 
-                // If not last statement and a return statement is used
-                (true, Stmt::Return(ref token, _), _) => {
+                // If a return statement is used when it is not the last statement
+                (Stmt::Return(ref token, _), _) => {
                     return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
                 }
 
-                // If not last statement and the current statement is halting
-                (true, _, true) => {
-                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
-                }
-
-                // Do nothing for all other combinations
-                _ => {}
+                // If the current statement is halting when it is not the last statement
+                (_, true) => return Err(ResolvingError::UnreachableCode(stmt.clone())),
             };
-
-            // Alternative syntax
-            // if let Stmt::Return(ref token, _) = stmt {
-            //     // Index + 1 as index is 0 indexed while len is 1 indexed
-            //     return if index + 1 != ast.len() {
-            //         Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
-            //     } else {
-            //         Ok(true)
-            //     };
-            // } else if halting {
-            //     if index + 1 != ast.len() {
-            //         return Err(ResolvingError::UnreachableCode(token.clone()));
-            //     }
-            // }
         }
 
-        // By default if there is no return statement within a block stmt, then this block is not halting.
-        Ok(false)
+        // Return halting status of the block statement
+        self.resolve_statement(ast.last().unwrap())
     }
 
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
