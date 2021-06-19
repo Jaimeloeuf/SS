@@ -54,16 +54,40 @@ impl Resolver {
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
         // Loop through all the statements in the block statement with index starting from 0
         for (index, ref stmt) in ast.iter().enumerate() {
-            self.resolve_statement(stmt)?;
+            let halting = self.resolve_statement(stmt)?;
 
-            // Regardless if function or none function block, make sure that the return statement is the last stmt of the block,
-            // As no other code can be executed after return, if there is any, it is an unreachable code error
-            if let Stmt::Return(ref token, _) = stmt {
-                // Index + 1 as index is 0 indexed while len is 1 indexed
-                if index + 1 != ast.len() {
-                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()));
+            // Do unreachable code check
+            // Index + 1 as index is 0 indexed while len is 1 indexed
+            match (index + 1 != ast.len(), stmt, halting) {
+                // If not last statement and a return statement is used
+                (true, Stmt::Return(ref token, _), _) => {
+                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
                 }
-            }
+
+                // This arm has to be placed after the first arm, if not it will match it and make first arm unmatchable
+                (_, Stmt::Return(_, _), _) => return Ok(true),
+
+                // If not last statement and the current statement is halting
+                (true, _, true) => {
+                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
+                }
+
+                _ => {}
+            };
+
+            // Alternative syntax
+            // if let Stmt::Return(ref token, _) = stmt {
+            //     // Index + 1 as index is 0 indexed while len is 1 indexed
+            //     return if index + 1 != ast.len() {
+            //         Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
+            //     } else {
+            //         Ok(true)
+            //     };
+            // } else if halting {
+            //     if index + 1 != ast.len() {
+            //         return Err(ResolvingError::UnreachableCode(token.clone()));
+            //     }
+            // }
         }
 
         // By default if there is no return statement within a block stmt, then this block is not halting.
