@@ -51,7 +51,7 @@ impl Resolver {
     ///
     /// Since statements can be halting, this method checks for unreachable statements if a statement is halting,
     /// regardless if function or none function block, make sure only the last stmt of this block is halting.
-    /// Errors on unreachable code, else bubbles up the halting status of these statements.
+    /// Errors on unreachable code, else bubbles up the halting status of the last statement.
     fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
         // Do not need to check if ast is empty, as empty block statements is a parser error.
         // Alternatively, if empty blocks are accepted, then this block is not halting as there is no return.
@@ -64,22 +64,39 @@ impl Resolver {
         for stmt in ast[..ast.len() - 1].iter() {
             let halting = self.resolve_statement(stmt)?;
 
-            // Do unreachable code check
-            match (stmt, halting) {
-                // Do nothing for all combinations where the statement is not halting
-                (_, false) => {}
+            // If the statement is halting, it means that there is unreachable code in this block statement
+            if halting {
+                // Return the appropriate unreachable code error type based on whether the current statement is a return
+                return Err(
+                    // If a return statement is used when it is not the last statement
+                    if let Stmt::Return(ref token, _) = stmt {
+                        ResolvingError::UnreachableCodeAfterReturn(token.clone())
+                    }
+                    // If the current statement is halting when it is not the last statement
+                    else {
+                        // Stmt types that can be halting --> Block / if / return / while
+                        // Unlike return statement, a token cannot be easily extracted from these stmt types for error handling,
+                        // Thus storing the whole stmt to let display trait implementation handle getting the token for line number.
+                        ResolvingError::UnreachableCode(stmt.clone())
+                    },
+                );
+            }
 
-                // If a return statement is used when it is not the last statement
-                (Stmt::Return(ref token, _), _) => {
-                    return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
-                }
-
-                // If the current statement is halting when it is not the last statement
-                (_, true) => return Err(ResolvingError::UnreachableCode(stmt.clone())),
-            };
+            // Alternative syntax
+            // match (stmt, halting) {
+            //     // Do nothing for all combinations where the statement is not halting
+            //     (_, false) => {}
+            //     // If a return statement is used when it is not the last statement
+            //     (Stmt::Return(ref token, _), _) => {
+            //         return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
+            //     }
+            //     // If the current statement is halting when it is not the last statement
+            //     (_, true) => return Err(ResolvingError::UnreachableCode(stmt.clone())),
+            // };
         }
 
-        // Return halting status of the block statement
+        // Get the last statement and unwrap it directly (it is garunteed to not be empty after parsing),
+        // Resolve the statement and return it's halting status as the halting status of the block statement.
         self.resolve_statement(ast.last().unwrap())
     }
 
@@ -95,12 +112,12 @@ impl Resolver {
             // A block stmt can contain nested return statements, therefore a block stmt can be halting
             Stmt::Block(ref stmts) => {
                 self.begin_scope();
-                // The returned value does not need to be unwrapped since it is bubbled up immediately
-                let halting = self.resolve_ast(stmts);
+                // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
+                let nested_halting_status = self.resolve_ast(stmts);
                 self.end_scope();
 
                 // Bubble up the halting status of the block statement
-                return halting;
+                return nested_halting_status;
             }
 
             // Const definitions are not halting, even when used to bind an anonymous function.
@@ -159,7 +176,7 @@ impl Resolver {
             // While loops are halting if the loop body is halting. i.e. if there is a return statement within the loop body
             Stmt::While(ref condition, ref body) => {
                 self.resolve_expression(condition)?;
-                // The returned value does not need to be unwrapped since it is bubbled up immediately
+                // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
                 return self.resolve_statement(body);
             }
 
