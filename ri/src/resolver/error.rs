@@ -1,3 +1,4 @@
+use crate::parser::stmt::Stmt;
 use crate::token::Token;
 
 #[derive(Debug)]
@@ -11,7 +12,7 @@ pub enum ResolvingError {
     /// There should not be any unreachable code after a return statement
     UnreachableCodeAfterReturn(Token),
     /// A more generic rrror for any unreachable code
-    UnreachableCode(Token),
+    UnreachableCode(Stmt),
 }
 
 impl std::fmt::Display for ResolvingError {
@@ -41,15 +42,12 @@ impl std::fmt::Display for ResolvingError {
             ),
             ResolvingError::UnreachableCodeAfterReturn(ref token) => write!(
                 f,
-                "[line {}] Cannot have unreachable code after a `return` statement",
-                // Line number is the line after the return statement
-                token.line + 1
+                "[line {}] Unreachable code found after the `return` statement on this line",
+                token.line
             ),
-            ResolvingError::UnreachableCode(ref token) => write!(
+            ResolvingError::UnreachableCode(ref stmt) => write!(
                 f,
-                "[line {}] Unreachable code found",
-                // Line number is the line after the return statement
-                token.line + 1
+                "Unreachable code found",
             ),
         }
     }

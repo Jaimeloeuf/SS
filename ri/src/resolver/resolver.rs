@@ -74,7 +74,7 @@ impl Resolver {
                     }
                     // If the current statement is halting when it is not the last statement
                     else {
-                        // Stmt types that can be halting --> Block / if / return / while
+                        // Stmt types that can be halting --> Block / if / while
                         // Unlike return statement, a token cannot be easily extracted from these stmt types for error handling,
                         // Thus storing the whole stmt to let display trait implementation handle getting the token for line number.
                         ResolvingError::UnreachableCode(stmt.clone())
@@ -159,7 +159,10 @@ impl Resolver {
                     return Ok(then_branch_is_halting && else_branch_is_halting);
                 }
             }
+
             Stmt::Print(ref expr) => self.resolve_expression(expr)?,
+
+            // Return statement is halting by definition
             Stmt::Return(ref token, ref expr) => {
                 // If not in any function, return statements are not allowed
                 if !self.in_function {
@@ -179,9 +182,6 @@ impl Resolver {
                 // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
                 return self.resolve_statement(body);
             }
-
-            #[allow(unreachable_patterns)]
-            ref unmatched_stmt_variant => panic!("{}", unmatched_stmt_variant),
         };
 
         // By default most statements are not halting
@@ -242,8 +242,6 @@ impl Resolver {
             Expr::Unary(_, ref expr) => {
                 self.resolve_expression(expr)?;
             }
-            #[allow(unreachable_patterns)]
-            ref unmatched_expr_variant => panic!("{}", unmatched_expr_variant),
         };
 
         Ok(())
