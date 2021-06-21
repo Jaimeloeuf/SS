@@ -147,16 +147,22 @@ impl Parser {
             statements.push(self.declaration()?);
         }
 
-        let right_brace_token =
-            self.consume(TokenType::RightBrace, "Expect '}' after block statement")?;
+        let line_number_of_closing_right_brace = self
+            .consume(TokenType::RightBrace, "Expect '}' after block statement")?
+            .line;
 
         // Empty block statements are not allowed.
         // Check here instead of checking in resolver.
         // As a side effect, a "no-op" function cannot be defined in SS therefore if needed, it must be a native function
         if statements.is_empty() {
-            Err(ParsingError::EmptyBlockStatement(right_brace_token.clone()))
+            Err(ParsingError::EmptyBlockStatement(
+                line_number_of_closing_right_brace,
+            ))
         } else {
-            Ok(Stmt::Block(statements, Some(right_brace_token.line)))
+            Ok(Stmt::Block(
+                statements,
+                Some(line_number_of_closing_right_brace),
+            ))
         }
     }
 
@@ -595,21 +601,16 @@ impl Parser {
             // Advance to eat the current token AFTER making sure that we did not hit an EOF
             // Because if we called advance without checking for EOF with self.is_at_end() rust will panic when we unwrap Token after EOF
             //
-            // Stop synchronize loop when semicolon is read. This assumes that in most cases, the error only cascades to a semicolon
+            // Stop synchronize loop when semicolon and these token types are read.
+            // This assumes that in most cases, the error only cascades to a semicolon.
             // This is a best case effort too, where it will fail when dealing with the semicolons in a for loop.
             // self.advance returns previous token, so it is chained here instead of making another call to self.previous()
-            if self.advance().token_type == TokenType::Semicolon {
-                return;
-            }
-
-            // Matching the other TokenTypes
-            // When these token types are read, stop the synchronize loop
-            match self.current().token_type {
-                TokenType::Function
+            match self.advance().token_type {
+                TokenType::Semicolon
+                | TokenType::Function
                 | TokenType::Const
                 | TokenType::If
-                // | TokenType::For
-                // | TokenType::Print
+                | TokenType::Print
                 | TokenType::While
                 | TokenType::Return => return,
                 _ => {}

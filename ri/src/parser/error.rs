@@ -12,8 +12,8 @@ pub enum ParsingError {
 
     UnexpectedEofError(Token),
 
-    /// EmptyBlockStatement(token_of_closing_right_brace)
-    EmptyBlockStatement(Token),
+    /// EmptyBlockStatement(line_number_of_closing_right_brace)
+    EmptyBlockStatement(usize),
 
     /// InternalError(line_number, error_message),
     ///
@@ -40,10 +40,10 @@ impl std::fmt::Display for ParsingError {
             ParsingError::InternalError(line, ref message) => {
                 write!(f, "[line {}] Internal error: {}", line, message)
             }
-            ParsingError::EmptyBlockStatement(ref token) => write!(
+            ParsingError::EmptyBlockStatement(line_number) => write!(
                 f,
                 "[line {}] Empty block statements are not allowed",
-                token.line
+                line_number
             ),
             // ParsingError::InvalidAssignmentError(ref token) => {
             //     write!(f, "[line {}] Invalid assignment target", token.line)
