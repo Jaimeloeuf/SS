@@ -128,7 +128,7 @@ impl TypeChecker {
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
             }
-            Stmt::If(ref condition, ref then_branch, ref else_branch) => {
+            Stmt::If(ref condition, ref then_branch, ref else_branch, _) => {
                 if self.check_expression(condition)? != Type::Bool {
                     return Err(TypeCheckerError::InternalError(
                         "TESTING - Conditions of If stmts must be bool",

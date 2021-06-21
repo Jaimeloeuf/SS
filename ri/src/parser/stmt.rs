@@ -24,10 +24,10 @@ pub enum Stmt {
     /// The line number is used for error handling, it's optional as arrow functions do not need to store it.
     Block(Vec<Stmt>, Option<usize>),
 
-    /// If(condition, stmt_to_run_if_condition_is_true, optional_stmt_to_run_if_condition_is_false)
+    /// If(condition, stmt_to_run_if_condition_is_true, optional_stmt_to_run_if_condition_is_false, if_keyword_line_number)
     ///
     /// Note that the stmts are not necessarily block stmts, as they can be single line stmts without brackets
-    If(Expr, Box<Stmt>, Option<Box<Stmt>>),
+    If(Expr, Box<Stmt>, Option<Box<Stmt>>, usize),
 
     /// While(condition, loop_body_stmt)
     ///
@@ -58,7 +58,7 @@ impl std::fmt::Display for Stmt {
                 write!(f, "(const {} {})", token.literal.as_ref().unwrap(), expr)
             }
             Stmt::Block(ref statments, _) => write!(f, "(do {:?})", statments),
-            Stmt::If(ref expr, ref if_branch, ref else_branch) => {
+            Stmt::If(ref expr, ref if_branch, ref else_branch, _) => {
                 write!(f, "(if {} {} {:?})", expr, if_branch, else_branch)
             }
             Stmt::While(ref expr, ref stmt) => write!(f, "(loop {} {})", expr, stmt),

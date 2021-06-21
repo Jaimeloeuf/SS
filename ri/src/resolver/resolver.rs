@@ -148,7 +148,7 @@ impl Resolver {
             // since the condition may be evaluated to false.
             // However if both if and else branches are defined, it means that the execution path MUST go down either of the branches.
             // In that case the statement as a whole is halting, if both the if and else branches are halting.
-            Stmt::If(ref condition, ref then_branch, ref else_branch) => {
+            Stmt::If(ref condition, ref then_branch, ref else_branch, _) => {
                 self.resolve_expression(condition)?;
                 // Unwrap to get halting status of branch body for comparison
                 let then_branch_is_halting = self.resolve_statement(then_branch)?;

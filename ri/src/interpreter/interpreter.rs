@@ -225,7 +225,7 @@ impl Interpreter {
             // 'return;' will be auto parsed to 'return Value::Null;' by parser
             Stmt::Return(_, ref expr) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
 
-            Stmt::If(ref condition, ref true_branch, ref else_branch) => {
+            Stmt::If(ref condition, ref true_branch, ref else_branch, _) => {
                 let branch = if self.interpret_expr(condition)?.bool_or_err(
                     "Invalid condition value type, only Boolean values can be used as conditionals!"
                 )? {

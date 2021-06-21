@@ -166,7 +166,9 @@ impl Parser {
     // }
     // @todo Optimize by skipping blocks like "if (false)"
     fn if_statement(&mut self) -> Result<Stmt, ParsingError> {
-        self.consume(TokenType::LeftParen, "Expect `(` after 'if'")?;
+        let line_number = self
+            .consume(TokenType::LeftParen, "Expect `(` after 'if'")?
+            .line;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expect `)` after 'if' condition")?;
 
@@ -180,7 +182,12 @@ impl Parser {
             None
         };
 
-        Ok(Stmt::If(condition, Box::new(true_branch), else_branch))
+        Ok(Stmt::If(
+            condition,
+            Box::new(true_branch),
+            else_branch,
+            line_number,
+        ))
     }
 
     fn while_statement(&mut self) -> Result<Stmt, ParsingError> {
