@@ -202,8 +202,7 @@ impl Parser {
     }
 
     fn return_statement(&mut self) -> Result<Stmt, ParsingError> {
-        // @todo Why need to clone previous? Does Stmt::Return really need the token?
-        let keyword = self.previous().clone();
+        let line_number = self.previous().line;
 
         // Return value can either be an expression or Null if nothing is specified
         // @todo Alternatively, store value as Option<Value> in Stmt::Return and let interpreter deal with it
@@ -214,7 +213,7 @@ impl Parser {
         };
 
         self.consume(TokenType::Semicolon, "Expect `;` after return value.")?;
-        Ok(Stmt::Return(keyword, Box::new(value)))
+        Ok(Stmt::Return(Box::new(value), line_number))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParsingError> {
@@ -487,7 +486,7 @@ impl Parser {
                 // This 3 lines essentially desugar '() => expr' into 'function() { return expr; }'
                 // @todo Do something about the previous().clone for return token.. seems wrong.
                 let body = self.expression()?;
-                let return_statement = Stmt::Return(self.previous().clone(), Box::new(body));
+                let return_statement = Stmt::Return(Box::new(body), self.previous().line);
                 let block_statement = Stmt::Block(vec![return_statement], None);
 
                 Ok(Expr::AnonymousFunc(Box::new(Stmt::AnonymousFunc(

@@ -187,7 +187,7 @@ impl TypeChecker {
                     )),
                 };
             }
-            Stmt::Return(_, ref expr) => {
+            Stmt::Return(ref expr, _) => {
                 // Get the type of the return expression,
                 // Wrap it in a Return type and Ok variant to bubble it up
                 return Ok(Type::Return(Box::new(self.check_expression(expr)?)));

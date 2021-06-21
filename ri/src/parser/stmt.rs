@@ -41,11 +41,11 @@ pub enum Stmt {
     /// AnonymousFunc will be wrapped in the Expr::AnonymousFunc variant since it is treated as an expression
     AnonymousFunc(Vec<Token>, Box<Stmt>),
 
-    /// Return(keyword_token, return_expression)
+    /// Return(return_expression, return_keyword_line_number)
     ///
     /// Return stmt is a special stmt variant that will be evaluated to a Value variant,
     /// where the value is the evaluated expr, 'return_expression'
-    Return(Token, Box<Expr>),
+    Return(Box<Expr>, usize),
 }
 
 // Temporary display trait for debugging
@@ -74,9 +74,7 @@ impl std::fmt::Display for Stmt {
             Stmt::AnonymousFunc(ref parameters, ref body) => {
                 write!(f, "(funcall [anonymous] {:?} {})", parameters, body)
             }
-            Stmt::Return(_, ref expr) => {
-                write!(f, "(return {})", expr)
-            }
+            Stmt::Return(ref expr, _) => write!(f, "(return {})", expr),
 
             #[allow(unreachable_patterns)]
             _ => write!(f, "Unimplemented display trait for Stmt::{:?}", self),

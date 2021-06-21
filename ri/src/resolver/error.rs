@@ -7,11 +7,15 @@ pub enum ResolvingError {
     UndefinedIdentifier(Token),
     IdentifierAlreadyUsed(Token, String),
     IdentifierAlreadyUsedGlobally(Token, String),
-    ReturnOutsideFunction(Token),
+    ReturnOutsideFunction(usize),
 
+    /// UnreachableCodeAfterReturn(line_number)
+    ///
     /// There should not be any unreachable code after a return statement
-    UnreachableCodeAfterReturn(Token),
-    /// A more generic rrror for any unreachable code
+    UnreachableCodeAfterReturn(usize),
+    /// UnreachableCode(halting_stmt)
+    ///
+    /// A more generic error for any unreachable code
     UnreachableCode(Stmt),
 }
 
@@ -35,15 +39,15 @@ impl std::fmt::Display for ResolvingError {
                 "[line {}] Identifier '{}' is a Global SimpleScript identifier that cannot be reused",
                 token.line, identifier
             ),
-            ResolvingError::ReturnOutsideFunction(ref token) => write!(
+            ResolvingError::ReturnOutsideFunction(line_number) => write!(
                 f,
                 "[line {}] Cannot use `return` outside a function",
-                token.line
+                line_number
             ),
-            ResolvingError::UnreachableCodeAfterReturn(ref token) => write!(
+            ResolvingError::UnreachableCodeAfterReturn(line_number) => write!(
                 f,
                 "[line {}] Unreachable code found after the `return` statement on this line",
-                token.line
+                line_number
             ),
             ResolvingError::UnreachableCode(ref stmt) => write!(
                 f,

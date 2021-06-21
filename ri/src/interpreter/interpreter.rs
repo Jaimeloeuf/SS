@@ -105,7 +105,7 @@ impl Interpreter {
             if return_value.is_some() {
                 // If the current statement is a return statement, its value will be a Value::Return variant
                 // The Value::Return variant tells us a return statement was executed, and also holds the return value
-                if let Stmt::Return(ref _token, ref _expr) = stmt {
+                if let Stmt::Return(ref _expr, _) = stmt {
                     // Break out of this loop of statements, in this Block statement
                     // To stop executing code in this block statement
                     //
@@ -223,7 +223,7 @@ impl Interpreter {
             // So as to differentiate this from a normal expression statement value.
             // So the interpreter can stop further execution and just return it to the interpreter method that called it
             // 'return;' will be auto parsed to 'return Value::Null;' by parser
-            Stmt::Return(_, ref expr) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
+            Stmt::Return(ref expr, _) => Some(Value::Return(Box::new(self.interpret_expr(expr)?))),
 
             Stmt::If(ref condition, ref true_branch, ref else_branch, _) => {
                 let branch = if self.interpret_expr(condition)?.bool_or_err(

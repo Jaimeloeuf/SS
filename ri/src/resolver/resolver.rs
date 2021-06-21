@@ -69,8 +69,8 @@ impl Resolver {
                 // Return the appropriate unreachable code error type based on whether the current statement is a return
                 return Err(
                     // If a return statement is used when it is not the last statement
-                    if let Stmt::Return(ref token, _) = stmt {
-                        ResolvingError::UnreachableCodeAfterReturn(token.clone())
+                    if let Stmt::Return(_, line_number) = stmt {
+                        ResolvingError::UnreachableCodeAfterReturn(*line_number)
                     }
                     // If the current statement is halting when it is not the last statement
                     else {
@@ -163,10 +163,10 @@ impl Resolver {
             Stmt::Print(ref expr) => self.resolve_expression(expr)?,
 
             // Return statement is halting by definition
-            Stmt::Return(ref token, ref expr) => {
+            Stmt::Return(ref expr, line_number) => {
                 // If not in any function, return statements are not allowed
                 if !self.in_function {
-                    return Err(ResolvingError::ReturnOutsideFunction(token.clone()));
+                    return Err(ResolvingError::ReturnOutsideFunction(line_number));
                 }
 
                 self.resolve_expression(expr)?;
