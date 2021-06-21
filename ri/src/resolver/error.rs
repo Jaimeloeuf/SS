@@ -1,4 +1,3 @@
-use crate::parser::stmt::Stmt;
 use crate::token::Token;
 
 #[derive(Debug)]
@@ -9,14 +8,10 @@ pub enum ResolvingError {
     IdentifierAlreadyUsedGlobally(Token, String),
     ReturnOutsideFunction(usize),
 
-    /// UnreachableCodeAfterReturn(line_number)
+    /// UnreachableCode(error_message_on_the_cause_of_unreachable_code)
     ///
-    /// There should not be any unreachable code after a return statement
-    UnreachableCodeAfterReturn(usize),
-    /// UnreachableCode(halting_stmt)
-    ///
-    /// A more generic error for any unreachable code
-    UnreachableCode(Stmt),
+    /// Generic error for any unreachable code caused by any type of halting stmt
+    UnreachableCode(String),
 }
 
 impl std::fmt::Display for ResolvingError {
@@ -44,31 +39,7 @@ impl std::fmt::Display for ResolvingError {
                 "[line {}] Cannot use `return` outside a function",
                 line_number
             ),
-            ResolvingError::UnreachableCodeAfterReturn(line_number) => write!(
-                f,
-                "[line {}] Unreachable code found after the `return` statement on this line",
-                line_number
-            ),
-            ResolvingError::UnreachableCode(ref stmt) => write!(
-                f,
-                // Only need to handle Block / if / while statements for unreachable code
-                "{}", match stmt {
-                    Stmt::Block(_, Some(line_number)) => format!(
-                        "[line {}] Unreachable code found after this line",
-                        line_number
-                    ),
-                    Stmt::If(_, _, _, line_number) => format!(
-                        "[line {}] Unreachable code found after this if-else statement",
-                        line_number
-                    ),
-                    Stmt::While(_, _, line_number) => format!(
-                        "[line {}] Unreachable code found after this while loop",
-                        line_number
-                    ),
-                    // All other statement types cannot be halting, thus they will not appear here
-                    _ => panic!("Invalid 'unreachable' statement: {:#?}", stmt),
-                }
-            ),
+            ResolvingError::UnreachableCode(message) => write!(f, "{}", message),
         }
     }
 }

@@ -64,22 +64,26 @@ impl Resolver {
         for stmt in ast[..ast.len() - 1].iter() {
             let halting = self.resolve_statement(stmt)?;
 
-            // If the statement is halting, it means that there is unreachable code in this block statement
+            // If statement is halting, there is unreachable code in this block statement since this cannot be the last statement
             if halting {
-                // Return the appropriate unreachable code error type based on whether the current statement is a return
-                return Err(
-                    // If a return statement is used when it is not the last statement
-                    if let Stmt::Return(_, line_number) = stmt {
-                        ResolvingError::UnreachableCodeAfterReturn(*line_number)
-                    }
-                    // If the current statement is halting when it is not the last statement
-                    else {
-                        // Stmt types that can be halting --> Block / if / while
-                        // Unlike return statement, a token cannot be easily extracted from these stmt types for error handling,
-                        // Thus storing the whole stmt to let display trait implementation handle getting the token for line number.
-                        ResolvingError::UnreachableCode(stmt.clone())
-                    },
-                );
+                // Create the appropriate unreachable code message based on the current statement
+                // Only these stmt types (Return / Block / If / While) can be halting
+                // Create error message here instead the display trait implementation, as it is memory intensive to clone stmt
+                let (line_number, msg) = match stmt {
+                    Stmt::Return(_, line_number) => (line_number, "'return' statement"),
+                    Stmt::Block(_, Some(line_number)) => (line_number, "'block' statement"),
+                    Stmt::If(_, _, _, line_number) => (line_number, "'if-else' statement"),
+                    Stmt::While(_, _, line_number) => (line_number, "'while' loop"),
+
+                    // All other statement types cannot be halting, thus they will not appear here
+                    _ => panic!("Invalid 'unreachable' statement: {:#?}", stmt),
+                };
+
+                // Return error and stop resolving this path
+                return Err(ResolvingError::UnreachableCode(format!(
+                    "[line {}] Unreachable code found after this {}",
+                    line_number, msg
+                )));
             }
 
             // Alternative syntax
