@@ -51,7 +51,23 @@ impl std::fmt::Display for ResolvingError {
             ),
             ResolvingError::UnreachableCode(ref stmt) => write!(
                 f,
-                "Unreachable code found",
+                // Only need to handle Block / if / while statements for unreachable code
+                "{}", match stmt {
+                    Stmt::Block(_, Some(line_number)) => format!(
+                        "[line {}] Unreachable code found after this line",
+                        line_number
+                    ),
+                    Stmt::If(_, _, _, line_number) => format!(
+                        "[line {}] Unreachable code found after this if-else statement",
+                        line_number
+                    ),
+                    Stmt::While(_, _, line_number) => format!(
+                        "[line {}] Unreachable code found after this while loop",
+                        line_number
+                    ),
+                    // All other statement types cannot be halting, thus they will not appear here
+                    _ => panic!("Invalid 'unreachable' statement: {:#?}", stmt),
+                }
             ),
         }
     }

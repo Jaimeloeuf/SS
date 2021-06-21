@@ -87,8 +87,8 @@ impl Resolver {
             //     // Do nothing for all combinations where the statement is not halting
             //     (_, false) => {}
             //     // If a return statement is used when it is not the last statement
-            //     (Stmt::Return(ref token, _), _) => {
-            //         return Err(ResolvingError::UnreachableCodeAfterReturn(token.clone()))
+            //     (Stmt::Return(_, line_number), _) => {
+            //         return Err(ResolvingError::UnreachableCodeAfterReturn(*line_number))
             //     }
             //     // If the current statement is halting when it is not the last statement
             //     (_, true) => return Err(ResolvingError::UnreachableCode(stmt.clone())),
@@ -295,7 +295,7 @@ impl Resolver {
 
         // Body must be a block statement, even for anonymous arrow functions
         // arrow functions is just syntatic sugar and are also parsed into block statements
-        if let &Stmt::Block(ref stmts) = body {
+        if let &Stmt::Block(ref stmts, _) = body {
             self.resolve_ast(stmts)?;
         } else {
             return Err(ResolvingError::InternalError(
