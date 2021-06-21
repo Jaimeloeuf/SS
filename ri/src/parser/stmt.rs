@@ -18,8 +18,11 @@ pub enum Stmt {
     /// Const(identifier_token, value)
     Const(Token, Expr),
 
-    /// A block stmt is just a vector of all the stmts defined in that block
-    Block(Vec<Stmt>),
+    /// Block(vec_of_stmts, optional_closing_bracket_line_number)
+    ///
+    /// A block stmt is just a vector of all the stmts defined in that block.
+    /// The line number is used for error handling, it's optional as arrow functions do not need to store it.
+    Block(Vec<Stmt>, Option<usize>),
 
     /// If(condition, stmt_to_run_if_condition_is_true, optional_stmt_to_run_if_condition_is_false)
     ///
@@ -54,7 +57,7 @@ impl std::fmt::Display for Stmt {
             Stmt::Const(ref token, ref expr) => {
                 write!(f, "(const {} {})", token.literal.as_ref().unwrap(), expr)
             }
-            Stmt::Block(ref statments) => write!(f, "(do {:?})", statments),
+            Stmt::Block(ref statments, _) => write!(f, "(do {:?})", statments),
             Stmt::If(ref expr, ref if_branch, ref else_branch) => {
                 write!(f, "(if {} {} {:?})", expr, if_branch, else_branch)
             }

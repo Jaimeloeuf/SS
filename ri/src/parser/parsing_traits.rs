@@ -156,7 +156,7 @@ impl Parser {
         if statements.is_empty() {
             Err(ParsingError::EmptyBlockStatement(right_brace_token.clone()))
         } else {
-            Ok(Stmt::Block(statements))
+            Ok(Stmt::Block(statements, Some(right_brace_token.line)))
         }
     }
 
@@ -479,7 +479,7 @@ impl Parser {
                 // @todo Do something about the previous().clone for return token.. seems wrong.
                 let body = self.expression()?;
                 let return_statement = Stmt::Return(self.previous().clone(), Box::new(body));
-                let block_statement = Stmt::Block(vec![return_statement]);
+                let block_statement = Stmt::Block(vec![return_statement], None);
 
                 Ok(Expr::AnonymousFunc(Box::new(Stmt::AnonymousFunc(
                     parameters,

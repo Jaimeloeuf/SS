@@ -175,7 +175,7 @@ impl Interpreter {
             Stmt::Expr(ref expr) => Some(self.interpret_expr(expr)?),
 
             // Block statement, groups statements together in the same scope for execution
-            Stmt::Block(ref statements) => {
+            Stmt::Block(ref statements, _) => {
                 // Create new environment/scope for current block with existing environment/scope as the parent/enclosing environment
                 let current_env = Environment::new(Some(Rc::clone(&self.env)));
 

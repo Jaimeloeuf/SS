@@ -89,7 +89,7 @@ impl Callable for Function {
 
         // Get body statement from function body's Stmt::Block
         let body = match &**body {
-            Stmt::Block(ref statement) => statement,
+            Stmt::Block(ref statement, _) => statement,
             unmatched_stmt_variant => {
                 // Might change to support inline/anonymous functions
                 // @todo Remove use of debug printing once stmt implements Display trait

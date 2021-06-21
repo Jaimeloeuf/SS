@@ -110,7 +110,7 @@ impl Resolver {
             // No expression is halting, so by extension, the expression stmt is not halting
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             // A block stmt can contain nested return statements, therefore a block stmt can be halting
-            Stmt::Block(ref stmts) => {
+            Stmt::Block(ref stmts, _) => {
                 self.begin_scope();
                 // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
                 let nested_halting_status = self.resolve_ast(stmts);

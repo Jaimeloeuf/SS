@@ -55,7 +55,7 @@ impl TypeChecker {
                 // @todo Why need to return here? Is it because a return stmt can be nested?
                 return self.check_expression(expr);
             }
-            Stmt::Block(ref stmts) => {
+            Stmt::Block(ref stmts, _) => {
                 self.begin_scope();
                 // Store block stmt type to type check for return types after ending current scope
                 let block_stmt_type = self.check_ast(stmts)?;
@@ -489,7 +489,7 @@ impl TypeChecker {
 
         // Body must be a block statement, even for anonymous arrow functions
         // arrow functions is just syntatic sugar and are also parsed into block statements
-        if let &Stmt::Block(ref stmts) = body {
+        if let &Stmt::Block(ref stmts, _) = body {
             for stmt in stmts {
                 // Destructure out the inner type and push onto return_types array to do return type, type checking later.
                 // Return types are usually bubbled up in block statements to let the function call type checking method handle it,
