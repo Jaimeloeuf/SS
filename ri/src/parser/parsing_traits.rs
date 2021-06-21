@@ -15,8 +15,6 @@ impl Parser {
             current_index: 0,
         };
 
-        println!("Processing '{}' tokens", parser.tokens.len());
-
         let mut statements: Vec<Stmt> = Vec::<Stmt>::new();
         let mut errors: Vec<ParsingError> = Vec::<ParsingError>::new();
 

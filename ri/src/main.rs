@@ -20,6 +20,7 @@ use interpreter::interpreter::Interpreter;
 use parser::parser_struct::Parser;
 use resolver::resolver::Resolver;
 use scanner::scanner_struct::Scanner;
+use type_checker::TypeChecker;
 
 // Macro wrapping around println! macro that only prints in debug builds or if verbose/debugging flag is set
 #[macro_export]
@@ -38,87 +39,70 @@ fn main() {
     verbosePrintln!("SS version: 0.0.1");
     let args: Vec<String> = env::args().collect();
 
-    // Use this to get flags as args
-    // let arg = &args[1];
-    // println!("Searching for {}", arg);
+    // for arg in &args {
+    //     // Use this to look for flags passed in as args
+    // }
 
     let filename = &args[1];
     // @todo Get the full file name instead of the relative path
-    println!("Entering file '{}'", filename);
+    println!("Entering file '{}'\n", filename);
 
-    read_file(&filename);
+    run_file(&filename);
 
     // @todo To also ran before running the interpreter
-    verbosePrintln!("Completed in: {:?}", start_of_main.elapsed());
+    verbosePrintln!("\nCompleted in: {:?}\n", start_of_main.elapsed());
 }
 
 // @todo Should return a Result variant too! Can be a Runtime Variant?
-fn read_file(filename: &String) {
+fn run_file(filename: &String) {
     let source = fs::read_to_string(filename).expect("RuntimeError - File not found");
 
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
-    // @todo Instead use ? operator, to let it bubble up
-    // And these components, scanner, parser, resolver, interpreter, will have their errors converted to a SSError enum
-    let tokens = Scanner::scan_tokens(source);
-
-    if let Err(e) = tokens {
-        println!("Program stopped due to Scanning SYNTAX ERROR.");
-
-        for error in e.iter() {
-            println!("{}\n", error);
-        }
-
-        return;
-    } else if let Ok(tokens) = tokens {
-        // println!("Logging out token vector");
-        // for token in tokens.iter() {
-        //     println!("{}", token.to_debug_string());
-        // }
-        // println!("End of token vector");
-
-        // @todo Should not nest call to parser and interpreter like this
-
-        // Give tokens to parse directly
-        let abstract_syntax_tree = Parser::parse(tokens);
-
-        if let Err(e) = abstract_syntax_tree {
-            println!("Program stopped due to SYNTAX ERROR.");
-
+    let tokens = match Scanner::scan_tokens(source) {
+        Ok(tokens) => tokens,
+        Err(e) => {
+            eprintln!("------ Scanning SYNTAX ERROR ------");
             for error in e.iter() {
-                println!("{}\n", error);
+                eprintln!("{}\n", error);
             }
-        } else if let Ok(mut ast) = abstract_syntax_tree {
-            // @todo Should be named statements instead of ast
-            verbosePrintln!("AST generated");
-
-            // for stmt in ast.iter() {
-            //     println!("{:?}", stmt);
-            // }
-            // println!();
-
-            // Mut is used to modify Expr::Const distance value
-            let resolver = Resolver::resolve(&mut ast);
-            if let Err(e) = resolver {
-                println!("{}", e);
-                panic!("Resolver failed");
-            }
-
-            // Mut is used to modify Expr::Const distance value
-            match type_checker::TypeChecker::check(&mut ast) {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("{}", e);
-                    panic!("TypeChecker failed");
-                }
-            }
-
-            // @todo Return errors if any?
-            // @todo Interpreter can return a code, which will be used as the program exit code of the interpreter
-            if let Some(err) = Interpreter::interpret(ast) {
-                println!("{}", err);
-            }
+            return;
         }
+    };
+
+    // Parse tokens for AST
+    let mut ast = match Parser::parse(tokens) {
+        Ok(ast) => ast,
+        Err(e) => {
+            eprintln!("------ Parsing SYNTAX ERROR ------");
+            for error in e.iter() {
+                eprintln!("{}\n", error);
+            }
+            return;
+        }
+    };
+
+    // Resolve AST and quit on error
+    // Mut is used to modify Expr::Const distance value
+    if let Err(e) = Resolver::resolve(&mut ast) {
+        eprintln!("------ Resolver ERROR ------");
+        eprintln!("{}", e);
+        return;
+    }
+
+    // Typecheck the AST and quit on error
+    if let Err(e) = TypeChecker::check(&mut ast) {
+        eprintln!("------ TypeChecker ERROR ------");
+        eprintln!("{}", e);
+        return;
+    }
+
+    // @todo Interpreter can return a code, which will be used as the program exit code of the interpreter
+    // Interpret/Run the AST and quit on error
+    if let Some(err) = Interpreter::interpret(ast) {
+        eprintln!("------ Interpreter ERROR ------");
+        eprintln!("{}", err);
+        return;
     }
 }
