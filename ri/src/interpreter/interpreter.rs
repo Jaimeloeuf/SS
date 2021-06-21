@@ -257,7 +257,7 @@ impl Interpreter {
                 // })?
             }
 
-            Stmt::While(ref expr, ref loop_body) => {
+            Stmt::While(ref expr, ref loop_body, _) => {
                 while self
                     .interpret_expr(expr)?
                     .bool_or_err("Expected Boolean from While loop expression")?

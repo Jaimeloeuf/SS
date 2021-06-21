@@ -176,7 +176,7 @@ impl TypeChecker {
                 // The type returned will be ignored, but the ? operator is used to allow errors to bubble up
                 self.check_expression(expr)?;
             }
-            Stmt::While(ref condition, ref body) => {
+            Stmt::While(ref condition, ref body, _) => {
                 return match self.check_expression(condition)? {
                     // If there are any return statements within loop, the type will be bubbled up.
                     Type::Bool => Ok(self.check_statement(body)?),

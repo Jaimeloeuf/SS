@@ -177,7 +177,7 @@ impl Resolver {
             }
 
             // While loops are halting if the loop body is halting. i.e. if there is a return statement within the loop body
-            Stmt::While(ref condition, ref body) => {
+            Stmt::While(ref condition, ref body, _) => {
                 self.resolve_expression(condition)?;
                 // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
                 return self.resolve_statement(body);

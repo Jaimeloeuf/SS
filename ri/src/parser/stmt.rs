@@ -29,10 +29,10 @@ pub enum Stmt {
     /// Note that the stmts are not necessarily block stmts, as they can be single line stmts without brackets
     If(Expr, Box<Stmt>, Option<Box<Stmt>>, usize),
 
-    /// While(condition, loop_body_stmt)
+    /// While(condition, loop_body_stmt, while_keyword_line_number)
     ///
     /// Note that loop_body_stmt is not necessarily a block stmt, it can be a single line loop
-    While(Expr, Box<Stmt>),
+    While(Expr, Box<Stmt>, usize),
 
     /// Func(name_token, parameter_tokens, body_as_a_block_stmt)
     Func(Token, Vec<Token>, Box<Stmt>),
@@ -61,7 +61,7 @@ impl std::fmt::Display for Stmt {
             Stmt::If(ref expr, ref if_branch, ref else_branch, _) => {
                 write!(f, "(if {} {} {:?})", expr, if_branch, else_branch)
             }
-            Stmt::While(ref expr, ref stmt) => write!(f, "(loop {} {})", expr, stmt),
+            Stmt::While(ref expr, ref stmt, _) => write!(f, "(loop {} {})", expr, stmt),
             Stmt::Func(ref token, ref parameters, ref body) => {
                 write!(
                     f,
