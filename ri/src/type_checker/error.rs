@@ -1,8 +1,13 @@
+use super::Type;
 use crate::token::Token;
 
 #[derive(Debug)]
 pub enum TypeCheckerError {
     InternalError(&'static str),
+
+    // Unused value
+    UnusedValue(Type),
+
     UndefinedIdentifier(Token),
     IdentifierAlreadyUsed(Token, String),
     IdentifierAlreadyUsedGlobally(Token, String),
@@ -13,6 +18,10 @@ impl std::fmt::Display for TypeCheckerError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             TypeCheckerError::InternalError(ref message) => write!(f, "{}", message),
+            TypeCheckerError::UnusedValue(type_of_unused_value) => write!(f,
+                "All values must be used, found unused value of type: {:?}",
+                type_of_unused_value
+            ),
             TypeCheckerError::UndefinedIdentifier(ref token) => write!(
                 f,
                 "[line {}] Cannot access value of identifier '{}' before it is defined",

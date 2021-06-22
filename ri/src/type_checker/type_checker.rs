@@ -41,6 +41,13 @@ impl TypeChecker {
                 // Stop and bubble up stmt_type if Type::Return, to bubble through everything and let function checker handle it
                 return Ok(stmt_type);
             }
+
+            // Checks for unused values to ensure that there no values are left unused
+            match stmt_type {
+                // Types that are allowed to be "unused" in global scope
+                Type::Func(_, _) | Type::Null => {}
+                value_type => return Err(TypeCheckerError::UnusedValue(value_type)),
+            }
         }
 
         // @todo Default type of an AST, Change to a void type or something to indicate that this is not a valid usable type
