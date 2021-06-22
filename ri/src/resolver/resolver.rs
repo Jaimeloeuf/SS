@@ -40,68 +40,70 @@ impl Resolver {
         // @todo Make it better then.. Cloning it because cannot have ref and mut ref to resolver at the same time....
         resolver.define_globals(resolver.globals.clone());
 
-        // @todo Store all the errors and add synchronization point so that multiple errors can be found at once
-        resolver.resolve_ast(ast)?;
+        for stmt in ast {
+            // Since return statements are illegal outside of a function body, statements in global scope can never be halting.
+            // @todo Store all the errors and add synchronization point so that multiple errors can be found at once
+            resolver.resolve_statement(stmt)?;
+        }
+
         resolver.end_scope();
 
         Ok(())
     }
 
-    /// Resolve statements 1 by 1
+    /// Resolve statements in a block statement 1 by 1
     ///
     /// Since statements can be halting, this method checks for unreachable statements if a statement is halting,
     /// regardless if function or none function block, make sure only the last stmt of this block is halting.
     /// Errors on unreachable code, else bubbles up the halting status of the last statement.
-    fn resolve_ast(&mut self, ast: &Vec<Stmt>) -> Result<bool, ResolvingError> {
-        // Do not need to check if ast is empty, as empty block statements is a parser error.
-        // Alternatively, if empty blocks are accepted, then this block is not halting as there is no return.
-        // if ast.is_empty() {
-        //     return Ok(false);
-        // }
+    fn resolve_block_statement(&mut self, block_statement: &Stmt) -> Result<bool, ResolvingError> {
+        // @todo maybe dun some line number, just line number, as that will err on anon fn
+        if let &Stmt::Block(ref stmts, Some(line_number)) = block_statement {
+            // Error on empty block statement, checked here instead of parser to avoid false positives. See parser for details.
+            if stmts.is_empty() {
+                Err(ResolvingError::EmptyBlockStatement(line_number))
 
-        // Loop through all the statements in the block statement till the second last one,
-        // The last statement will be resolved and checked seperately.
-        for stmt in ast[..ast.len() - 1].iter() {
-            let halting = self.resolve_statement(stmt)?;
+                // Alternatively if empty blocks are accepted, then this block is not halting as there is no return.
+                // Ok(false)
+            } else {
+                // Loop through all the statements in block statement till the second last one,
+                // The last statement will be resolved and checked seperately as it does not need an unreachable code check
+                for stmt in stmts[..stmts.len() - 1].iter() {
+                    let halting = self.resolve_statement(stmt)?;
 
-            // If statement is halting, there is unreachable code in this block statement since this cannot be the last statement
-            if halting {
-                // Create the appropriate unreachable code message based on the current statement
-                // Only these stmt types (Return / Block / If / While) can be halting
-                // Create error message here instead the display trait implementation, as it is memory intensive to clone stmt
-                let (line_number, msg) = match stmt {
-                    Stmt::Return(_, line_number) => (line_number, "'return' statement"),
-                    Stmt::Block(_, Some(line_number)) => (line_number, "'block' statement"),
-                    Stmt::If(_, _, _, line_number) => (line_number, "'if-else' statement"),
-                    Stmt::While(_, _, line_number) => (line_number, "'while' loop"),
+                    // If statement is halting, there is unreachable code in this block statement since this cannot be the last statement
+                    if halting {
+                        // Create the appropriate unreachable code message based on the current statement
+                        // Only these stmt types (Return / Block / If / While) can be halting
+                        // Create error message here instead the display trait implementation, as it is memory intensive to clone stmt
+                        let (line_number, msg) = match stmt {
+                            Stmt::Return(_, line_number) => (line_number, "'return' statement"),
+                            Stmt::Block(_, Some(line_number)) => (line_number, "'block' statement"),
+                            Stmt::If(_, _, _, line_number) => (line_number, "'if-else' statement"),
+                            Stmt::While(_, _, line_number) => (line_number, "'while' loop"),
 
-                    // All other statement types cannot be halting, thus they will not appear here
-                    _ => panic!("Invalid 'unreachable' statement: {:#?}", stmt),
-                };
+                            // All other statement types cannot be halting, thus they will not appear here
+                            _ => panic!("Invalid 'unreachable' statement: {:#?}", stmt),
+                        };
 
-                // Return error and stop resolving this path
-                return Err(ResolvingError::UnreachableCode(format!(
-                    "[line {}] Unreachable code found after this {}",
-                    line_number, msg
-                )));
+                        // Return error and stop resolving this path
+                        return Err(ResolvingError::UnreachableCode(format!(
+                            "[line {}] Unreachable code found after this {}",
+                            line_number, msg
+                        )));
+                    }
+                }
+
+                // Get the last statement and unwrap it directly (it is garunteed to not be empty after parsing),
+                // Resolve the statement and return it's halting status as the halting status of the block statement.
+                self.resolve_statement(stmts.last().unwrap())
             }
-
-            // Alternative syntax
-            // match (stmt, halting) {
-            //     // Do nothing for all combinations where the statement is not halting
-            //     (_, false) => {}
-            //     // If a return statement is used when it is not the last statement
-            //     (Stmt::Return(_, line_number), _) => {
-            //         return Err(ResolvingError::UnreachableCodeAfterReturn(*line_number))
-            //     }
-            //     // If the current statement is halting when it is not the last statement
-            //     (_, true) => return Err(ResolvingError::UnreachableCode(stmt.clone())),
-            // };
+        } else {
+            panic!(
+                "resolve_block_statement method only accepts Stmt::Block, found: {:#?}",
+                block_statement
+            );
         }
-
-        // Get the last statement and unwrap it directly (it is garunteed to not be empty after parsing),
-        // Resolve the statement and return it's halting status as the halting status of the block statement.
-        self.resolve_statement(ast.last().unwrap())
     }
 
     // @todo Use reference to the string instead of having to own it for lexeme.clone()
@@ -114,10 +116,11 @@ impl Resolver {
             // No expression is halting, so by extension, the expression stmt is not halting
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             // A block stmt can contain nested return statements, therefore a block stmt can be halting
-            Stmt::Block(ref stmts, _) => {
+            Stmt::Block(_, _) => {
                 self.begin_scope();
+                // Pass whole statement in to resolve instead of just the inner vec of statements
                 // The returned value does not need to be unwrapped since this nested halting status is bubbled up immediately
-                let nested_halting_status = self.resolve_ast(stmts);
+                let nested_halting_status = self.resolve_block_statement(stmt);
                 self.end_scope();
 
                 // Bubble up the halting status of the block statement
@@ -299,13 +302,7 @@ impl Resolver {
 
         // Body must be a block statement, even for anonymous arrow functions
         // arrow functions is just syntatic sugar and are also parsed into block statements
-        if let &Stmt::Block(ref stmts, _) = body {
-            self.resolve_ast(stmts)?;
-        } else {
-            return Err(ResolvingError::InternalError(
-                "Function body can only be Stmt::Block",
-            ));
-        };
+        self.resolve_block_statement(body)?;
 
         self.end_scope();
         self.in_function = is_parent_in_function;

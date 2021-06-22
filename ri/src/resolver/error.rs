@@ -8,6 +8,11 @@ pub enum ResolvingError {
     IdentifierAlreadyUsedGlobally(Token, String),
     ReturnOutsideFunction(usize),
 
+    /// EmptyBlockStatement(line_number_of_closing_right_brace)
+    ///
+    /// As a side effect, a "no-op" function cannot be defined in SS therefore if needed, it must be a native function
+    EmptyBlockStatement(usize),
+
     /// UnreachableCode(error_message_on_the_cause_of_unreachable_code)
     ///
     /// Generic error for any unreachable code caused by any type of halting stmt
@@ -40,6 +45,11 @@ impl std::fmt::Display for ResolvingError {
                 line_number
             ),
             ResolvingError::UnreachableCode(message) => write!(f, "{}", message),
+            ResolvingError::EmptyBlockStatement(line_number) => write!(
+                f,
+                "[line {}] Empty block statements are not allowed",
+                line_number
+            ),
         }
     }
 }

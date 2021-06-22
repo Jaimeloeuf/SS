@@ -149,19 +149,21 @@ impl Parser {
             .consume(TokenType::RightBrace, "Expect '}' after block statement")?
             .line;
 
-        // Empty block statements are not allowed.
-        // Check here instead of checking in resolver.
-        // As a side effect, a "no-op" function cannot be defined in SS therefore if needed, it must be a native function
-        if statements.is_empty() {
-            Err(ParsingError::EmptyBlockStatement(
-                line_number_of_closing_right_brace,
-            ))
-        } else {
-            Ok(Stmt::Block(
-                statements,
-                Some(line_number_of_closing_right_brace),
-            ))
-        }
+        // Empty block statements are not allowed, but will be checked in resolver instead.
+        // The issue with checking here is that if this happen within a function definition, the error will bubble up to 'parse' method
+        // and because of the synchronization function, it will continue resolving the function body, which means the closing '}' of the
+        // function body is not consumed, and will create a false positive error later on when it is found, which may confuse user.
+        // However if all is parsed, and error is handled by resolver, then this issue will not exist.
+        // if statements.is_empty() {
+        //     return Err(ParsingError::EmptyBlockStatement(
+        //         line_number_of_closing_right_brace,
+        //     ));
+        // }
+
+        Ok(Stmt::Block(
+            statements,
+            Some(line_number_of_closing_right_brace),
+        ))
     }
 
     // @todo Support else if
