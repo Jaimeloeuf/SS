@@ -313,6 +313,12 @@ impl Interpreter {
                 }
             }
 
+            // Interpret the expression of an Ignore statement, bubbles up errors if any and does not evaluates a value
+            Stmt::Ignore(ref expr) => {
+                self.interpret_expr(expr)?;
+                None
+            }
+
             Stmt::Print(ref expr) => {
                 // Interpret expression and unwrap result to print
                 // @todo Use seperate print from interpreter's print method, to make them run independently

@@ -222,6 +222,14 @@ impl Parser {
         Ok(Stmt::Return(Box::new(value), line_number))
     }
 
+    fn ignore_statement(&mut self) -> Result<Stmt, ParsingError> {
+        // If the line number is needed for debugging purposes, take here and store in Stmt::Ignore
+        // let line_number = self.previous().line;
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after ignore statement.")?;
+        Ok(Stmt::Ignore(expr))
+    }
+
     fn expression_statement(&mut self) -> Result<Stmt, ParsingError> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression")?;

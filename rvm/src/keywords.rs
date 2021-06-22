@@ -32,6 +32,8 @@ pub fn get_token_type_if_keyword(word_to_test_that_might_be_keyword: &str) -> Op
 
         "const" => Some(TokenType::Const),
 
+        "ignore" => Some(TokenType::Ignore),
+
         _ => None,
     }
 }

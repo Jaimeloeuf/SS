@@ -183,6 +183,16 @@ impl TypeChecker {
                 // The type returned will be ignored, but the ? operator is used to allow errors to bubble up
                 self.check_expression(expr)?;
             }
+            Stmt::Return(ref expr, _) => {
+                // Get the type of the return expression,
+                // Wrap it in a Return type and Ok variant to bubble it up
+                return Ok(Type::Return(Box::new(self.check_expression(expr)?)));
+            }
+            // Ignore statements are used to ignore evaluated values of expressions,
+            // Which is done by type checking the expression and only bubbling up errors if needed.
+            Stmt::Ignore(ref expr) => {
+                self.check_expression(expr)?;
+            }
             Stmt::While(ref condition, ref body, _) => {
                 return match self.check_expression(condition)? {
                     // If there are any return statements within loop, the type will be bubbled up.
@@ -193,11 +203,6 @@ impl TypeChecker {
                         "Expect boolean condition for While statements, found 'unexpected_type'",
                     )),
                 };
-            }
-            Stmt::Return(ref expr, _) => {
-                // Get the type of the return expression,
-                // Wrap it in a Return type and Ok variant to bubble it up
-                return Ok(Type::Return(Box::new(self.check_expression(expr)?)));
             }
 
             #[allow(unreachable_patterns)]

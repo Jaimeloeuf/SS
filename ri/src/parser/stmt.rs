@@ -46,6 +46,13 @@ pub enum Stmt {
     /// Return stmt is a special stmt variant that will be evaluated to a Value variant,
     /// where the value is the evaluated expr, 'return_expression'
     Return(Box<Expr>, usize),
+
+    /// Ignore(expression_to_ignore)
+    ///
+    /// This behaves semantically the same as Stmt::Expr(..) only difference being the evaluated value is discarded.
+    /// Used to ignore evaluated value of an expression, be it a function call or literal number.
+    /// This ensures that expression values are not forgotten mistakenly.
+    Ignore(Expr),
 }
 
 // Temporary display trait for debugging
@@ -75,6 +82,7 @@ impl std::fmt::Display for Stmt {
                 write!(f, "(funcall [anonymous] {:?} {})", parameters, body)
             }
             Stmt::Return(ref expr, _) => write!(f, "(return {})", expr),
+            Stmt::Ignore(ref expr) => write!(f, "(ignore {})", expr),
 
             #[allow(unreachable_patterns)]
             _ => write!(f, "Unimplemented display trait for Stmt::{:?}", self),

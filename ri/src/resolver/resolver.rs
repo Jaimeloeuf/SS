@@ -183,6 +183,11 @@ impl Resolver {
                 return Ok(true);
             }
 
+            // Ignore statements are used to ignore evaluated values of expressions,
+            // And since expressions are not halting by default, a ignore statement cannot be halting too
+            // It is resolved the same as Stmt::Expr
+            Stmt::Ignore(ref expr) => self.resolve_expression(expr)?,
+
             // While loops are halting if the loop body is halting. i.e. if there is a return statement within the loop body
             Stmt::While(ref condition, ref body, _) => {
                 self.resolve_expression(condition)?;
