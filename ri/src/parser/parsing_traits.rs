@@ -490,9 +490,10 @@ impl Parser {
                 // Arrow functions are single expression anonymous functions, where the single expression is the return value
                 // So since the body is an expression, parse it as an expression before constructing a statement for AnonymousFunc stmt type
                 // This 3 lines essentially desugar '() => expr' into 'function() { return expr; }'
-                // @todo Do something about the previous().clone for return token.. seems wrong.
-                let body = self.expression()?;
+                // Start parsing from "or" because the expression definitely cannot be an assignment
+                let body = self.or()?;
                 let return_statement = Stmt::Return(Box::new(body), self.previous().line);
+                // @todo Create a small vec? Or something with size of just 1, since vec! does not..? See vec! implementation
                 let block_statement = Stmt::Block(vec![return_statement], None);
 
                 Ok(Expr::AnonymousFunc(Box::new(Stmt::AnonymousFunc(
@@ -500,17 +501,10 @@ impl Parser {
                     Box::new(block_statement),
                 ))))
             } else {
-                // Advance parser's current token pointer to "consume" the TokenType::LeftParen token
-                // Because unlike other blocks in this method, this ElseIf's condition is self.check instead of self.is_next_token
-                // Unlike self.is_next_token, self.check does not consume the token.
-                // self.check is used here instead of self.is_next_token because if the expression is an arrow function,
-                // we want the LeftParen token to be there when we call self.parameters to parse it.
-                // Thus we have to consume it manually here if the expression is not a parameter, and is a group expression instead
-                //
-                // This is the same as 'self.advance();' just that we dont need the token returned and can optimize away the method call
-                self.current_index += 1;
-
-                let expr = self.expression()?;
+                // TokenType::LeftParen is consumed when calling self.parameters()
+                // So can just continuing parsing the inner expression
+                // Start parsing from "or" because the expression definitely cannot be an assignment
+                let expr = self.or()?;
                 self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
                 Ok(Expr::Grouping(Box::new(expr)))
             }
