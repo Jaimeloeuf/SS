@@ -22,8 +22,9 @@ impl Resolver {
 
     // Method to define identifiers used in the global scope
     pub fn define_globals(&mut self, identifiers: Vec<&str>) {
+        let global_scope = self.scopes.last_mut().unwrap();
         for id in identifiers {
-            self.scopes.last_mut().unwrap().insert(id.to_string(), true);
+            global_scope.insert(id.to_string(), true);
         }
     }
 
