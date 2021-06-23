@@ -50,6 +50,12 @@ pub enum Type {
     /// The Function's AST node is stored so that it can be used to type check again when a function call is made
     Func(usize, Box<Stmt>),
 
+    /// AnonymousFunc(number_of_parameters, function_stmt)
+    ///
+    /// This is just like the Func(..) variant except for the different name,
+    /// which will be used to differentiate this and a named function during unused value check.
+    AnonymousFunc(usize, Box<Stmt>),
+
     /// Return is a special type that wraps a Type,
     /// The point of the Return type is to allow type checker to know and let it bubble up till a handler
     Return(Box<Type>),

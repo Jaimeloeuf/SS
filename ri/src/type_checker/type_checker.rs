@@ -119,7 +119,7 @@ impl TypeChecker {
                 // When types are available for the parameters by using the types of the arguments.
                 let function_stmt = stmt.clone();
 
-                let function_type = Type::Func(params.len(), Box::new(function_stmt));
+                let function_type = Type::AnonymousFunc(params.len(), Box::new(function_stmt));
 
                 // Function is not added to scope before type checking function body,
                 // Because anonymous functions cannot "directly" refer to itself recursively.
@@ -310,6 +310,9 @@ impl TypeChecker {
                 let (number_of_parameters, function_stmt) =
                     match self.check_expression(callee_identifier_expr)? {
                         Type::Func(number_of_parameters, function_stmt) => {
+                            (number_of_parameters, function_stmt)
+                        }
+                        Type::AnonymousFunc(number_of_parameters, function_stmt) => {
                             (number_of_parameters, function_stmt)
                         }
 
