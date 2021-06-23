@@ -57,11 +57,14 @@ impl Resolver {
     /// regardless if function or none function block, make sure only the last stmt of this block is halting.
     /// Errors on unreachable code, else bubbles up the halting status of the last statement.
     fn resolve_block_statement(&mut self, block_statement: &Stmt) -> Result<bool, ResolvingError> {
-        // @todo maybe dun some line number, just line number, as that will err on anon fn
-        if let &Stmt::Block(ref stmts, Some(line_number)) = block_statement {
+        if let &Stmt::Block(ref stmts, optional_line_number) = block_statement {
             // Error on empty block statement, checked here instead of parser to avoid false positives. See parser for details.
             if stmts.is_empty() {
-                Err(ResolvingError::EmptyBlockStatement(line_number))
+                Err(ResolvingError::EmptyBlockStatement(
+                    // Unwrap to get line number directly, because only block statements of anonymous functions do not have line numbers,
+                    // And they will not be empty, since the block statement is a desugared syntax guaranteed to be none empty.
+                    optional_line_number.unwrap(),
+                ))
 
                 // Alternatively if empty blocks are accepted, then this block is not halting as there is no return.
                 // Ok(false)
