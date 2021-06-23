@@ -204,9 +204,6 @@ impl TypeChecker {
                     )),
                 };
             }
-
-            #[allow(unreachable_patterns)]
-            ref unmatched_stmt_variant => panic!("{}", unmatched_stmt_variant),
         };
 
         // Default type of the statement
@@ -441,9 +438,6 @@ impl TypeChecker {
                     ),
                 }
             }
-
-            #[allow(unreachable_patterns)]
-            ref unmatched_expr_variant => panic!("{}", unmatched_expr_variant),
         })
     }
 

@@ -83,9 +83,6 @@ impl std::fmt::Display for Stmt {
             }
             Stmt::Return(ref expr, _) => write!(f, "(return {})", expr),
             Stmt::Ignore(ref expr) => write!(f, "(ignore {})", expr),
-
-            #[allow(unreachable_patterns)]
-            _ => write!(f, "Unimplemented display trait for Stmt::{:?}", self),
         }
     }
 }

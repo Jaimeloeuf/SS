@@ -35,23 +35,19 @@ impl Function {
 
 impl Callable for Function {
     fn to_string(&self) -> String {
-        if let Stmt::Func(ref name_token, _, _) = &self.declaration {
-            if let Some(function_identifier) = name_token.lexeme.as_ref() {
-                // Function type is 'ss' to indicate that the function is defined in SS instead of native code.
-                // So both user defined functions and standard library in SS will both be in this category
-                format!("ss: {}", function_identifier.to_string())
-            } else {
-                panic!("InternalError: Function token missing string identifier...?!?")
+        match &self.declaration {
+            Stmt::Func(ref name_token, _, _) => {
+                if let Some(function_identifier) = name_token.lexeme.as_ref() {
+                    // Function type is 'ss' to indicate that the function is defined in SS instead of native code.
+                    // So both user defined functions and standard library in SS will both be in this category
+                    format!("ss: {}", function_identifier.to_string())
+                } else {
+                    panic!("InternalError: Function token missing string identifier...?!?")
+                }
             }
-        } else if let Stmt::AnonymousFunc(_, _) = &self.declaration {
-            format!("ss: [anonymous]")
-        } else {
-            // @todo Remove use of debug printing once stmt implements Display trait
-            // return Err(RuntimeError::InternalError(format!(
-            //     "Function must be Stmt::Func, found: {:?}",
-            //     unmatched_stmt_variant,
-            // )));
-            panic!("Function must be Stmt::Func, found: {:?}", self.declaration)
+            Stmt::AnonymousFunc(_, _) => format!("ss: [anonymous]"),
+
+            _ => panic!("InternalError: Function cannot be: {}", self.declaration),
         }
     }
 
@@ -59,12 +55,8 @@ impl Callable for Function {
         match &self.declaration {
             Stmt::Func(_, ref parameters, _) => Ok(parameters.len()),
             Stmt::AnonymousFunc(ref parameters, _) => Ok(parameters.len()),
-            unmatched_stmt_variant => {
-                Err(RuntimeError::InternalError(format!(
-                    "Function must be Stmt::Func, found: {:?}", // @todo Remove use of debug printing once stmt implements Display trait
-                    unmatched_stmt_variant,
-                )))
-            }
+
+            _ => panic!("InternalError: Function cannot be: {}", self.declaration),
         }
     }
 
@@ -78,13 +70,8 @@ impl Callable for Function {
         let (parameters, body) = match &self.declaration {
             Stmt::Func(_, ref parameters, ref body) => (parameters, body),
             Stmt::AnonymousFunc(ref parameters, ref body) => (parameters, body),
-            unmatched_stmt_variant => {
-                // @todo Remove use of debug printing once stmt implements Display trait
-                return Err(RuntimeError::InternalError(format!(
-                    "Function must be Stmt::Func, found: {:?}",
-                    unmatched_stmt_variant,
-                )));
-            }
+
+            _ => panic!("InternalError: Function cannot be: {}", self.declaration),
         };
 
         // Get body statement from function body's Stmt::Block
@@ -92,9 +79,8 @@ impl Callable for Function {
             Stmt::Block(ref statement, _) => statement,
             unmatched_stmt_variant => {
                 // Might change to support inline/anonymous functions
-                // @todo Remove use of debug printing once stmt implements Display trait
                 return Err(RuntimeError::InternalError(format!(
-                    "Function body must be a Block Statement, found: {:?}",
+                    "Function body must be a Block Statement, found: {}",
                     unmatched_stmt_variant
                 )));
             }
@@ -116,9 +102,7 @@ impl Callable for Function {
                 // Need to check if there are parameters but no arguments, then skip it and pass in Null?
                 environment.define(parameter_name.clone(), arguments.remove(0))
             } else {
-                return Err(RuntimeError::InternalError(format!(
-                    "Function parameter token missing String literal!"
-                )));
+                panic!("Function parameter token missing String literal!");
             }
         }
 

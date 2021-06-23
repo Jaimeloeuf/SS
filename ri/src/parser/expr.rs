@@ -75,8 +75,6 @@ impl std::fmt::Display for Expr {
             // Expr::Set(ref expr, ref token, _) => write!(f, "(set {} {})", token, expr),
             // Expr::This(_, _) => write!(f, "this"),
             // Expr::Super(_, ref method, _) => write!(f, "(super {})", method.lexeme),
-            #[allow(unreachable_patterns)]
-            _ => write!(f, "Unimplemented display trait for Expr: {:?}", self),
         }
     }
 }
