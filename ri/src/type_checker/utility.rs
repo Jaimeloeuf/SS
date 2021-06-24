@@ -32,8 +32,10 @@ impl TypeChecker {
                     return scope.get(identifier_string).unwrap().clone();
                 }
             }
-
-            panic!("TypeChecker Internal Error: Identifier type not found in all scopes!")
+            panic!(
+                "TypeChecker Internal Error: Type of identifier '{}' not found in all scopes!",
+                identifier_string
+            )
         }
     }
 

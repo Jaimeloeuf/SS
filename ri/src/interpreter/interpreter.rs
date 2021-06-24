@@ -212,9 +212,7 @@ impl Interpreter {
                     self.env.borrow_mut().define(function_name.clone(), func);
                     None
                 } else {
-                    return Err(RuntimeError::InternalError(format!(
-                        "Parsing error: Function token missing string literal"
-                    )));
+                    panic!("Internal Parsing error: Function token missing string literal");
                 }
             }
 
@@ -276,7 +274,7 @@ impl Interpreter {
                 // Reference: https://stackoverflow.com/questions/41573764
                 // Since this is a token of Identifier type, lexeme can be used directly
                 if let Some(ref identifier) = token.lexeme {
-                    // @todo This should be done in scanner/parser and not be a RuntimeError
+                    // @todo Remove RuntimeError as resolver took care of this alr
                     // Check if the Const identifier has already been used in current scope
                     if self.env.borrow().in_current_scope(identifier) {
                         return Err(RuntimeError::ValueAlreadyDefined(identifier.clone()));
@@ -306,10 +304,10 @@ impl Interpreter {
                 } else {
                     // If somehow a identifier token does not have a string literal, then token Display trait is not helpful for debugging,
                     // Because it attempts to print out the string literal which is missing, thus print with debug symbol instead
-                    return Err(RuntimeError::InternalError(format!(
+                    panic!(
                         "Runtime Error: Unable to set value on const identifier -> {:?}\n{}",
                         token, "Parsing error: Const identifier missing string literal\n"
-                    )));
+                    );
                 }
             }
 
@@ -367,6 +365,7 @@ impl Interpreter {
             // Which for user defined functions, is implemented in value::function module's Function struct's call method
             Expr::Call(ref callee, ref arguments, ref token) => {
                 // Evaluate expression and ensure that the result is a callable function
+                // @todo Remove callable check as already checked in type checker
                 let callable = self.interpret_expr(callee)?.callable(token.line)?;
 
                 // Create evaluated arguments list using length of arguments
@@ -415,6 +414,7 @@ impl Interpreter {
                     //  Should Value even be moved out in the first place? Shouldnt all the values be immutable?
                     // Or perhaps return a mutable ref from env hashmap and every modification is made directly on the hashmap without needing additional update logic?
                     //
+                    // @todo remove this as all is found by resolver at compile time
                     // Match is used here to convert error type from EnvError to RuntimeError, instead of using ? operator to bubble it up directly
                     match self.env.borrow().get(identifier, *distance) {
                         Ok(value) => Ok(value),
@@ -653,18 +653,12 @@ impl Interpreter {
                 } else {
                     // Unlikely to happen, but if somehow a logical expression does not have a valid token_type,
                     // Then it is an internal error caused by the parser
-                    Err(RuntimeError::InternalError(format!(
-                        "Parsing Error: Invalid Token Type for logical expr -> {:?}",
+                    panic!(
+                        "Internal Parsing Error: Invalid Token Type for logical expr -> {:?}",
                         operator.token_type
-                    )))
+                    )
                 }
             }
-
-            #[allow(unreachable_patterns)]
-            unmatched => Err(RuntimeError::InternalError(format!(
-                "Unimplemented expr type -> {}",
-                unmatched
-            ))),
         }
     }
 }

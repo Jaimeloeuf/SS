@@ -196,7 +196,7 @@ impl TypeChecker {
             Stmt::While(ref condition, ref body, _) => {
                 return match self.check_expression(condition)? {
                     // If there are any return statements within loop, the type will be bubbled up.
-                    Type::Bool => Ok(self.check_statement(body)?),
+                    Type::Bool => self.check_statement(body),
 
                     // Only Bools can be used for loop condition
                     unexpected_type => Err(TypeCheckerError::InternalError(
@@ -334,7 +334,7 @@ impl TypeChecker {
                     argument_types.push(self.check_expression(arg)?);
                 }
 
-                // Get the items needed to type check function from one of the Function type AST node
+                // Get items needed to type check function from the Function's AST node
                 let (optional_identifier_token, param_tokens, argument_types, body) =
                     match *function_stmt {
                         Stmt::Func(ref identifier_token, ref params, ref body) => {
