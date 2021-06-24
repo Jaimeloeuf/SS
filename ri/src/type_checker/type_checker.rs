@@ -45,13 +45,16 @@ impl TypeChecker {
             // Checks for unused values to ensure that there no values are left unused
             match stmt_type {
                 // Types that are allowed to be "unused" in global scope
-                Type::Func(_, _) | Type::Null => {}
+                Type::Func(_, _) | Type::None => {}
+
+                // Expressions and anonymous functions types are unused values
                 value_type => return Err(TypeCheckerError::UnusedValue(value_type)),
             }
         }
 
-        // @todo Default type of an AST, Change to a void type or something to indicate that this is not a valid usable type
-        Ok(Type::Null)
+        // Default type of an AST as this does not evaluate to any value by default, thus it DOES NOT HAVE a value type.
+        // Only return statements and statements with nested return statements can have a type to bubble up.
+        Ok(Type::None)
     }
 
     // Type check a given statement, and return the statement's inferred type if any
@@ -104,7 +107,7 @@ impl TypeChecker {
                     .insert(identifier_string.clone(), function_type.clone());
 
                 // Call check function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
+                // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
                 // HOWEVER, the return type is not needed, since return type of a function is only used during the,
                 // type checking process of a function call, to determine the type of the function call expression.
                 let _return_type =
@@ -127,7 +130,7 @@ impl TypeChecker {
                 // @todo Alternatively, inside the parser, it can be an error to refer to itself recursively if it is an anonymous function
 
                 // Call check function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve any or defaults to Type::Null
+                // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
                 // HOWEVER, the return type is not needed, since return type of a function is only used during the,
                 // type checking process of a function call, to determine the type of the function call expression.
                 let _return_type = self.check_function(None, params, None, body)?;
@@ -206,9 +209,9 @@ impl TypeChecker {
             }
         };
 
-        // Default type of the statement
-        // @todo Change to a void type or something
-        Ok(Type::Null)
+        // Statements do not evaluate to any value by default, thus they DO NOT HAVE a value type.
+        // Only return statements and statements with nested return statements can have a type to bubble up.
+        Ok(Type::None)
     }
 
     // Type check a given expression, and return the expression's inferred type
@@ -361,6 +364,7 @@ impl TypeChecker {
                 Literal::Number(_) => Type::Number,
                 Literal::String(_) => Type::String,
                 Literal::Bool(_) => Type::Bool,
+                // @todo Are null types still needed now that Type::None exists?
                 Literal::Null => Type::Null,
             },
             Expr::Array(_, ref elements) => {
@@ -517,9 +521,9 @@ impl TypeChecker {
         self.current_function = parent_identifier_token;
 
         Ok(
-            // If there are no return statements, default return type is Null
+            // If there are no return statements, default return type is None
             if return_types.is_empty() {
-                Type::Null
+                Type::None
             } else if return_types.len() == 1 {
                 // If there is only a single return, use the type immediately without further checks
                 // Move out from vec since vec is no longer needed

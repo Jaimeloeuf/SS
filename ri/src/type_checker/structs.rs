@@ -42,6 +42,11 @@ pub enum Type {
     /// Used to defer type checking for types within a function definition, to when the types are available, such as during a function call
     Lazy,
 
+    /// A type to represent NO TYPE, and is used to signify the type checked item is NOT A VALUE
+    /// E.g. statements like const definition, where it cannot be used as a value, or a function call that does not return anything.
+    /// This is used to catch unused values by ensuring all statements must type check to this at every block level.
+    None,
+
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
@@ -87,6 +92,9 @@ impl PartialEq for Type {
             // (&Type::Func(ref f), &Type::Func(ref other)) => Rc::ptr_eq(f, other),
             // (&Type::Class(ref c), &Type::Class(ref other)) => Rc::ptr_eq(c, other),
             // (&Type::Instance(ref i), &Type::Instance(ref other)) => Rc::ptr_eq(i, other),
+
+            // Note: PartialEq does not need to be implemented for Type::None variant since all uncaught cases are false
+            // (Type::None, _)
             _ => false,
         }
     }
