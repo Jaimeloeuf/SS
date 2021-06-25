@@ -63,10 +63,18 @@ fn run_file(filename: &String) {
     let tokens = match Scanner::scan_tokens(source) {
         Ok(tokens) => tokens,
         Err(e) => {
-            eprintln!("------ Scanning SYNTAX ERROR ------");
-            for error in e.iter() {
-                eprintln!("{}\n", error);
+            eprintln!("-------- Scanning SYNTAX ERROR --------");
+
+            eprintln!("{}\n", e[0]);
+            if e.len() > 1 {
+                // Because of how it scans tokens, other errors might be falsely detected as the scanner is not synchronized after an error
+                eprintln!("---- These might be false positives ----\n");
+                for error in e.iter().skip(1) {
+                    eprintln!("{}\n", error);
+                }
             }
+
+            // Break out of the function
             return;
         }
     };
@@ -75,12 +83,12 @@ fn run_file(filename: &String) {
     let mut ast = match Parser::parse(tokens) {
         Ok(ast) => ast,
         Err(e) => {
-            eprintln!("------ Parsing SYNTAX ERROR ------");
+            eprintln!("-------- Parsing SYNTAX ERROR --------");
 
-            eprintln!("{}", e[0]);
+            eprintln!("{}\n", e[0]);
             if e.len() > 1 {
                 // Because of how parser scans tokens, other errors might be falsely detected as the error synchronization is not very good
-                eprintln!("------ The rest might be false positives ------\n");
+                eprintln!("---- These might be false positives ----\n");
                 for error in e.iter().skip(1) {
                     eprintln!("{}\n", error);
                 }
@@ -94,14 +102,14 @@ fn run_file(filename: &String) {
     // Resolve AST and quit on error
     // Mut is used to modify Expr::Const distance value
     if let Err(e) = Resolver::resolve(&mut ast) {
-        eprintln!("------ Resolver ERROR ------");
+        eprintln!("-------- Resolver ERROR --------");
         eprintln!("{}", e);
         return;
     }
 
     // Typecheck the AST and quit on error
     if let Err(e) = TypeChecker::check(&mut ast) {
-        eprintln!("------ TypeChecker ERROR ------");
+        eprintln!("-------- TypeChecker ERROR --------");
         eprintln!("{}", e);
         return;
     }
@@ -109,7 +117,7 @@ fn run_file(filename: &String) {
     // @todo Interpreter can return a code, which will be used as the program exit code of the interpreter
     // Interpret/Run the AST and quit on error
     if let Some(err) = Interpreter::interpret(ast) {
-        eprintln!("------ Interpreter ERROR ------");
+        eprintln!("-------- Interpreter ERROR --------");
         eprintln!("{}", err);
         return;
     }
