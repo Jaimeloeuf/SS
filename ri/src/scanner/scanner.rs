@@ -37,7 +37,7 @@ impl Scanner {
 
                 // @todo Question is should we continue to scan if there is an error?
                 // yes right? For things like LSP, since we still want to be able to parse?
-                // Do we need to syncrhonize too?
+                // Do we need to synchronize too?
                 Err(e) => errors.push(e),
             }
         }

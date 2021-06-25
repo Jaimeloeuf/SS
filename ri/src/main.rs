@@ -76,9 +76,17 @@ fn run_file(filename: &String) {
         Ok(ast) => ast,
         Err(e) => {
             eprintln!("------ Parsing SYNTAX ERROR ------");
-            for error in e.iter() {
-                eprintln!("{}\n", error);
+
+            eprintln!("{}", e[0]);
+            if e.len() > 1 {
+                // Because of how parser scans tokens, other errors might be falsely detected as the error synchronization is not very good
+                eprintln!("------ The rest might be false positives ------\n");
+                for error in e.iter().skip(1) {
+                    eprintln!("{}\n", error);
+                }
             }
+
+            // Break out of the function
             return;
         }
     };
