@@ -12,10 +12,6 @@ pub enum ParsingError {
 
     UnexpectedEofError(Token),
 
-    /// InternalError(line_number, error_message),
-    ///
-    /// Static string message are hardcoded parser error messages
-    InternalError(usize, &'static str),
     /*
         Unused
     */
@@ -28,14 +24,11 @@ impl std::fmt::Display for ParsingError {
         match self {
             ParsingError::UnexpectedTokenError(ref token, message) => write!(
                 f,
-                "[line {}] Error: Unexpected Token Found -> {}\n\t{}",
+                "[line {}] Unexpected Token Found -> {}\n\t{}",
                 token.line, token, message,
             ),
             ParsingError::UnexpectedEofError(ref token) => {
                 write!(f, "[line {}] Unexpected end of input", token.line)
-            }
-            ParsingError::InternalError(line, ref message) => {
-                write!(f, "[line {}] Internal error: {}", line, message)
             }
             // ParsingError::InvalidAssignmentError(ref token) => {
             //     write!(f, "[line {}] Invalid assignment target", token.line)

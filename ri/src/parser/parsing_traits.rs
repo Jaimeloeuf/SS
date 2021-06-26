@@ -265,10 +265,8 @@ impl Parser {
         let expr = self.or()?;
 
         if self.is_next_token(TokenType::Equal) {
-            Err(ParsingError::InternalError(
-                self.current().line,
-                "Assignments are not supported yet",
-            ))
+            // Assignments are not supported yet
+            unimplemented!();
         } else {
             Ok(expr)
         }
