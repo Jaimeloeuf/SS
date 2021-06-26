@@ -24,10 +24,6 @@ impl Parser {
             // Calling declaration parsing method, as declarations have the lowest precedence in the syntax grammar
             match parser.declaration() {
                 Ok(stmt) => statements.push(stmt),
-                // Ok(stmt) => {
-                //     println!("parsed stmt/expr {:?}", stmt);
-                //     statements.push(stmt);
-                // }
 
                 // @todo Maybe log err to stderr too for the LSP to pick it up?
                 // Add error to error vector, and synchronize the parser to continue parsing
@@ -122,6 +118,7 @@ impl Parser {
             TokenType::While => self.advance_and_call(Parser::while_statement),
             // TokenType::For => self.advance_and_call(Parser::for_statement),
             TokenType::Return => self.advance_and_call(Parser::return_statement),
+            TokenType::Ignore => self.advance_and_call(Parser::ignore_statement),
             _ => self.expression_statement(),
         }
     }
@@ -544,7 +541,7 @@ impl Parser {
             // Not sure if this case will ever happen but just an extra safeguard for Unexpected Eof tokens
             Err(ParsingError::UnexpectedEofError(self.current().clone()))
         } else {
-            // I dont think we should use self.current here
+            // @todo Should the token be consumed here so that it would not have a issue doing error synchronization?
             Err(ParsingError::UnexpectedTokenError(
                 self.current().clone(),
                 "Invalid token found while parsing expression",

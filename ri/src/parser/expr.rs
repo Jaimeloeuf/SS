@@ -20,6 +20,7 @@ pub enum Expr {
     // Expressions that saves other expressions/values into the runtime environment identified by a Const's identifier
     // Evaluates to the value
     // Const(Token, Option<usize>),
+    // @todo Rename to create_const as this name is misleading
     Const(Token, usize),
 
     // Expression to wrap around a Stmt::AnonymousFunc variant as anonymous functions are expressions

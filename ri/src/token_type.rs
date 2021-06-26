@@ -45,29 +45,25 @@ pub enum TokenType {
   Str, // String is a reserved keyword in rust
   Number,
 
-  // Keywords.
-  Break, // Do we need this? Since no loops? should we even have switch case
-  // Class,
-  // Super,
-  // This,
+  /* Keywords */
+  // Break, // Do we need this? Since no loops? should we even have switch case
   If,
   Else,
   False,
   Function,
   Arrow, // =>
 
-  For,   // to remove?
-  While, // to remove?
-  Print, // Shouldnt this be in std:: lib instead?
+  // For,
+  While,
+  Print,
   Return,
   True,
   Const,
+  Ignore,
 
-  // What about undefined? Void?
-  // Maybe dun allow it, either enforce checking for nulls with the language server,
-  // Or force it at the language level by removing Null, and introducing Tagged union a.k.a optional T for every T
-  // Else uniqueness type
-  Null, // to remove?
+  // To remove and introduce Tagged union a.k.a optional T for every T
+  // Or maybe uniqueness type
+  Null,
 
   Eof,
 }

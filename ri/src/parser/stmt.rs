@@ -45,6 +45,7 @@ pub enum Stmt {
     ///
     /// Return stmt is a special stmt variant that will be evaluated to a Value variant,
     /// where the value is the evaluated expr, 'return_expression'
+    // @todo Expr does not need to be boxed here. Change it out
     Return(Box<Expr>, usize),
 
     /// Ignore(expression_to_ignore)
