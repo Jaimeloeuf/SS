@@ -114,49 +114,33 @@ Block comments
         - well we should be explicit, but this prevents the language from being expressive.
         - https://softwareengineering.stackexchange.com/questions/209376/is-there-a-correlation-between-the-scale-of-the-project-and-the-strictness-of-th
             - Strict type checking and static type checking aren't the same thing. Python is dynamically typed, but is more strict than C. The advantage of static type checking isn't strictness per se but that types are checked at build time, not run time. I've dealt with many C/C++ issues in my career because of implicit casting.
+- Type inference
+    - 
 - Should we enforce explicit typing? Or can we have type inference??
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
-- Types on the left hand side like TS and other languages that support Type inference.
+- Types on the left hand side like TS and other languages that support Type inference. [Ref](https://elizarov.medium.com/types-are-moving-to-the-right-22c0ef31dd4a)
 - ? Will there be runtime checks? e.g. accessing values on the array pass its bounds?
     - Will this be a runtime or compile time check? can static analysis work on this?
     - E.g. In Go lang, there are constants, and these do not need to have any type declaration, it is implicit so since my whole language is constants, then... do we really need to have types? Unless we introduce variables, since procedural paradigm is basically impossible without variables...
 
 ### Primitives
-<!-- consider using this type of int format instead? -->
-- void? undefined? null? Optional?
+- ?void
     - void means WILL NOT RETURN / NOT ALLOWED TO RETURN from function
-        - means that this function is a pure side effect...
+        - means that this function is used purely for its side effect(s)
+- ?undefined
     - Should we support undefined/null? This seems to cause alot of issue in other languages...
-        - we need at least 1 to signify not defined right
-        - e.g.  req.body.value !== undefined
-- unsigned ints
-    - u8
-    - u16
-    - u32
-    - u64
-    - u128
-- ints
-    - i8
-    - i16
-    - i32
-    - i64
-    - i128
-- Aliases
-    - ubyte
-        - u8
-    - byte
-        - i8
-    - uint
-        - u32
-    - int
-        - i32
-    - ulong
-        - u128
-    - long
-        - i128
-    - float
-        - note that not using double as float is a better word
+        - Might need at least 1 to signify not defined in cases like `req.body.value !== undefined`
+- number
+    - Number is the basic numeric type like int
+    - Unlike int in other languages, BigInt support should be baked in, allowing users to create any ints without worrying about size
+- unsigned number
+    - Unsigned number is the unsigned version of number
+    - Main purpose of this is to enforce compile time checks for things like array indexing operations
+    - Will not be needed if the type system is able to infer gaurds of `if (number >= 0)` to be positive
+- float
+    - Using float instead of double as it is a more descriptive name
+    - However this will still support the max floating point representation of the system it runs on
 - String
     - Fixed length char array! Means no need for complex underlying vector stuff for dynamic growable strings
 - Bool
@@ -165,7 +149,7 @@ Block comments
     - In SS, there are no truthy or falesy literal "values" other then the 'true' and 'false' keywords
         - All expressions can be evaluated to true or false values during runtime, ONLY the Keyword are treated as true or false literal values without the need for evaluation.
         - Meaning that, for example an empty string does not evalutes to true or false
-        - Explicit comparision expressions is required to check if the string is empty, e.g. if ("" == "")
+        - Explicit comparision expressions is required to check if the string is empty, e.g. if (inputString == "")
         - Refer to [Conditions](#Conditions)
 ### Special data types
 - Object
