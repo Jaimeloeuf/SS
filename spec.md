@@ -4,7 +4,13 @@
 - Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
 
 Like all other languages, here is a concise introduction to SS.
-> SimpleScript is a Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+> SimpleScript is a Strongly & Statically typed, Application programming language inspired by JavaScript/TypeScript, SML and Go, that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+
+## Content Table
+WIP The language's syntax is formally defined in [syntatic grammar.bnf](<./syntatic grammar.bnf>)
+
+Legend:
+- `?` Any section prefixed with `?` denotes that it is still a work in progress and not fixed yet.
 
 
 ## Features and Goals
@@ -14,15 +20,14 @@ The main priority of this language is to optimize for reading code more than wri
 Code is assumed to be read more often than written, thus it should be easy to read, understand and reason about even if it means sacrificing some implicit assumptions made in other programming languages.  
 In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable and having a language syntax that makes its semantic clear and non-ambiguous.  
 
-Inspirations include Javascript / Typescript / Go / Rust.
+Inspirations include Javascript / Typescript / Go / ML family languages / Rust.
 
-- Focus on explicit representation of ideas via code. Instead of like JS where there are alot of assumptions/quirks/implicit behaviours/magic
+- Focus on explicit representation of ideas via code. Unlike JS where there are alot of assumptions/quirks/magic/implicit behaviours
 - Application programming language, where memory management is abstracted away
     - See [Memory section](#memory)
-- Hardware independent
-    If I write the code on a 64bit x86 platform, it should perform the SAME exact way on a 32bit RISC platform.
-- Implementation independent
-    - The language should be one that can be implemented in any programming language and can be runned in any format from AOT binary executables to direct interpretation
+- Hardware and Implementation independent
+    - If I write the code on a 64bit x86 platform, it should perform the SAME exact way on a 32bit RISC platform.
+    - The language should be implementable in any programming language and can ran in any format from AOT binary executables to direct interpretation with the same executional semantics
     - And obviously they should work the exact same way, just one faster and native to the platform
     - @todo If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
     - @todo We also need to take care of cross compilation techniques.
@@ -32,10 +37,11 @@ Inspirations include Javascript / Typescript / Go / Rust.
     - Functional
     - Reactive (Some form of this, most likely by introducing a event loop implementation in the standard library)
     - Metaprogramming
-- Statically typed
-    - Need to know the type at Compile time if compiled
-    - The code is always "compiled" first into an IR that can be parsed later on
-        - So even when interpreted, Types can be enforced, kinda like TS
+- Strongly & Statically typed (optional type annotations)
+    - The language should be strongly and statically typed to prevent type errors at compile time
+    - However, it is tedious and error prone to write the types over and over again, and it can be off putting for beginners to deal with parametric polymorphism using explicitly written type annotations.
+    - Therefore, the language uses inferred types instead of explicit type annotations by default
+    - However, when needed, users can still choose to explicitly annotate types either for documentation purposes or to simply place a type constraint so that the compiler will not automatically use a more general type.
 - Immutable
     - no data can be changed once created.
 - Expressive and extensible using metaprogramming concepts
@@ -108,18 +114,13 @@ Block comments
     - ? perhaps allow mutable variables, but copying rust, have a unsafe block
         - so variables can only be declared and live in an unsafe block
         - The only reason for this is because imperative paradigm is really difficult without mutable variables
-- Strongly typed language
-    - generics?
-    - do we really want it to be strongly typed? Giving up type inference too?
-        - well we should be explicit, but this prevents the language from being expressive.
-        - https://softwareengineering.stackexchange.com/questions/209376/is-there-a-correlation-between-the-scale-of-the-project-and-the-strictness-of-th
-            - Strict type checking and static type checking aren't the same thing. Python is dynamically typed, but is more strict than C. The advantage of static type checking isn't strictness per se but that types are checked at build time, not run time. I've dealt with many C/C++ issues in my career because of implicit casting.
 - Type inference
-    - 
+    - By default all types are inferred to allow users to enjoy type safety without making the language extra verbose and syntatically complex
+    - But when needed optional explicit type annotations can be used either for documentation purposes or to simply put a type constraint
 - Should we enforce explicit typing? Or can we have type inference??
     - esp needed for things like getting a value out from a object
     - but if all the structs have fixed schema, shouldnt we be able to know the type too?
-- Types on the left hand side like TS and other languages that support Type inference. [Ref](https://elizarov.medium.com/types-are-moving-to-the-right-22c0ef31dd4a)
+- Types on the right hand side like TS and other languages that support Type inference. [Ref](https://elizarov.medium.com/types-are-moving-to-the-right-22c0ef31dd4a)
 - ? Will there be runtime checks? e.g. accessing values on the array pass its bounds?
     - Will this be a runtime or compile time check? can static analysis work on this?
     - E.g. In Go lang, there are constants, and these do not need to have any type declaration, it is implicit so since my whole language is constants, then... do we really need to have types? Unless we introduce variables, since procedural paradigm is basically impossible without variables...
@@ -151,6 +152,8 @@ Block comments
         - Meaning that, for example an empty string does not evalutes to true or false
         - Explicit comparision expressions is required to check if the string is empty, e.g. if (inputString == "")
         - Refer to [Conditions](#Conditions)
+- Functions
+    - Functions are first class therefore they are also values
 ### Special data types
 - Object
     - key value maps
