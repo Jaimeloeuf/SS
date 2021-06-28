@@ -4,7 +4,8 @@
 - Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
 
 Like all other languages, here is a concise introduction to SS.
-> SimpleScript is a Strongly & Statically typed, Application programming language inspired by JavaScript/TypeScript, SML and Go, that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+> SimpleScript is a Strongly & Statically typed, Application programming language inspired by JavaScript/TypeScript, SML and Go, to be a simple and clean language that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+
 
 ## Content Table
 WIP The language's syntax is formally defined in [syntatic grammar.bnf](<./syntatic grammar.bnf>)

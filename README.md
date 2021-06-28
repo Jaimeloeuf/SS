@@ -1,7 +1,7 @@
 # SS (SimpleScript) [![Status](https://img.shields.io/badge/Status-Experimenting%20/%20Pre%20Pre%20Pre%20Technical%20Preview-green.svg)](#project-status)
 Just a simple programming language / experiment to build a simpler and less quirky JavaScript.  
 
-> SimpleScript is a Strongly & Statically Typed, Application programming language inspired by JavaScript/TypeScript and Go, to be a simple and clean language with simple semantics to easily target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+> SimpleScript is a Strongly & Statically typed, Application programming language inspired by JavaScript/TypeScript, SML and Go, to be a simple and clean language that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
 
 
 ## Language design goals
@@ -16,14 +16,14 @@ Core tenets:
 Specifically:
 - readability (and in extension, familiarity)
 - ease of use (easy and intuitive constructs/syntax)
-- no stupid module issues like python
-- typed language
+- strongly & statically typed language
 - high level language
 - simple memory model
     - either with a gc
     - or using a borrow tracker like rust
 - not too verbose
 - not too abstract, e.g. can support abstract ideas like meta programming, but not too extreme as it may reduce readability and in extension, maintainability
+- no stupid module issues like python
 
 
 ## Goals / Milestones
@@ -44,6 +44,7 @@ Currently:
 - Doing lots of research on programming languages
     - Learning more about PLT (Programming Language Theory)
     - Studying other languages
+    - Working on the type system with type inference
 - Working on the language spec whilst learning and building upon the research
     - Module system design
     - Researching and experimenting with how to embed Asynchronous programming / Concurrency / Parallel computing into the language semantics itself.
@@ -64,6 +65,10 @@ This mono repo contains the following sub repos and their commit prefixes:
 - [rvm](./rvm)
     - Bytecode virtual machine written in Rust
     - Commits prefixed with ```rvm:``` or ```[rvm]```
+- [vsce](./vsce)
+    - Visual Studio Code Extension
+    - Will include both the extension and the language server in the future
+    - Commits prefixed with ```vsce:```
 - [Simply Typed Lambda Calculus](./Simply%20Typed%20Lambda%20Calculus)
     - Simply Typed Lambda Calculus implemented in JavaScript, with a focus on type inference
     - Commits prefixed with ```stlc:``` or ```[stlc]```
