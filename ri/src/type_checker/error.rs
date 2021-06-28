@@ -2,7 +2,7 @@ use super::Type;
 use crate::token::Token;
 
 #[derive(Debug)]
-pub enum TypeCheckerError {
+pub enum TypeError {
     InternalError(&'static str),
 
     // Unused value
@@ -14,31 +14,31 @@ pub enum TypeCheckerError {
     ReturnOutsideFunction(Token),
 }
 
-impl std::fmt::Display for TypeCheckerError {
+impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            TypeCheckerError::InternalError(ref message) => write!(f, "{}", message),
-            TypeCheckerError::UnusedValue(type_of_unused_value) => write!(f,
+            TypeError::InternalError(ref message) => write!(f, "{}", message),
+            TypeError::UnusedValue(type_of_unused_value) => write!(f,
                 "All values must be used, found unused value of type: {:?}",
                 type_of_unused_value
             ),
-            TypeCheckerError::UndefinedIdentifier(ref token) => write!(
+            TypeError::UndefinedIdentifier(ref token) => write!(
                 f,
                 "[line {}] Cannot access value of identifier '{}' before it is defined",
                 token.line,
                 token.lexeme.as_ref().unwrap()
             ),
-            TypeCheckerError::IdentifierAlreadyUsed(ref token, ref identifier) => write!(
+            TypeError::IdentifierAlreadyUsed(ref token, ref identifier) => write!(
                 f,
                 "[line {}] Identifier '{}' cannot be reused, identifiers must be unique",
                 token.line, identifier
             ),
-            TypeCheckerError::IdentifierAlreadyUsedGlobally(ref token, ref identifier) => write!(
+            TypeError::IdentifierAlreadyUsedGlobally(ref token, ref identifier) => write!(
                 f,
                 "[line {}] Identifier '{}' is a Global SimpleScript identifier that cannot be reused",
                 token.line, identifier
             ),
-            TypeCheckerError::ReturnOutsideFunction(ref token) => write!(
+            TypeError::ReturnOutsideFunction(ref token) => write!(
                 f,
                 "[line {}] Cannot use `return` outside a function",
                 token.line

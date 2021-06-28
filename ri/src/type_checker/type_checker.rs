@@ -1,4 +1,4 @@
-use super::error::TypeCheckerError;
+use super::error::TypeError;
 use super::Type;
 use super::TypeChecker;
 
@@ -10,7 +10,7 @@ use crate::token_type::TokenType;
 
 impl TypeChecker {
     // Associated function to type check a AST (where AST in this case is a vec of Stmt variants)
-    pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeCheckerError> {
+    pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
             scopes: Vec::new(),
@@ -34,7 +34,7 @@ impl TypeChecker {
     }
 
     /// Type check statements 1 by 1 by iterating through the vec of statements instead of calling this recursively for efficiency
-    fn check_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeCheckerError> {
+    fn check_ast(&mut self, ast: &Vec<Stmt>) -> Result<Type, TypeError> {
         for ref stmt in ast {
             let stmt_type = self.check_statement(stmt)?;
             if let Type::Return(_) = stmt_type {
@@ -48,7 +48,7 @@ impl TypeChecker {
                 Type::Func(_, _) | Type::None => {}
 
                 // Expressions and anonymous functions types are unused values
-                value_type => return Err(TypeCheckerError::UnusedValue(value_type)),
+                value_type => return Err(TypeError::UnusedValue(value_type)),
             }
         }
 
@@ -58,7 +58,7 @@ impl TypeChecker {
     }
 
     // Type check a given statement, and return the statement's inferred type if any
-    fn check_statement(&mut self, stmt: &Stmt) -> Result<Type, TypeCheckerError> {
+    fn check_statement(&mut self, stmt: &Stmt) -> Result<Type, TypeError> {
         // Any stmt that resolves into a Type, will have to manually return it
         match *stmt {
             Stmt::Expr(ref expr) => {
@@ -140,7 +140,7 @@ impl TypeChecker {
             }
             Stmt::If(ref condition, ref then_branch, ref else_branch, _) => {
                 if self.check_expression(condition)? != Type::Bool {
-                    return Err(TypeCheckerError::InternalError(
+                    return Err(TypeError::InternalError(
                         "TESTING - Conditions of If stmts must be bool",
                     ));
                 }
@@ -170,7 +170,7 @@ impl TypeChecker {
                     } else {
                         for return_type in &return_types {
                             if return_type != &return_types[0] {
-                                return Err(TypeCheckerError::InternalError(
+                                return Err(TypeError::InternalError(
                                     "TESTING - Function must have the same return type throughout the function body"
                                 ));
                             }
@@ -202,7 +202,7 @@ impl TypeChecker {
                     Type::Bool => self.check_statement(body),
 
                     // Only Bools can be used for loop condition
-                    unexpected_type => Err(TypeCheckerError::InternalError(
+                    unexpected_type => Err(TypeError::InternalError(
                         "Expect boolean condition for While statements, found 'unexpected_type'",
                     )),
                 };
@@ -215,7 +215,7 @@ impl TypeChecker {
     }
 
     // Type check a given expression, and return the expression's inferred type
-    fn check_expression(&mut self, expr: &Expr) -> Result<Type, TypeCheckerError> {
+    fn check_expression(&mut self, expr: &Expr) -> Result<Type, TypeError> {
         Ok(match *expr {
             Expr::Const(ref token, _) => self.get_type(token),
 
@@ -246,7 +246,7 @@ impl TypeChecker {
                             if l_type == Type::Number {
                                 Type::Number
                             } else {
-                                return Err(TypeCheckerError::InternalError(
+                                return Err(TypeError::InternalError(
                                     "TESTING - Binary - Expect number for '&operator.token_type'",
                                 ));
                             }
@@ -273,7 +273,7 @@ impl TypeChecker {
                     }
                 } else {
                     // @todo Fix error msg, add a, 'found type {l_type} and {r_type}'
-                    return Err(TypeCheckerError::InternalError(
+                    return Err(TypeError::InternalError(
                         "TESTING - Binary - operands of binary expressions must have the SAME type",
                     ));
                 }
@@ -318,7 +318,7 @@ impl TypeChecker {
 
                         value_type => {
                             // @todo fix error and show the actual value type used
-                            return Err(TypeCheckerError::InternalError(
+                            return Err(TypeError::InternalError(
                                 "TESTING - cannot call 'value_type' as a function",
                             ));
                         }
@@ -326,7 +326,7 @@ impl TypeChecker {
 
                 // Ensure that the number of arguments matches the number of parameters defined
                 if arguments.len() != number_of_parameters {
-                    return Err(TypeCheckerError::InternalError(
+                    return Err(TypeError::InternalError(
                         "TESTING - Call - different numbers of arguments",
                     ));
                 }
@@ -373,7 +373,7 @@ impl TypeChecker {
                 // Resolve for elements[1..] of the array, where all elements are expressions
                 for element in elements.into_iter().skip(1) {
                     if self.check_expression(element)? != array_element_type {
-                        return Err(TypeCheckerError::InternalError("TESTING - Array"));
+                        return Err(TypeError::InternalError("TESTING - Array"));
                     }
                 }
 
@@ -382,7 +382,7 @@ impl TypeChecker {
             Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
                 // @todo Ensure that the indexing expression is a unsigned integer, not just a number, to remove the runtime check
                 if self.check_expression(index_expression)? != Type::Number {
-                    return Err(TypeCheckerError::InternalError(
+                    return Err(TypeError::InternalError(
                         "TESTING - index expression must be uint",
                     ));
                 }
@@ -394,7 +394,7 @@ impl TypeChecker {
 
                     value_type => {
                         // @todo fix error and show the actual value type used
-                        return Err(TypeCheckerError::InternalError(
+                        return Err(TypeError::InternalError(
                             "TESTING - cannot access 'value_type' as an array",
                         ));
                     }
@@ -408,7 +408,7 @@ impl TypeChecker {
                 match (l_type, r_type) {
                     (Type::Bool, Type::Bool) => Type::Bool,
                     _ => {
-                        return Err(TypeCheckerError::InternalError(
+                        return Err(TypeError::InternalError(
                             "TESTING - Logical expressions must be bool",
                         ))
                     }
@@ -422,7 +422,7 @@ impl TypeChecker {
                         if expr_type == Type::Bool {
                             Type::Bool
                         } else {
-                            return Err(TypeCheckerError::InternalError(
+                            return Err(TypeError::InternalError(
                                 "TESTING - Unary NOT expressions must be bool",
                             ));
                         }
@@ -431,7 +431,7 @@ impl TypeChecker {
                         if expr_type == Type::Number {
                             Type::Number
                         } else {
-                            return Err(TypeCheckerError::InternalError(
+                            return Err(TypeError::InternalError(
                                 "TESTING - Unary NEGATE expressions must be Number",
                             ));
                         }
@@ -451,7 +451,7 @@ impl TypeChecker {
         param_tokens: &Vec<Token>,
         argument_types: Option<Vec<Type>>,
         body: &Stmt,
-    ) -> Result<Type, TypeCheckerError> {
+    ) -> Result<Type, TypeError> {
         // Save parent function's name first if any before assigning the name of the current function
         let parent_identifier_token = self.current_function.clone();
 
@@ -532,7 +532,7 @@ impl TypeChecker {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
                     if return_type != &return_types[0] {
-                        return Err(TypeCheckerError::InternalError(
+                        return Err(TypeError::InternalError(
                             "TESTING - Function must have the same return type throughout the function body"
                         ));
                     }
