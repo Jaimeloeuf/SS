@@ -41,7 +41,7 @@ impl TypeChecker {
 
     // @todo Allow types to be passed in, and change it to be inserting the types 1 by 1
     // @todo Perhaps if that is the case, should change it to inline
-    // Method to define identifiers used in the global scope
+    // Method to define the types of the different identifiers available in the prelude / global scope
     pub fn define_globals(&mut self, identifiers: Vec<&str>) {
         for id in identifiers {
             self.scopes

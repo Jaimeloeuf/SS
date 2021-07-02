@@ -1,6 +1,10 @@
 use super::error::TypeError;
+use super::type_table::TypeTable;
 use super::Type;
 use super::TypeChecker;
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::literal::Literal;
 use crate::parser::expr::Expr;
@@ -15,6 +19,11 @@ impl TypeChecker {
         let mut type_checker = TypeChecker {
             scopes: Vec::new(),
             current_function: None,
+
+            // The starting environment will always be the global scope
+            env: Rc::new(RefCell::new(TypeTable::global())),
+            // @todo Tmp way to pass around type table holding the closure types
+            closure_types: None,
 
             // @todo A better way other than hardcoding all identifiers in
             globals: vec!["clock"],
@@ -150,6 +159,7 @@ impl TypeChecker {
 
                 let if_body_type = self.check_statement(then_branch)?;
                 if let Type::Return(_) = if_body_type {
+                    // Push return type instead of unwrapping for inner type as that is handled by function call type checker
                     return_types.push(if_body_type);
                 }
 
@@ -157,6 +167,7 @@ impl TypeChecker {
                 if let Some(ref else_branch) = else_branch {
                     let else_body_type = self.check_statement(else_branch)?;
                     if let Type::Return(_) = else_body_type {
+                        // Push return type instead of unwrapping for inner type as that is handled by function call type checker
                         return_types.push(else_body_type);
                     }
                 }
@@ -168,6 +179,7 @@ impl TypeChecker {
                         // Move out from vec since vec is no longer needed
                         return_types.remove(0)
                     } else {
+                        // Loop only useful if there is more than one if/else, i.e if there are any 'else-if' blocks
                         for return_type in &return_types {
                             if return_type != &return_types[0] {
                                 return Err(TypeError::InternalError(
@@ -175,15 +187,15 @@ impl TypeChecker {
                                 ));
                             }
                         }
-                        // If all return types are the same, then move out first type as function return type
+                        // If all return types are the same, then move out and use first type as function return type
                         return_types.remove(0)
                     });
                 }
             }
             Stmt::Print(ref expr) => {
                 // This cannot be skipped because even though print accepts all types, the expression needs to be type checked first
-                // E.g. the expression can be a 5 == "string", and this needs to be checked, even if the Bool type returned can be ignored
-                // The type returned will be ignored, but the ? operator is used to allow errors to bubble up
+                // E.g. the expression can be a 5 == "string", and this needs to be checked, even if the expression type is unused
+                // The type of the expression is ignored, but the ? operator is used to allow errors to bubble up
                 self.check_expression(expr)?;
             }
             Stmt::Return(ref expr, _) => {
@@ -261,7 +273,7 @@ impl TypeChecker {
                             if l_type == Type::Number {
                                 Type::Bool
                             } else {
-                                return Err(TypeCheckerError::InternalError(
+                                return Err(TypeError::InternalError(
                                     "TESTING - Binary - Expect number for '&operator.token_type'",
                                 ));
                             }
@@ -458,27 +470,44 @@ impl TypeChecker {
         self.current_function = match optional_identifier_token {
             Some(identifier_token) => {
                 // Check if the function is a recursive one, by checking if the name of the function called is the same as the parent function
+                // Regardless if type checking function definition or a call to the function, always return Type::Lazy to prevent infinite recursive type checking
+                // @todo Type::Lazy is used to match any type, to test if this is sound..
                 if let Some(ref parent_identifier_token) = self.current_function {
                     if parent_identifier_token == identifier_token {
                         return Ok(Type::Lazy);
                     }
                 }
+
                 Some(identifier_token.clone())
             }
             None => None,
         };
 
         self.begin_scope();
+        // Get a new Rc<Environment> pointing to the same Environment memory allocation
+        // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
+        let parent_env = Rc::clone(&self.env);
+
+        // Create new environment/scope for current block with existing environment/scope as the parent/enclosing environment
+        let current_env = TypeTable::new(Some(Rc::clone(&self.env)));
+
+        // Set the new environment directly onto the struct, so other methods can access it directly
+        // @todo Can be better written, by changing all the methods to take current scope as function argument,
+        // @todo instead of saving current environment temporarily and attaching the new environment to self.
+        self.env = Rc::new(RefCell::new(current_env));
 
         // A scope is always expected to exists, including the global top level scope
-        let scope = self.scopes.last_mut().unwrap();
+        // let scope = self.scopes.last_mut().unwrap();
 
         // Hard to merge with closures, thus 2 seperate loop
         match argument_types {
             // If argument types are given (type checking function call), use them to type check function body
             Some(mut argument_types) => {
+                let mut scope = self.env.borrow_mut();
+
                 for param_token in param_tokens {
-                    scope.insert(
+                    // scope.insert(
+                    scope.define(
                         param_token.lexeme.as_ref().unwrap().clone(),
                         // Remove instead of cloning as vec is no longer needed after this operation
                         // Always remove the first element, since after each remove all elements will be shifted left
@@ -488,11 +517,14 @@ impl TypeChecker {
             }
             // If argument types not given (type checking function definition), use Type::Lazy to defer some type checking
             None => {
+                let mut scope = self.env.borrow_mut();
+
                 for param_token in param_tokens {
                     // Save type of every parameter into scope as Type::Lazy during this function definition type checking process,
                     // To defer type checking for statements that use these parameters till function call type checks,
                     // And during which the type of the arguments will be available
-                    scope.insert(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
+                    // scope.insert(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
+                    scope.define(param_token.lexeme.as_ref().unwrap().clone(), Type::Lazy);
                 }
             }
         }
@@ -516,6 +548,10 @@ impl TypeChecker {
         };
 
         self.end_scope();
+
+        // Reset parent environment back onto the struct once block completes execution
+        // The newly created current environment for this block will be dropped once function exits
+        self.env = parent_env;
 
         // Restore the parent function's identifier token now that the call has been type checked
         self.current_function = parent_identifier_token;
