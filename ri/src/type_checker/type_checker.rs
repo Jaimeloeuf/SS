@@ -54,9 +54,10 @@ impl TypeChecker {
             // Checks for unused values to ensure that there no values are left unused
             match stmt_type {
                 // Types that are allowed to be "unused" in global scope
-                Type::Func(_, _) | Type::None => {}
+                Type::Func(_, _, _) | Type::None => {}
 
                 // Expressions and anonymous functions types are unused values
+                // @todo Get line number from stmt for error reporting
                 value_type => return Err(TypeError::UnusedValue(value_type)),
             }
         }
@@ -90,10 +91,15 @@ impl TypeChecker {
 
                 // A scope is always expected to exists, including the global top level scope
                 // Save type of expression into scope using the identifier_token's lexeme as key
-                self.scopes
-                    .last_mut()
-                    .unwrap()
-                    .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
+                // self.scopes
+                //     .last_mut()
+                //     .unwrap()
+                //     .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
+
+                self.env.borrow_mut().define(
+                    identifier_token.lexeme.as_ref().unwrap().clone(),
+                    expr_type.clone(),
+                );
             }
             Stmt::Func(ref identifier_token, ref params, ref body) => {
                 // Clone the function stmt as it will be stored as part of the Type::Func(..),
@@ -101,7 +107,8 @@ impl TypeChecker {
                 // When types are available for the parameters by using the types of the arguments.
                 let function_stmt = stmt.clone();
 
-                let function_type = Type::Func(params.len(), Box::new(function_stmt));
+                let function_type =
+                    Type::Func(params.len(), Box::new(function_stmt), Rc::clone(&self.env));
 
                 let identifier_string = identifier_token.lexeme.as_ref().unwrap();
 
@@ -110,10 +117,13 @@ impl TypeChecker {
                 // Param types are not available as the language has no type annotations, thus all param types are "generic",
                 // And are only type checked when function is called, with arguments' types as param types for checking.
                 // Since function body is not type checked yet, Return type is unknown therefore it is not stored
-                self.scopes
-                    .last_mut()
-                    .unwrap()
-                    .insert(identifier_string.clone(), function_type.clone());
+                // self.scopes
+                //     .last_mut()
+                //     .unwrap()
+                //     .insert(identifier_string.clone(), function_type.clone());
+                self.env
+                    .borrow_mut()
+                    .define(identifier_string.clone(), function_type.clone());
 
                 // Call check function to continue type checking function body with Type::Lazy for the parameters
                 // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
@@ -131,7 +141,12 @@ impl TypeChecker {
                 // When types are available for the parameters by using the types of the arguments.
                 let function_stmt = stmt.clone();
 
-                let function_type = Type::AnonymousFunc(params.len(), Box::new(function_stmt));
+                // let function_type = Type::AnonymousFunc(params.len(), Box::new(function_stmt));
+                let function_type = Type::AnonymousFunc(
+                    params.len(),
+                    Box::new(function_stmt),
+                    Rc::clone(&self.env),
+                );
 
                 // Function is not added to scope before type checking function body,
                 // Because anonymous functions cannot "directly" refer to itself recursively.
@@ -319,13 +334,13 @@ impl TypeChecker {
             Expr::Call(ref callee_identifier_expr, ref arguments, _) => {
                 // @todo Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
                 // If this resolves to a valid Type::Func(..), then extract the tuple's value.
-                let (number_of_parameters, function_stmt) =
+                let (number_of_parameters, function_stmt, closure_types) =
                     match self.check_expression(callee_identifier_expr)? {
-                        Type::Func(number_of_parameters, function_stmt) => {
-                            (number_of_parameters, function_stmt)
+                        Type::Func(number_of_parameters, function_stmt, closure_types) => {
+                            (number_of_parameters, function_stmt, closure_types)
                         }
-                        Type::AnonymousFunc(number_of_parameters, function_stmt) => {
-                            (number_of_parameters, function_stmt)
+                        Type::AnonymousFunc(number_of_parameters, function_stmt, closure_types) => {
+                            (number_of_parameters, function_stmt, closure_types)
                         }
 
                         value_type => {
@@ -335,6 +350,8 @@ impl TypeChecker {
                             ));
                         }
                     };
+
+                self.closure_types = Some(closure_types);
 
                 // Ensure that the number of arguments matches the number of parameters defined
                 if arguments.len() != number_of_parameters {

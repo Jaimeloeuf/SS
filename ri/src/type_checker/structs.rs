@@ -1,4 +1,8 @@
+use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
+use std::rc::Rc;
+
+use super::type_table::TypeTable;
 
 use crate::parser::stmt::Stmt;
 use crate::token::Token;
@@ -9,6 +13,10 @@ pub struct TypeChecker {
     ///
     /// @todo Might change this to a LinkedList
     pub scopes: Vec<HashMap<String, Type>>,
+
+    // Env tracks current type table, moving back and forth in the linked list of type tables as the type checker enter and exit scopes
+    pub env: Rc<RefCell<TypeTable>>,
+    pub closure_types: Option<Rc<RefCell<TypeTable>>>,
 
     /// Store the current function's identifier token in order to break out of recursive type checking
     ///
@@ -50,16 +58,23 @@ pub enum Type {
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
+    // @todo Cleanup
     /// Func(number_of_parameters, function_stmt)
     ///
     /// The Function's AST node is stored so that it can be used to type check again when a function call is made
-    Func(usize, Box<Stmt>),
+    // Func(usize, Box<Stmt>),
+    //
+    /// This type table contains the types in the env surrounding the function definition NOT THE ENV surrounding the function call
+    /// closure: Rc<RefCell<TypeTable>>,
+    Func(usize, Box<Stmt>, Rc<RefCell<TypeTable>>),
 
+    // @todo Cleanup
     /// AnonymousFunc(number_of_parameters, function_stmt)
     ///
     /// This is just like the Func(..) variant except for the different name,
     /// which will be used to differentiate this and a named function during unused value check.
-    AnonymousFunc(usize, Box<Stmt>),
+    // AnonymousFunc(usize, Box<Stmt>),
+    AnonymousFunc(usize, Box<Stmt>, Rc<RefCell<TypeTable>>),
 
     /// Return is a special type that wraps a Type,
     /// The point of the Return type is to allow type checker to know and let it bubble up till a handler
