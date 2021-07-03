@@ -50,8 +50,7 @@ impl TypeTable {
     // Old value will be returned if the value is updated instead of created
     // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.insert
     pub fn define(&mut self, key: String, val: Type) {
-        // println!("inserting {} : {:#?}", key, val);
-        println!("inserting type of {}", key);
+        println!("inserting '{}' as type {:?}", key, val);
         // Since not supporting variables now, all const declared will be in the current scope
         // So we do not have to traverse up the scope chain to find the environment/scope the variable is created in before assigning
         self.types.insert(key, val);
