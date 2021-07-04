@@ -17,16 +17,11 @@ impl TypeChecker {
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
-            scopes: Vec::new(),
-            current_function: None,
-
             // The starting environment will always be the global scope
             env: Rc::new(RefCell::new(TypeTable::global())),
-            // @todo Tmp way to pass around type table holding the closure types
             closure_types: None,
 
-            // @todo A better way other than hardcoding all identifiers in
-            globals: vec!["clock"],
+            current_function: None,
         };
 
         // @todo
@@ -75,10 +70,26 @@ impl TypeChecker {
                 return self.check_expression(expr);
             }
             Stmt::Block(ref stmts, _) => {
-                self.begin_scope();
+                // Get a new Rc<TypeTable> pointing to the same TypeTable in memory
+                // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
+                let parent_env = Rc::clone(&self.env);
+
+                // Create new type table for current function block with existing type table as the enclosing one
+                let current_env = TypeTable::new(Some(Rc::clone(&self.env)));
+
+                // Set the new type table directly onto struct so other methods can access it directly
+                // @todo Can be better written, by changing all the methods to take current scope as function argument,
+                // @todo instead of saving current environment temporarily and attaching the new environment to self.
+                self.env = Rc::new(RefCell::new(current_env));
+
+                /*  */
+
                 // Store block stmt type to type check for return types after ending current scope
                 let block_stmt_type = self.check_ast(stmts)?;
-                self.end_scope();
+
+                // Reset parent environment back onto the struct once block completes execution
+                // The newly created current environment for this block will be dropped once function exits
+                self.env = parent_env;
 
                 // Bubble up block_stmt_type if it is Type::Return to let function checker handle it
                 if let Type::Return(_) = block_stmt_type {

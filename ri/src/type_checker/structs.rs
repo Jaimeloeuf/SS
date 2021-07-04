@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
 use super::type_table::TypeTable;
@@ -9,13 +8,11 @@ use crate::token::Token;
 
 // Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
 pub struct TypeChecker {
-    /// Using a vec as a "Stack" data structure
-    ///
-    /// @todo Might change this to a LinkedList
-    pub scopes: Vec<HashMap<String, Type>>,
-
-    // Env tracks current type table, moving back and forth in the linked list of type tables as the type checker enter and exit scopes
+    /// Env tracks the type table for the current scope level
+    /// TypeChecker moves back and forth in this linked list of type tables as it enter and exit scopes
     pub env: Rc<RefCell<TypeTable>>,
+
+    /// @todo Tmp way of passing around the closure type table
     pub closure_types: Option<Rc<RefCell<TypeTable>>>,
 
     /// Store the current function's identifier token in order to break out of recursive type checking
@@ -28,11 +25,6 @@ pub struct TypeChecker {
     /// and thus the type checker should return Type::Lazy immediately as the type of the recursive function call,
     /// to make all checks against this recursive function call as valid, until it can actually be type checked with concrete types.
     pub current_function: Option<Token>,
-
-    /// Field holding a vector of global identifiers
-    ///
-    /// Used by declare utility method to check if the identifier is a global identifier to give users a more specific error message
-    pub globals: Vec<&'static str>,
 }
 
 /// An enum of all possible types of values in SS

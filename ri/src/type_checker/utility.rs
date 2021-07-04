@@ -23,35 +23,22 @@ impl TypeChecker {
             identifier_string
         );
 
-        #[allow(unreachable_code)] // @todo Remove
-        // Simple optimization, as identifiers are usually defined in the same scope more often than not
         // Able to unwrap directly as a scope is always expected to exists, including the global top level scope
-        if let Some(identifier_type) = self.scopes.last_mut().unwrap().get(identifier_string) {
-            identifier_type.clone()
-        } else {
-            // Convert scopes vector into Iter type and reverse it to traverse up from 1 scope above local scope to top level global scope
-            // Skip the first scope, which is the local scope since we already check the local scope in the if statement above.
-            for ref scope in self.scopes.iter().rev().skip(1) {
-                if scope.contains_key(identifier_string) {
-                    return scope.get(identifier_string).unwrap().clone();
-                }
-            }
-            panic!(
-                "TypeChecker Internal Error: Type of identifier '{}' not found in all scopes!",
-                identifier_string
-            )
-        }
+        // panic!(
+        //     "TypeChecker Internal Error: Type of identifier '{}' not found in all scopes!",
+        //     identifier_string
+        // )
     }
 
     // @todo Allow types to be passed in, and change it to be inserting the types 1 by 1
     // @todo Perhaps if that is the case, should change it to inline
     // Method to define the types of the different identifiers available in the prelude / global scope
     pub fn define_globals(&mut self, identifiers: Vec<&str>) {
-        for id in identifiers {
-            self.scopes
-                .last_mut()
-                .unwrap()
-                .insert(id.to_string(), Type::Null);
-        }
+        // for id in identifiers {
+        //     self.scopes
+        //         .last_mut()
+        //         .unwrap()
+        //         .insert(id.to_string(), Type::Null);
+        // }
     }
 }
