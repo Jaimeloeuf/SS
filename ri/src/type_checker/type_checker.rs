@@ -29,15 +29,14 @@ impl TypeChecker {
             globals: vec!["clock"],
         };
 
-        // Create first new scope for the global scope and insert in identifiers
-        type_checker.begin_scope();
+        // @todo
+        type_checker.env = Rc::new(RefCell::new(TypeTable::global()));
 
         // @todo Make it better then.. Cloning it because cannot have ref and mut ref to type_checker at the same time....
-        type_checker.define_globals(type_checker.globals.clone());
+        // type_checker.define_globals(type_checker.globals.clone());
 
         // @todo Add a synchronization method, to prevent type checker from quitting on first error, and instead, check other errors and return all via an array
         type_checker.check_ast(ast)?;
-        type_checker.end_scope();
 
         Ok(())
     }
@@ -500,21 +499,17 @@ impl TypeChecker {
             None => None,
         };
 
-        self.begin_scope();
-        // Get a new Rc<Environment> pointing to the same Environment memory allocation
+        // Get a new Rc<TypeTable> pointing to the same TypeTable in memory
         // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
         let parent_env = Rc::clone(&self.env);
 
-        // Create new environment/scope for current block with existing environment/scope as the parent/enclosing environment
+        // Create new type table for current function block with existing type table as the enclosing one
         let current_env = TypeTable::new(Some(Rc::clone(&self.env)));
 
-        // Set the new environment directly onto the struct, so other methods can access it directly
+        // Set the new type table directly onto struct so other methods can access it directly
         // @todo Can be better written, by changing all the methods to take current scope as function argument,
         // @todo instead of saving current environment temporarily and attaching the new environment to self.
         self.env = Rc::new(RefCell::new(current_env));
-
-        // A scope is always expected to exists, including the global top level scope
-        // let scope = self.scopes.last_mut().unwrap();
 
         // Hard to merge with closures, thus 2 seperate loop
         match argument_types {
@@ -563,8 +558,6 @@ impl TypeChecker {
         } else {
             panic!("Internal Error: Function body can only be Stmt::Block");
         };
-
-        self.end_scope();
 
         // Reset parent environment back onto the struct once block completes execution
         // The newly created current environment for this block will be dropped once function exits

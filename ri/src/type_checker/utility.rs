@@ -3,17 +3,7 @@ use super::TypeChecker;
 
 use crate::token::Token;
 
-use std::collections::hash_map::HashMap;
-
 impl TypeChecker {
-    pub fn begin_scope(&mut self) {
-        self.scopes.push(HashMap::<String, Type>::new());
-    }
-
-    pub fn end_scope(&mut self) {
-        self.scopes.pop();
-    }
-
     // @todo Add lifetime specifier so dont need to clone Type out
     // @todo If no where else uses this, can inline this into Expr::Const(..) of resolve_expression
     pub fn get_type(&mut self, token: &Token) -> Type {
