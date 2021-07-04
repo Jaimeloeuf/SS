@@ -20,12 +20,11 @@ impl TypeChecker {
         // Use lexeme from token as identifier
         let identifier_string = token.lexeme.as_ref().unwrap();
 
-        if let Ok(value_type) = self.env.borrow().get_full(identifier_string) {
+        if let Some(value_type) = self.env.borrow().get_full(identifier_string) {
             return value_type;
         };
         if let Some(ref closure_types) = self.closure_types {
-            println!("looking within closure types ",);
-            if let Ok(value_type) = closure_types.borrow().get_full(identifier_string) {
+            if let Some(value_type) = closure_types.borrow().get_full(identifier_string) {
                 return value_type;
             }
         }

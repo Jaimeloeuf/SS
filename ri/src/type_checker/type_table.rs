@@ -4,11 +4,6 @@ use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
-// Temporary error
-pub enum TypeTableError {
-    UndefinedIdentifier(String),
-}
-
 #[derive(Debug)]
 pub struct TypeTable {
     // @todo Perhaps use a ref to a String instead of this, to avoid cloning the string
@@ -61,50 +56,38 @@ impl TypeTable {
         println!("\n");
     }
 
-    pub fn get_full(&self, key: &String) -> Result<Type, TypeTableError> {
-        println!("finding type for: {}", key);
-
-        // If type of identifier is found in current scope
+    pub fn get_full(&self, key: &String) -> Option<Type> {
+        // If type of identifier is found in current scope return it immediately
         if let Some(value_type) = self.types.get(key) {
-            print!("finding within current scope -> ");
-            for key in self.types.keys() {
-                print!("{}, ", key);
-            }
-            println!("\n");
-            return Ok(value_type.clone());
+            return Some(value_type.clone());
         }
 
+        // Since type of identifier not found in current scope, get the enclosing type table as starting point to traverse up
         let mut environment = Rc::clone(self.enclosing.as_ref().unwrap());
 
-        // Loop through all scopes looking for the first to contain a type for the identifier
+        // Loop through all type tables looking for the first to contain a type for the identifier
         loop {
-            // Split into 2 lines to satisfy borrow checker rules.
-            // Can be sure to unwrap as 1..distance will never exceed global scope
-            // let parent_env = Rc::clone(environment.borrow().enclosing.as_ref().unwrap());
-            // environment = parent_env;
-
-            print!("finding within -> ");
-            for key in environment.borrow().types.keys() {
-                print!("{}, ", key);
-            }
-            println!("\n");
-
-            // If type of identifier is found in current scope
+            // Return type of identifier when found
             if let Some(value_type) = environment.borrow().types.get(key) {
-                return Ok(value_type.clone());
+                return Some(value_type.clone());
             }
 
+            // Breaks out of loop and function if current type table is for top level scope and no type found for identifier
+            // @todo Temporarily return to let caller handle it, might integrate this code into utility function instead
             if environment.borrow().enclosing.is_none() {
-                // Temporarily return error to let caller handle it
-                return Err(TypeTableError::UndefinedIdentifier(String::from("")));
-                // panic!("cannot find the damn type of: {}", key)
+                return None;
             }
 
-            // If value is not found in current scope, set parent scope to current scope and continue looking for it
+            // If type not found in current scope and not top level scope, set parent scope to current and continue looking
+            // Can be sure to unwrap as the previous code already checks if enclosing is none
+            //
+            // Code split into 2 lines to satisfy borrow checker, alternative is
+            // match environment.borrow().enclosing.as_ref() {
+            //     Some(parent_env) => environment = Rc::clone(parent_env),
+            //     None => return None,
+            // };
             let parent_env = Rc::clone(environment.borrow().enclosing.as_ref().unwrap());
             environment = parent_env;
         }
-
-        panic!("Cannot find type of: {}", key)
     }
 }
