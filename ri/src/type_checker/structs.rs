@@ -10,6 +10,9 @@ use crate::token::Token;
 pub struct TypeChecker {
     /// Env tracks the type table for the current scope level
     /// TypeChecker moves back and forth in this linked list of type tables as it enter and exit scopes
+    // @todo Change this to self.types instead
+    // @todo Can be better written, by changing all the methods to take current scope as function argument,
+    // @todo instead of saving current environment temporarily and attaching the new environment to self.
     pub env: Rc<RefCell<TypeTable>>,
 
     /// @todo Tmp way of passing around the closure type table

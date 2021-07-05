@@ -17,18 +17,15 @@ impl TypeChecker {
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
-            // The starting environment will always be the global scope
+            // Create global type table with the types of global values pre-defined in the method
             env: Rc::new(RefCell::new(TypeTable::global())),
+
+            // No closure applicable for top level code
             closure_types: None,
 
+            // Global scope is not a function unlike languages like C where there is a main function as entry point
             current_function: None,
         };
-
-        // @todo
-        type_checker.env = Rc::new(RefCell::new(TypeTable::global()));
-
-        // @todo Make it better then.. Cloning it because cannot have ref and mut ref to type_checker at the same time....
-        // type_checker.define_globals(type_checker.globals.clone());
 
         // @todo Add a synchronization method, to prevent type checker from quitting on first error, and instead, check other errors and return all via an array
         type_checker.check_ast(ast)?;
@@ -47,10 +44,10 @@ impl TypeChecker {
 
             // Checks for unused values to ensure that there no values are left unused
             match stmt_type {
-                // Types that are allowed to be "unused" in global scope
+                // Ignore types that are allowed to be "unused" in global scope
                 Type::Func(_, _, _) | Type::None => {}
 
-                // Expressions and anonymous functions types are unused values
+                // Expressions (including anonymous functions) types are unused values
                 // @todo Get line number from stmt for error reporting
                 value_type => return Err(TypeError::UnusedValue(value_type)),
             }
@@ -91,25 +88,18 @@ impl TypeChecker {
                 // The newly created current environment for this block will be dropped once function exits
                 self.env = parent_env;
 
+                // @todo Is this needed or can just bubble up since check_function also matches for Type::Return
                 // Bubble up block_stmt_type if it is Type::Return to let function checker handle it
                 if let Type::Return(_) = block_stmt_type {
                     return Ok(block_stmt_type);
                 }
             }
             Stmt::Const(ref identifier_token, ref expr) => {
+                // Must be split to prevent borrow as mutable when also borrowed as immutable
                 let expr_type = self.check_expression(expr)?;
-
-                // A scope is always expected to exists, including the global top level scope
-                // Save type of expression into scope using the identifier_token's lexeme as key
-                // self.scopes
-                //     .last_mut()
-                //     .unwrap()
-                //     .insert(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
-
-                self.env.borrow_mut().define(
-                    identifier_token.lexeme.as_ref().unwrap().clone(),
-                    expr_type.clone(),
-                );
+                self.env
+                    .borrow_mut()
+                    .define(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
             Stmt::Func(ref identifier_token, ref params, ref body) => {
                 // Clone the function stmt as it will be stored as part of the Type::Func(..),
@@ -139,8 +129,7 @@ impl TypeChecker {
                 // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
                 // HOWEVER, the return type is not needed, since return type of a function is only used during the,
                 // type checking process of a function call, to determine the type of the function call expression.
-                let _return_type =
-                    self.check_function(Some(identifier_token), params, None, body)?;
+                self.check_function(Some(identifier_token), params, None, body)?;
 
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
@@ -158,16 +147,16 @@ impl TypeChecker {
                     Rc::clone(&self.env),
                 );
 
-                // Function is not added to scope before type checking function body,
-                // Because anonymous functions cannot "directly" refer to itself recursively.
-                // @todo They can do so by referencing the identifier this Expr::AnonymousFunc is binded to. Will this be an issue?? Yes unfortunately... ML deals with this using a rec keyword
-                // @todo Alternatively, inside the parser, it can be an error to refer to itself recursively if it is an anonymous function
+                // Anonymous functions cannot do recursion by referencing identifier this Expr::AnonymousFunc is binded to,
+                // as function type is not added to type table before type checking function body thus cannot refer to itself recursively
+                // F# deals with this using a rec keyword if it can be used recursively
+                // @todo Alternatively make it an error to refer to itself recursively if it is an anonymous function in parser
 
                 // Call check function to continue type checking function body with Type::Lazy for the parameters
                 // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
                 // HOWEVER, the return type is not needed, since return type of a function is only used during the,
                 // type checking process of a function call, to determine the type of the function call expression.
-                let _return_type = self.check_function(None, params, None, body)?;
+                self.check_function(None, params, None, body)?;
 
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
@@ -184,7 +173,7 @@ impl TypeChecker {
 
                 let if_body_type = self.check_statement(then_branch)?;
                 if let Type::Return(_) = if_body_type {
-                    // Push return type instead of unwrapping for inner type as that is handled by function call type checker
+                    // Push return type instead of unwrapping for inner type as it's handled by function call type checker
                     return_types.push(if_body_type);
                 }
 
@@ -192,7 +181,7 @@ impl TypeChecker {
                 if let Some(ref else_branch) = else_branch {
                     let else_body_type = self.check_statement(else_branch)?;
                     if let Type::Return(_) = else_body_type {
-                        // Push return type instead of unwrapping for inner type as that is handled by function call type checker
+                        // Push return type instead of unwrapping for inner type as it's handled by function call type checker
                         return_types.push(else_body_type);
                     }
                 }
@@ -256,10 +245,8 @@ impl TypeChecker {
         Ok(match *expr {
             Expr::Const(ref token, _) => self.get_type(token),
 
-            Expr::AnonymousFunc(ref stmt) => {
-                // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use check_statement to handle Stmt::AnonymousFunc
-                self.check_statement(stmt)?
-            }
+            // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use check_statement to handle Stmt::AnonymousFunc
+            Expr::AnonymousFunc(ref stmt) => self.check_statement(stmt)?,
 
             // @todo Add new arithmetic expr to split this up, so that the operator check can be skipped
             // Binary expressions holds both equality/inequality checks, and arithmetic operations
