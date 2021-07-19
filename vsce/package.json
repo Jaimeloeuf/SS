@@ -3,6 +3,9 @@
     "displayName": "SimpleScript",
     "description": "Language extension for SimpleScript",
     "version": "0.0.1",
+    "scripts": {
+        "compile-yaml": "npx js-yaml syntaxes/abc.tmLanguage.yaml > syntaxes/abc.tmLanguage.json"
+    },
     "engines": {
         "vscode": "^1.57.0"
     },
@@ -10,16 +13,28 @@
         "Programming Languages"
     ],
     "contributes": {
-        "languages": [{
-            "id": "simplescript",
-            "aliases": ["SimpleScript", "simplescript"],
-            "extensions": [".ss"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "simplescript",
-            "scopeName": "source.ss",
-            "path": "./syntaxes/simplescript.tmLanguage.json"
-        }]
+        "languages": [
+            {
+                "id": "simplescript",
+                "aliases": [
+                    "SimpleScript",
+                    "simplescript"
+                ],
+                "extensions": [
+                    ".ss"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "simplescript",
+                "scopeName": "source.ss",
+                "path": "./syntaxes/simplescript.tmLanguage.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "js-yaml": "^4.1.0"
     }
 }
