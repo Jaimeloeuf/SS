@@ -3,14 +3,29 @@
   "displayName": "SimpleScript",
   "description": "Language extension for SimpleScript",
   "version": "0.0.1",
+  "author": "JJ",
+  "publisher": "EnkelDigital",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jaimeloeuf/SS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Jaimeloeuf/SS/issues"
+  },
   "scripts": {
-    "compile-yaml": "npx js-yaml syntaxes/abc.tmLanguage.yaml > syntaxes/abc.tmLanguage.json"
+    "publish": "git stash --include-untracked && vsce publish && git stash apply",
+    "compile-yaml": "npx js-yaml syntaxes/simplescript.tmLanguage.yaml > syntaxes/simplescript.tmLanguage.json"
   },
   "engines": {
     "vscode": "^1.57.0"
   },
   "categories": [
     "Programming Languages"
+  ],
+  "keywords": [
+    "simplescript",
+    "ss"
   ],
   "contributes": {
     "languages": [
