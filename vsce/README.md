@@ -1,21 +1,20 @@
 # SS Visual Studio Code Extension
-To provide language support SimpleScript on VS Code.
+- Provides language support for [SimpleScript](https://github.com/Jaimeloeuf/SS) in VS Code
+- Install it from <https://marketplace.visualstudio.com/items?itemName=EnkelDigital.simplescript>
 
 
-## Features
-Describe specific features of your extension including screenshots of your extension in action.
+<!-- ## Features
+Describe specific features of your extension including screenshots of your extension in action. -->
 
 
-## Requirements
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+<!-- ## Requirements
+If you have any requirements or dependencies, add a section describing those and how to install and configure them. -->
 
 
-## Extension Settings
+<!-- ## Extension Settings
 Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.  
-For example:  
 This extension contributes the following settings:
-- * `myExtension.enable`: enable/disable this extension
-- * `myExtension.thing`: set to `blah` to do something
+- `myExtension.enable`: enable/disable this extension -->
 
 
 <!-- ## Known Issues

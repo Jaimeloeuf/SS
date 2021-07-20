@@ -13,8 +13,20 @@
     "keywords": {
       "patterns": [
         {
+          "name": "keyword.simplescript",
+          "match": "\\b(const|and|or|ignore|print)\\b"
+        },
+        {
           "name": "keyword.control.simplescript",
-          "match": "\\b(const|and|or|function|return|ignore|if|else|true|false|print|while|null)\\b"
+          "match": "\\b(if|else|while)\\b"
+        },
+        {
+          "name": "keyword.literals.simplescript",
+          "match": "\\b(true|false|null)\\b"
+        },
+        {
+          "name": "keyword.function.simplescript",
+          "match": "\\b(function|return)\\b"
         }
       ]
     },
