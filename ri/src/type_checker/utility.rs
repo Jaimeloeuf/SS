@@ -10,11 +10,12 @@ impl TypeChecker {
         // Use lexeme from token as identifier
         let identifier_string = token.lexeme.as_ref().unwrap();
 
-        if let Some(value_type) = self.env.borrow().get_full(identifier_string) {
+        // @todo Look for type in closure first or current env first?
+        if let Some(value_type) = self.env.borrow().get_type(identifier_string) {
             return value_type;
         };
         if let Some(ref closure_types) = self.closure_types {
-            if let Some(value_type) = closure_types.borrow().get_full(identifier_string) {
+            if let Some(value_type) = closure_types.borrow().get_type(identifier_string) {
                 return value_type;
             }
         }
@@ -22,12 +23,6 @@ impl TypeChecker {
             "Type of '{}' is not found in both current environment and closure",
             identifier_string
         );
-
-        // Able to unwrap directly as a scope is always expected to exists, including the global top level scope
-        // panic!(
-        //     "TypeChecker Internal Error: Type of identifier '{}' not found in all scopes!",
-        //     identifier_string
-        // )
     }
 
     // @todo Allow types to be passed in, and change it to be inserting the types 1 by 1

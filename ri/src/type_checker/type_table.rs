@@ -56,7 +56,8 @@ impl TypeTable {
         println!("\n");
     }
 
-    pub fn get_full(&self, key: &String) -> Option<Type> {
+    // Method to retrieve type of identifier from type table (self) and its parent type tables if any
+    pub fn get_type(&self, key: &String) -> Option<Type> {
         // If type of identifier is found in current scope return it immediately
         if let Some(value_type) = self.types.get(key) {
             return Some(value_type.clone());
