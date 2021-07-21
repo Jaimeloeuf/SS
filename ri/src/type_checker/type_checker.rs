@@ -13,6 +13,13 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 impl TypeChecker {
+    // Method to define types of identifiers available in the prelude / global scope at the start of the type checker
+    // pub fn define_globals(&mut self, identifiers: Vec<&str>) {
+    //     for id in identifiers {
+    //         self.env.define(id.to_string(), ...);
+    //     }
+    // }
+
     // Associated function to type check a AST (where AST in this case is a vec of Stmt variants)
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
         // Create TypeChecker instance internally
@@ -243,7 +250,33 @@ impl TypeChecker {
     // Type check a given expression, and return the expression's inferred type
     fn check_expression(&mut self, expr: &Expr) -> Result<Type, TypeError> {
         Ok(match *expr {
-            Expr::Const(ref token, _) => self.get_type(token),
+            Expr::Const(ref token, _) => {
+                // Use lexeme from token as identifier
+                let identifier_string = token.lexeme.as_ref().unwrap();
+
+                // Once file has been resolved all identifiers are checked to have been defined before use, which means
+                // If types are inserted into type table correctly, type of identifier MUST exist in current environment or closure
+                // Therefore if type not found, it is a internal type table programming logic error
+
+                // @todo Look for type in closure first or current env first?
+                if let Some(value_type) = self.env.borrow().get_type(identifier_string) {
+                    value_type
+                } else if let Some(ref closure_types) = self.closure_types {
+                    if let Some(value_type) = closure_types.borrow().get_type(identifier_string) {
+                        value_type
+                    } else {
+                        panic!(
+                            "InternalError: Type of '{}' is not found in both current environment and closure",
+                            identifier_string
+                        );
+                    }
+                } else {
+                    panic!(
+                        "InternalError: Type of '{}' is not found in current environment and there is no closure environment",
+                        identifier_string
+                    );
+                }
+            }
 
             // Expr::AnonymousFunc is a wrapper for Stmt::AnonymousFunc, thus use check_statement to handle Stmt::AnonymousFunc
             Expr::AnonymousFunc(ref stmt) => self.check_statement(stmt)?,
@@ -329,7 +362,6 @@ impl TypeChecker {
                 check("s1", "s2");
             */
             Expr::Call(ref callee_identifier_expr, ref arguments, _) => {
-                // @todo Optimize away method chaining, as this is the same as parsing out token from Box<Expr::Const(token, _)> and calling self.get_type(token)
                 // If this resolves to a valid Type::Func(..), then extract the tuple's value.
                 let (number_of_parameters, function_stmt, closure_types) =
                     match self.check_expression(callee_identifier_expr)? {
@@ -413,7 +445,6 @@ impl TypeChecker {
                     ));
                 }
 
-                // This is the same as parsing out token from, Box<Expr::Const(token, _)> and calling self.get_type(token)
                 // If this resolves to a valid Type::Array(..) type, then extract the 'array_element_type'
                 match self.check_expression(array_identifier_expr)? {
                     Type::Array(array_element_type) => *array_element_type,

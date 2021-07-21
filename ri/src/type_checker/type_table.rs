@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
+/// This is a stack implemented with a linked list by having every element hold a ref to its parent if its not the top level scope's type table
 #[derive(Debug)]
 pub struct TypeTable {
     // @todo Perhaps use a ref to a String instead of this, to avoid cloning the string
@@ -41,22 +42,15 @@ impl TypeTable {
         type_table
     }
 
-    // Can also be called to update value in map
-    // Old value will be returned if the value is updated instead of created
-    // https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.insert
+    // @todo Although this can be used to update value in map, do not use it to update since it should only be set once. Add update gaurd
     pub fn define(&mut self, key: String, val: Type) {
-        println!("inserting '{}' as type {:?}", key, val);
         // Since not supporting variables now, all const declared will be in the current scope
         // So we do not have to traverse up the scope chain to find the environment/scope the variable is created in before assigning
         self.types.insert(key, val);
-        print!("after inserting -> ");
-        for key in self.types.keys() {
-            print!("{}, ", key);
-        }
-        println!("\n");
     }
 
     // Method to retrieve type of identifier from type table (self) and its parent type tables if any
+    // @todo Add lifetime specifier so dont need to clone Type out
     pub fn get_type(&self, key: &String) -> Option<Type> {
         // If type of identifier is found in current scope return it immediately
         if let Some(value_type) = self.types.get(key) {
