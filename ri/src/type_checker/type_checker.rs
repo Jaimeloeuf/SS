@@ -370,8 +370,6 @@ impl TypeChecker {
                         }
                     };
 
-                self.closure_types = Some(closure_types);
-
                 // Ensure that the number of arguments matches the number of parameters defined
                 if arguments.len() != number_of_parameters {
                     return Err(TypeError::InternalError(
@@ -396,6 +394,10 @@ impl TypeChecker {
                         }
                         _ => panic!("Internal Error: Expected Func type stmt body in Type::Func"),
                     };
+
+                // Store closure type on TypeChecker before type checking function so if needed Expr::Const(..) logic can access it
+                // @todo If it is more than 1 layer of nesting, the previous self.closure_types will get overwritten
+                self.closure_types = Some(closure_types);
 
                 // Type check the function again, this time with the types of the arguments as types of the parameters
                 // The type of the call expression is the return type of the function called after resolving it
