@@ -53,22 +53,18 @@ pub enum Type {
     /// Arrays expect homogenous data types
     Array(Box<Type>),
 
-    // @todo Cleanup
-    /// Func(number_of_parameters, function_stmt)
+    /// Func(number_of_parameters, function_stmt, type_table_of_closure_environment)
     ///
-    /// The Function's AST node is stored so that it can be used to type check again when a function call is made
-    // Func(usize, Box<Stmt>),
-    //
-    /// This type table contains the types in the env surrounding the function definition NOT THE ENV surrounding the function call
-    /// closure: Rc<RefCell<TypeTable>>,
+    /// The Function's AST node is stored so that it can be used to type check again when a function call is made.
+    /// This type table stores the types in the env surrounding the function definition NOT THE environment when calling the function
     Func(usize, Box<Stmt>, Rc<RefCell<TypeTable>>),
 
-    // @todo Cleanup
-    /// AnonymousFunc(number_of_parameters, function_stmt)
+    /// AnonymousFunc(number_of_parameters, function_stmt, type_table_of_closure_environment)
     ///
-    /// This is just like the Func(..) variant except for the different name,
-    /// which will be used to differentiate this and a named function during unused value check.
-    // AnonymousFunc(usize, Box<Stmt>),
+    /// This is just like the Func(..) variant, differentiated mainly for type checker's unused value check.
+    ///
+    /// The Function's AST node is stored so that it can be used to type check again when a function call is made.
+    /// This type table stores the types in the env surrounding the function definition NOT THE environment when calling the function
     AnonymousFunc(usize, Box<Stmt>, Rc<RefCell<TypeTable>>),
 
     /// Return is a special type that wraps a Type,

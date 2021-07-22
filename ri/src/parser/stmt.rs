@@ -36,6 +36,7 @@ pub enum Stmt {
 
     /// Func(name_token, parameter_tokens, body_as_a_block_stmt)
     Func(Token, Vec<Token>, Box<Stmt>),
+
     /// The only difference between Func and AnonymousFunc is that AnonymousFunc dont have the name token
     ///
     /// AnonymousFunc will be wrapped in the Expr::AnonymousFunc variant since it is treated as an expression

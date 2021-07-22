@@ -109,60 +109,50 @@ impl TypeChecker {
                     .define(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
             Stmt::Func(ref identifier_token, ref params, ref body) => {
-                // Clone the function stmt as it will be stored as part of the Type::Func(..),
-                // So that it can be used to type check the function again during a function call,
-                // When types are available for the parameters by using the types of the arguments.
-                let function_stmt = stmt.clone();
-
+                // Clone function stmt to store as part of the Type::Func(..) to type check the function again when it's called.
+                // Type check again when called, with the arguments' types mapped to the parameter identifiers
+                // Num of params is stored to ensure number of arguments matches in function call.
+                // Get closure values by 'cloning' current type table by getting a ref to it, similiar to how value/function.rs stores closure
                 let function_type =
-                    Type::Func(params.len(), Box::new(function_stmt), Rc::clone(&self.env));
+                    Type::Func(params.len(), Box::new(stmt.clone()), Rc::clone(&self.env));
 
                 let identifier_string = identifier_token.lexeme.as_ref().unwrap();
 
-                // Add function to scope before type checking function body to allow function to refer to itself recursively.
-                // Num of params is stored to ensure number of arguments matches in function call.
-                // Param types are not available as the language has no type annotations, thus all param types are "generic",
-                // And are only type checked when function is called, with arguments' types as param types for checking.
-                // Since function body is not type checked yet, Return type is unknown therefore it is not stored
-                // self.scopes
-                //     .last_mut()
-                //     .unwrap()
-                //     .insert(identifier_string.clone(), function_type.clone());
+                // Add function to type table before type checking function body to allow function to refer to itself recursively.
                 self.env
                     .borrow_mut()
                     .define(identifier_string.clone(), function_type.clone());
 
-                // Call check function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
-                // HOWEVER, the return type is not needed, since return type of a function is only used during the,
-                // type checking process of a function call, to determine the type of the function call expression.
+                // Pass in the identifier token since this is a named function and can be used recursively
+                //
+                // Param types are not available as no type annotations thus all param types are "generic" during function definition,
+                //
+                // Method will return function's return type IF it is able to resolve any, else defaults to Type::None
+                // HOWEVER, return type is not used since it's only needed when type checking function call expressions to determine their types
                 self.check_function(Some(identifier_token), params, None, body)?;
 
                 // Return function_type as the type of this function definition
                 return Ok(function_type);
             }
             Stmt::AnonymousFunc(ref params, ref body) => {
-                // Clone the function stmt as it will be stored as part of the Type::Func(..),
-                // So that it can be used to type check the function again during a function call,
-                // When types are available for the parameters by using the types of the arguments.
-                let function_stmt = stmt.clone();
-
-                // let function_type = Type::AnonymousFunc(params.len(), Box::new(function_stmt));
-                let function_type = Type::AnonymousFunc(
-                    params.len(),
-                    Box::new(function_stmt),
-                    Rc::clone(&self.env),
-                );
+                // Clone function stmt to store as part of the Type::Func(..) to type check the function again when it's called.
+                // Type check again when called, with the arguments' types mapped to the parameter identifiers
+                // Num of params is stored to ensure number of arguments matches in function call.
+                // Get closure values by 'cloning' current type table by getting a ref to it, similiar to how value/function.rs stores closure
+                let function_type =
+                    Type::AnonymousFunc(params.len(), Box::new(stmt.clone()), Rc::clone(&self.env));
 
                 // Anonymous functions cannot do recursion by referencing identifier this Expr::AnonymousFunc is binded to,
                 // as function type is not added to type table before type checking function body thus cannot refer to itself recursively
-                // F# deals with this using a rec keyword if it can be used recursively
+                // @todo Languages like F# deals with this using a rec keyword if it can be used recursively
                 // @todo Alternatively make it an error to refer to itself recursively if it is an anonymous function in parser
 
-                // Call check function to continue type checking function body with Type::Lazy for the parameters
-                // Method will return the function's return type IF it is able to resolve any or defaults to Type::None
-                // HOWEVER, the return type is not needed, since return type of a function is only used during the,
-                // type checking process of a function call, to determine the type of the function call expression.
+                // No identifier token since this is an anonymous function that cannot be used recursively
+                //
+                // Param types are not available as no type annotations thus all param types are "generic" during function definition,
+                //
+                // Method will return function's return type IF it is able to resolve any, else defaults to Type::None
+                // HOWEVER, return type is not used since it's only needed when type checking function call expressions to determine their types
                 self.check_function(None, params, None, body)?;
 
                 // Return function_type as the type of this function definition
@@ -502,6 +492,14 @@ impl TypeChecker {
         })
     }
 
+    /// Arguments:
+    /// - `optional_identifier_token`: Optional identifier token used to prevent infinite recursion when type checking recursive function calls of named functions
+    /// - `param_tokens`: The parameters' token
+    /// - `argument_types`: Optional vec of types mapped to the param_tokens vec to type check, if None, they will be type checked as generics
+    /// - `body`: The body of the function statement to type check
+    /// 
+    /// Return:
+    /// - Returns the return type of the function if any return type can be determined else defaults to Type::None
     fn check_function(
         &mut self,
         optional_identifier_token: Option<&Token>,

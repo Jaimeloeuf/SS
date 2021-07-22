@@ -23,6 +23,7 @@ pub enum Expr {
     // @todo Rename to create_const as this name is misleading
     Const(Token, usize),
 
+    // @todo Why cant the logic be here instead of inside Stmt variant? Then the stmt variant will just be like a "expression stmt"
     // Expression to wrap around a Stmt::AnonymousFunc variant as anonymous functions are expressions
     AnonymousFunc(Box<Stmt>),
 
