@@ -105,3 +105,28 @@ impl PartialEq for Type {
         }
     }
 }
+
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            // Use debug formatter for simple variant types
+            Type::Number | Type::String | Type::Bool | Type::Null | Type::Lazy | Type::None => {
+                write!(f, "Type::{:?}", self)
+            }
+
+            Type::Array(ref element_type) => write!(f, "Type::Array({})", element_type),
+
+            // Only show the number of params for function types
+            Type::Func(number_of_params, _, _) => {
+                write!(f, "Type::Func({} params)", number_of_params)
+            }
+            Type::AnonymousFunc(number_of_params, _, _) => {
+                write!(f, "Type::AnonymousFunc({} params)", number_of_params)
+            }
+
+            Type::Return(type_of_return_expression) => {
+                write!(f, "Type::Return({})", type_of_return_expression)
+            }
+        }
+    }
+}
