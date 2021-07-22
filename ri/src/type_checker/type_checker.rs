@@ -13,13 +13,6 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 impl TypeChecker {
-    // Method to define types of identifiers available in the prelude / global scope at the start of the type checker
-    // pub fn define_globals(&mut self, identifiers: Vec<&str>) {
-    //     for id in identifiers {
-    //         self.env.define(id.to_string(), ...);
-    //     }
-    // }
-
     // Associated function to type check a AST (where AST in this case is a vec of Stmt variants)
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
         // Create TypeChecker instance internally
@@ -499,7 +492,7 @@ impl TypeChecker {
     /// - `param_tokens`: The parameters' token
     /// - `argument_types`: Optional vec of types mapped to the param_tokens vec to type check, if None, they will be type checked as generics
     /// - `body`: The body of the function statement to type check
-    /// 
+    ///
     /// Return:
     /// - Returns the return type of the function if any return type can be determined else defaults to Type::None
     fn check_function(

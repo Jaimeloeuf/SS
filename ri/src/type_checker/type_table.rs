@@ -23,12 +23,11 @@ impl TypeTable {
         }
     }
 
-    // Create the global environment / prelude
+    // Create and return top level type table and define the types of identifiers included in the global environment/prelude
     pub fn global() -> TypeTable {
         // Since global environment is the top level scope, there is no enclosing environment
         let mut type_table = TypeTable::new(None);
 
-        // Rust Reference: https://doc.rust-lang.org/std/prelude/index.html
         // Define types of the prelude (bunch of things auto imported and available at toplevel)
         // env.define(
         //     "clock".to_string(),
