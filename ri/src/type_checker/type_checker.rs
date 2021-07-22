@@ -12,6 +12,9 @@ use crate::parser::stmt::Stmt;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+/*
+    Unused values checked here instead of resolver to piggy back the logic as its easier to just make sure there is no "return" types left
+*/
 impl TypeChecker {
     // Associated function to type check a AST (where AST in this case is a vec of Stmt variants)
     pub fn check(ast: &Vec<Stmt>) -> Result<(), TypeError> {
