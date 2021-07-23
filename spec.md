@@ -48,6 +48,20 @@ Inspirations include Javascript / Typescript / Go / ML family languages / Rust.
 - Expressive and extensible using metaprogramming concepts
 
 
+## Inspiration
+This language is inspired by many others, and this section lists specifically how they have influenced the design of SimpleScript
+
+- Syntax
+    - SimpleScript was created as a better JavaScript, so obviously the JavaScript C-style syntax has the biggest influence on the language
+    - JavaScript is easy to write and flexible thanks to its dynamically typed nature, thus its kept that way despite having a static type system
+    - Simple like Go, with very few features and keywords, to focus on the important few, making it WYSIWYG
+- Type system
+    - It is a Hindley–Milner type system with some extra constraints and modifcations to accommodate the C-style syntax/design
+    - Inspired by languages in the ML family (SML / OCaml / F#) that have static typing without type annotations (fantastic type inference)
+- Asynchronous Programming
+    - JavaScript / Go / Erlang (BEAM and OTP)
+
+
 ## Implementation details
 One of the aim of SimpleScript is that, the spec should be simple and flexible enough to be implemented in all sorts of ways deemed useful. Thus the goal is to build a few reference implementations for the top few popular stacks right now.  
 Thus some of the WIP reference implementations are (sorted by order of development):

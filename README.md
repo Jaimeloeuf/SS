@@ -5,7 +5,7 @@ Just a simple programming language / experiment to build a simpler and less quir
 
 
 ## Language design goals
-- Read more about the language's spec and design goals in the [specs](./spec.md)
+- Read the language's specification and design goals in [here](./spec.md)
 - See the [syntatic grammar definition in BNF](./syntatic%20grammar.bnf)
 
 Core tenets:
@@ -16,7 +16,7 @@ Core tenets:
 Specifically:
 - readability (and in extension, familiarity)
 - ease of use (easy and intuitive constructs/syntax)
-- strongly & statically typed language
+- strongly & statically typed language, but using type inference to prevent unnecessary type annotations
 - high level language
 - simple memory model
     - either with a gc
@@ -29,8 +29,8 @@ Specifically:
 ## Goals / Milestones
 - Reference implementation of the language
     - Intepreter in Rust
-    - Rust byte code Virtual Machine
-    - A Compiler frontend for LLVM
+    - Byte Code stack based Virtual Machine in Rust
+    - A compiler frontend for LLVM
     - Perhaps a Graal/Wasm/JVM version to target a popular bytecode virtual machine
     <!-- - Transpilation to JavaScript to run in the web -->
 - Others
