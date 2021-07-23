@@ -6,14 +6,13 @@ use super::type_table::TypeTable;
 use crate::parser::stmt::Stmt;
 use crate::token::Token;
 
-// Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
+// @todo Add lifetime specifier to String so that we can use ref of string instead of constantly cloning strings
 pub struct TypeChecker {
-    /// Env tracks the type table for the current scope level
+    /// `types` tracks the type table for the current scope level.
     /// TypeChecker moves back and forth in this linked list of type tables as it enter and exit scopes
-    // @todo Change this to self.types instead
     // @todo Can be better written, by changing all the methods to take current scope as function argument,
     // @todo instead of saving current environment temporarily and attaching the new environment to self.
-    pub env: Rc<RefCell<TypeTable>>,
+    pub types: Rc<RefCell<TypeTable>>,
 
     /// @todo Tmp way of passing around the closure type table
     pub closure_types: Option<Rc<RefCell<TypeTable>>>,

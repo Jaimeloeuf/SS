@@ -21,7 +21,7 @@ impl TypeChecker {
         // Create TypeChecker instance internally
         let mut type_checker = TypeChecker {
             // Create global type table with the types of global values pre-defined in the method
-            env: Rc::new(RefCell::new(TypeTable::global())),
+            types: Rc::new(RefCell::new(TypeTable::global())),
 
             // No closure applicable for top level code
             closure_types: None,
@@ -71,25 +71,23 @@ impl TypeChecker {
             }
             Stmt::Block(ref stmts, _) => {
                 // Get a new Rc<TypeTable> pointing to the same TypeTable in memory
-                // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
-                let parent_env = Rc::clone(&self.env);
+                // Essentially, get reference to current type table by cloning a pointer to it and not actually clone the underlying data
+                let parent_types = Rc::clone(&self.types);
 
                 // Create new type table for current function block with existing type table as the enclosing one
-                let current_env = TypeTable::new(Some(Rc::clone(&self.env)));
+                let current_types = TypeTable::new(Some(Rc::clone(&self.types)));
 
                 // Set the new type table directly onto struct so other methods can access it directly
-                // @todo Can be better written, by changing all the methods to take current scope as function argument,
-                // @todo instead of saving current environment temporarily and attaching the new environment to self.
-                self.env = Rc::new(RefCell::new(current_env));
+                self.types = Rc::new(RefCell::new(current_types));
 
                 /*  */
 
                 // Store block stmt type to type check for return types after ending current scope
                 let block_stmt_type = self.check_ast(stmts)?;
 
-                // Reset parent environment back onto the struct once block completes execution
-                // The newly created current environment for this block will be dropped once function exits
-                self.env = parent_env;
+                // Reset parent type table back onto the struct once block completes execution
+                // The newly created current type table for this block will be dropped once function exits
+                self.types = parent_types;
 
                 // @todo Is this needed or can just bubble up since check_function also matches for Type::Return
                 // Bubble up block_stmt_type if it is Type::Return to let function checker handle it
@@ -100,7 +98,7 @@ impl TypeChecker {
             Stmt::Const(ref identifier_token, ref expr) => {
                 // Must be split to prevent borrow as mutable when also borrowed as immutable
                 let expr_type = self.check_expression(expr)?;
-                self.env
+                self.types
                     .borrow_mut()
                     .define(identifier_token.lexeme.as_ref().unwrap().clone(), expr_type);
             }
@@ -110,12 +108,12 @@ impl TypeChecker {
                 // Num of params is stored to ensure number of arguments matches in function call.
                 // Get closure values by 'cloning' current type table by getting a ref to it, similiar to how value/function.rs stores closure
                 let function_type =
-                    Type::Func(params.len(), Box::new(stmt.clone()), Rc::clone(&self.env));
+                    Type::Func(params.len(), Box::new(stmt.clone()), Rc::clone(&self.types));
 
                 let identifier_string = identifier_token.lexeme.as_ref().unwrap();
 
                 // Add function to type table before type checking function body to allow function to refer to itself recursively.
-                self.env
+                self.types
                     .borrow_mut()
                     .define(identifier_string.clone(), function_type.clone());
 
@@ -135,8 +133,11 @@ impl TypeChecker {
                 // Type check again when called, with the arguments' types mapped to the parameter identifiers
                 // Num of params is stored to ensure number of arguments matches in function call.
                 // Get closure values by 'cloning' current type table by getting a ref to it, similiar to how value/function.rs stores closure
-                let function_type =
-                    Type::AnonymousFunc(params.len(), Box::new(stmt.clone()), Rc::clone(&self.env));
+                let function_type = Type::AnonymousFunc(
+                    params.len(),
+                    Box::new(stmt.clone()),
+                    Rc::clone(&self.types),
+                );
 
                 // Anonymous functions cannot do recursion by referencing identifier this Expr::AnonymousFunc is binded to,
                 // as function type is not added to type table before type checking function body thus cannot refer to itself recursively
@@ -245,7 +246,7 @@ impl TypeChecker {
                 // Therefore if type not found, it is a internal type table programming logic error
 
                 // @todo Look for type in closure first or current env first?
-                if let Some(value_type) = self.env.borrow().get_type(identifier_string) {
+                if let Some(value_type) = self.types.borrow().get_type(identifier_string) {
                     value_type
                 } else if let Some(ref closure_types) = self.closure_types {
                     if let Some(value_type) = closure_types.borrow().get_type(identifier_string) {
@@ -525,22 +526,20 @@ impl TypeChecker {
         };
 
         // Get a new Rc<TypeTable> pointing to the same TypeTable in memory
-        // Essentially, get a reference to self.env by cloning a pointer to it and not actually clone the underlying data
-        let parent_env = Rc::clone(&self.env);
+        // Essentially, get a reference to self.types by cloning a pointer to it and not actually clone the underlying data
+        let parent_types = Rc::clone(&self.types);
 
         // Create new type table for current function block with existing type table as the enclosing one
-        let current_env = TypeTable::new(Some(Rc::clone(&self.env)));
+        let current_types = TypeTable::new(Some(Rc::clone(&self.types)));
 
         // Set the new type table directly onto struct so other methods can access it directly
-        // @todo Can be better written, by changing all the methods to take current scope as function argument,
-        // @todo instead of saving current environment temporarily and attaching the new environment to self.
-        self.env = Rc::new(RefCell::new(current_env));
+        self.types = Rc::new(RefCell::new(current_types));
 
         // Hard to merge with closures, thus 2 seperate loop
         match argument_types {
             // If argument types are given (type checking function call), use them to type check function body
             Some(mut argument_types) => {
-                let mut scope = self.env.borrow_mut();
+                let mut scope = self.types.borrow_mut();
 
                 for param_token in param_tokens {
                     // scope.insert(
@@ -554,7 +553,7 @@ impl TypeChecker {
             }
             // If argument types not given (type checking function definition), use Type::Lazy to defer some type checking
             None => {
-                let mut scope = self.env.borrow_mut();
+                let mut scope = self.types.borrow_mut();
 
                 for param_token in param_tokens {
                     // Save type of every parameter into scope as Type::Lazy during this function definition type checking process,
@@ -584,9 +583,9 @@ impl TypeChecker {
             panic!("Internal Error: Function body can only be Stmt::Block");
         };
 
-        // Reset parent environment back onto the struct once block completes execution
-        // The newly created current environment for this block will be dropped once function exits
-        self.env = parent_env;
+        // Reset parent type table back onto the struct once block completes execution
+        // The newly created current type table for this block will be dropped once function exits
+        self.types = parent_types;
 
         // Restore the parent function's identifier token now that the call has been type checked
         self.current_function = parent_identifier_token;
