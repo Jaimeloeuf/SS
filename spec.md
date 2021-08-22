@@ -4,35 +4,35 @@
 - Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
 
 Like all other languages, here is a concise introduction to SS.
-> SimpleScript is a Strongly & Statically typed, Application programming language inspired by JavaScript/TypeScript, SML and Go, to be a simple and clean language that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
+> SimpleScript is a Strongly & Statically typed, Application programming language inspired by languages like JavaScript/TypeScript, SML, Elm, Rust and Go, to be a simple language that can target multiple execution methods from AOT compilation for binary executables to popular VM platforms (like JVM / BEAM / WASM) to interpretation and JIT compilation techniques.
 
 
 ## Content Table
-WIP The language's syntax is formally defined in [syntatic grammar.bnf](<./syntatic grammar.bnf>)
-
-Legend:
-- `?` Any section prefixed with `?` denotes that it is still a work in progress and not fixed yet.
+<!-- Used by vitepress to generate the table of contents automatically -->
+[[toc]]
 
 
-## Features and Goals
-Goal is to build a idiot/beginner proof language, because I keep saying "I'm so dumb" when I waste days trying to figure stuff out because the languages that I work with is not intuitive / not what you see is what you get. So I want to build a new language that is Simple, Flexible and Idiot proof while staying practical.  
+## Legend
+- `?` Any section or points prefixed with `?` denotes that it is still a work in progress and not yet fixed.
 
-The main priority of this language is to optimize for reading code more than writing code.  
-Code is assumed to be read more often than written, thus it should be easy to read, understand and reason about even if it means sacrificing some implicit assumptions made in other programming languages.  
-In short this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable and having a language syntax that makes its semantic clear and non-ambiguous.  
 
-Inspirations include Javascript / Typescript / Go / ML family languages / Rust.
+## Goals
+The goal is to build a beginner/idiot proof language, because I keep saying "I'm so dumb" when I waste days trying to figure stuff out because the languages that I work with is not intuitive / not what you see is what you get (WYSIWYG). So I want to build a new language that is Simple, Flexible and Idiot proof while staying practical.  
 
+This language prioritizes the code reading experience over the code writing experience, because code is assumed to be read more often than written, thus it should be easier to read, understand and reason about, even if it means sacrificing some implicit assumptions made in other programming languages. In other words this means that the language semantic will generally favour explicit definitions rather then implicit ones to make the code more readable and having a language syntax that makes its semantic clear and non-ambiguous.  
+
+The goals of this language influences most of the language design decisions made throughout this document.
+
+
+## Specific Goals and Features
 - Focus on explicit representation of ideas via code. Unlike JS where there are alot of assumptions/quirks/magic/implicit behaviours
 - Application programming language, where memory management is abstracted away
     - See [Memory section](#memory)
 - Hardware and Implementation independent
     - If I write the code on a 64bit x86 platform, it should perform the SAME exact way on a 32bit RISC platform.
-    - The language should be implementable in any programming language and can ran in any format from AOT binary executables to direct interpretation with the same executional semantics
-    - And obviously they should work the exact same way, just one faster and native to the platform
-    - @todo If compiled, any constants defined at compile time, will be preprocessed to replace the values directly in the code? or will LLVM take care of this?
-    - @todo We also need to take care of cross compilation techniques.
-- Package management like npm, allow user to pass in a hash for a module, so that when downloading, the tool should verify it...
+    - The language should be implementable in any programming language and can ran in any format from AOT binary executables to direct interpretation with the same executional semantics, and obviously they should work the exact same way, just that one might be faster and native to the platform
+- Simple to use package management like cargo/npm
+    - `?` CLI accept a hash for a module, to verify the downloaded module
 - Multi Paradigm
     - Procedural
     - Functional
@@ -41,45 +41,49 @@ Inspirations include Javascript / Typescript / Go / ML family languages / Rust.
 - Strongly & Statically typed (optional type annotations)
     - The language should be strongly and statically typed to prevent type errors at compile time
     - However, it is tedious and error prone to write the types over and over again, and it can be off putting for beginners to deal with parametric polymorphism using explicitly written type annotations.
-    - Therefore, the language uses inferred types instead of explicit type annotations by default
-    - However, when needed, users can still choose to explicitly annotate types either for documentation purposes or to simply place a type constraint so that the compiler will not automatically use a more general type.
+    - Therefore, type inference is used as much as possible by default instead of explicit type annotations
+    - However, when needed, users can still choose to explicitly annotate types either for documentation or to simply user a stricter type constraint so that the compiler will not automatically use a more general type.
 - Immutable
-    - no data can be changed once created.
-- Expressive and extensible using metaprogramming concepts
+    - Data cannot be mutated once created.
+- `?` Expressive and extensible using metaprogramming concepts
 
 
 ## Inspiration
-This language is inspired by many others, and this section lists specifically how they have influenced the design of SimpleScript
+This language is inspired by many others, and this none exhaustive section lists specifically how other languages have influenced the design of SimpleScript. Inspirations include `Javascript` / `Typescript` / `Go` / `ML family languages` / `Elm` / `Rust` / `etc...`
 
-- Syntax
-    - SimpleScript was created as a better JavaScript, so obviously the JavaScript C-style syntax has the biggest influence on the language
-    - JavaScript is easy to write and flexible thanks to its dynamically typed nature, thus its kept that way despite having a static type system
-    - Simple like Go, with very few features and keywords, to focus on the important few, making it WYSIWYG
-- Type system
-    - It is a Hindley–Milner type system with some extra constraints and modifcations to accommodate the C-style syntax/design
-    - Inspired by languages in the ML family (SML / OCaml / F#) that have static typing without type annotations (fantastic type inference)
-- Asynchronous Programming
-    - JavaScript / Go / Erlang (BEAM and OTP)
+- JavaScript/TypeScript
+    - SimpleScript was created to be a better JavaScript/TypeScript, so the JavaScript `C` based syntax has one of the biggest influence on the language's syntax
+    - JavaScript is easy to write and flexible thanks to its dynamically typed nature, thus its kept that way despite having a static type system, by leveraging good type inference and optional type annotations.
+    - JavaScript (specifically common JS on Node) have a pretty simple to understand way of handling module/file/package, where a file is a module and also a package, and to use code from that file, you just simply export it in that file and import it where you want to use it. This is much more simpler and intuitive compared to other module systems, although this might be more complex to implement and less advance.
+- Go
+    - Simple like Go, with a minimal set of features and keywords, to focus on the important few, making it WYSIWYG
+    - Lesser features and keywords also means that users can get started really quickly once they understand the foundations
+    - In some cases, the type system takes after Go's one by choosing invariance instead of more the flexible convariance for the sake of keeping it simpler and beginner friendly.
+    - Go has a great CLI, although this is not neccessarily a language feature, it does adds to the overall usage experience, thanks to how easier it is to use and the fact that it is bundled right together with the compiler.
+- ML family (SML / OCaml / F#)
+    - The type system of SimpleScript is greatly inspired by languages in the ML family for their ease of use and expressiveness to model complex domain models easily without holding the developer back and forcing them to change the way they think.
+    - The simplicity of having no type annotations thanks to type inference is great for developers getting started while not giving up on the safety garuntees provided by compile time, type checking.
+    - More advanced users can also make use of the optional type annotations to further mould the type system to work with their problem domain.
+    - SimpleScript uses a Hindley–Milner type system with some extra constraints and modifcations to accommodate the C-style syntax/design
 
 
 ## Implementation details
 One of the aim of SimpleScript is that, the spec should be simple and flexible enough to be implemented in all sorts of ways deemed useful. Thus the goal is to build a few reference implementations for the top few popular stacks right now.  
 Thus some of the WIP reference implementations are (sorted by order of development):
-1. Interpreted just like JavaScript using a custom intepreter (Tree walk interpreter for simplicity)
-    - Intepreter built using Rust/Other langs
-    - Might support JIT integrations, but... its damn difficult so tbd
+1. Interpreted just like JavaScript using a Rust intepreter (Tree walk interpreter for simplicity)
+    - `?` Might support JIT integrations, but... its damn difficult so tbd
 2. Compile to native binaries using LLVM backend and a custom frontend
 3. Compile to WASM as this will be used more and more compared to other VMs like JVM / CLR / Erlang BEAM in the future thanks to its sandboxed model and wide language support for Rust/Go/C++/...
     - https://wasmer.io/
     - Instead of providing our own runtime, rely on the WASM runtime...
 4. Compile to bytecode for VMs like the JVM / CLR / Erlang BEAM to support more environments using it
-5. Support transpilation options? Like transpile to JS/Rust
+5. `?` Transpilation to JS/Rust/...
     - The purpose of this is to take advantage of their build tools, like rusts memory management system and more.
     - Transpile to JS to make it easier to run and more portable, basically like TypeScript or any dialect of JavaScript, but WASM would be preferred for performance.
 
 Notes:
 - For any compilation techniques, the language have to be designed to support seperate compilation like Go, primarily for speed and the ability to link to pre-compiled object files.
-    - To achieve this
+    - References
         - https://stackoverflow.com/questions/2976630/how-does-go-compile-so-quickly
         - https://stackoverflow.com/questions/2976630/how-does-go-compile-so-quickly/49863657#49863657
         - Essentially, simple syntax and good dependency (modules) management
@@ -99,7 +103,7 @@ Notes:
             - 1 in unintentional missing value, 1 is intentionally missing value set by the programmer
         - see rust on concept of null using Option type https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#the-option-enum-and-its-advantages-over-null-values
 - Symbols
-    - All the operators [link]()
+    - [All operators](#Operators)
     - ;
     - ( )
     - { }
@@ -266,11 +270,6 @@ const Array<Number> myArray = [1, 2, 3, 4]
     - myArray[arrayIndex]
 - Destructuring syntax
 
-### Memory
-- SS will come with a GC as part of its runtime
-    - Custom GC as part of the interpreter
-    - Or memory management taken care by VM targets like JVM/CLR
-    - Or linked to your source code as part of the final compiled executable like Go
 
 ## Operators
 ### logical
@@ -322,20 +321,24 @@ const Array<Number> myArray = [1, 2, 3, 4]
     - Is it valid? That depends on how the scanner splits the lexemes. If the scanner sees it like: ```- --a;```
     - Then it could be parsed. But that would require the scanner to know about the grammatical structure of the surrounding code, which entangles things more than we want. Instead, the maximal munch rule says that it is always scanned like: ```-- -a;```
     - It scans it that way even though doing so leads to a syntax error later in the parser.
-    - Similiar to rust and lox
+    - Similiar to rust and lox <https://github.com/dtolnay/rust-faq#why-doesnt-rust-have-increment-and-decrement-operators>
 - a += 1     /    a -= 1
     - What about shorthands like these?
 
 ### Comparison
-- ==
-- !=
-- \>
-- <
-- \>=
-- <=
+- `==`
+- `!=`
+- `\>`
+- `<`
+- `\>=`
+- `<=`
 
 Note:
-- == and != can be used on all types
+- `==` and `!=` can be used on all types
+    - However, both operand of the comparison operators must be of the same type.
+        - Meaning you can only compare a `Number` to another `Number`, you cannot compare a `Number` to a `String`.
+        - Attempting to compare 2 values of different types will result in a compile time error.
+    - Unlike JavaScript, where there are 2 types of equality operators, `==` and `===` (strict equality), there is only `==` in SS, where all comparisons only compares the operand's value at runtime, because the operand's type will already be checked for equality at compile time.
 - <, >, <=, >= can only be used on numbers
     - Might support different types, e.g. comparisons between floats and ints
 
@@ -374,7 +377,7 @@ Expressions that evalute to a BOOLEAN ONLY
 
 
 ## Control flows
-### If/ElseIf/Else
+### if / elseif / else
 Bracketless one line statements might be supported later on for cleaner code syntax
 ```js
 if (condition) {
@@ -392,7 +395,7 @@ const expression = booleanCondition ? trueExpression : falseExpression;
 ```
 ### Switch
 - ? Should we support rust type of advance pattern matching? Pretty useful but might be quite difficult for beginners
-    - This needs enums too right?
+    - Supporting rust like switch means supporting enum/sum data types
 
 
 ## Loops
@@ -481,6 +484,7 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
             - ignore foo();
             - [Calling ignore method on promises](http://joeduffyblog.com/2015/11/19/asynchronous-everything/)
             - If function have return value, it cannot be ignored, it must be explicitly ignored like in Go lang
+            - Kind of like the void operator in JavaScript <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/void>
 
 ### Pure functions
 ```js
@@ -631,6 +635,13 @@ For now, no kernel thread support, rather user level thread via thread libraries
 - Thus the approach taken by SimpleScript is to combine the best of most worlds as described in the tl;dr by focusing on providing a great bare minimum setup with simple ways to extend it.
 
 
+### Why not use a event loop like JavaScript
+- The JavaScript event loop in browsers and Node works differently.
+- Event loop causes quite alot of confusion to developers until it is well understood.
+- Although it provides alot of value for building single threaded async programming paradigm easily, it makes code hard to reason about which in turn can cause some very quirky bugs.
+- Something that is "What you see is what you get" and easy to reason about is preferred
+
+
 ## Modules & Libraries
 A standard way for splitting up code for sharing and modularity.  
 The goal is to provide AN EXTREMELY SIMPLE way of dealing with modules to users. It should be designed for zero cognitive load, as module systems and modularity is a huge source of stress in other languages from C's plaster solution with preprocessor and linking, to python's terrible library module setup, to JS's node_modules dependency graph issue and compatibility issues between ES and Common JS modules.
@@ -658,22 +669,27 @@ The goal is to provide AN EXTREMELY SIMPLE way of dealing with modules to users.
 - Import a standard library
     ```js
     import libraryName from "std/libraryName";
+    const libraryName = import("std/libraryName");
     ```
 - Import a module from a standard library
     ```js
     import moduleName from "std/libraryName/moduleName";
+    const moduleName = import("std/libraryName/moduleName");
     ```
 - Import a library
     ```js
     import libraryName from "libraryName";
+    const libraryName = import("libraryName");
     ```
 - Import a module from a library
     ```js
     import moduleName from "libraryName/moduleName";
+    const moduleName = import("libraryName/moduleName");
     ```
 - Import a user written module using relative path
     ```js
     import moduleName from "./myModuleName";
+    const moduleName = import("./myModuleName");
     ```
 - Import a module into its own namespace instead of the current module's namespace
     ```js
@@ -694,7 +710,15 @@ Default import essentially
 - debugger // Keyword, not default import
     - @todo Include a section for this in the spec
 
-    
+
+## Memory Management
+- SimpleScript will come with a GC as part of its runtime
+    - Custom GC as part of the interpreter
+    - Or memory management taken care by VM targets like JVM/CLR
+    - Or linked to your source code as part of the final compiled executable like Go
+- Stack
+    - VM
+
 
 ## Metaprogramming
 ### Proxies
@@ -735,15 +759,14 @@ Allow us to print diff things like variables to strings to functions...
 ### Functions
 When printing functions, the type of function and the function name will be displayed, where $FUNCTION_NAME is the name of the function.  
 - Native functions, defined by the runtime in any other language
-    - <function-native: $FUNCTION_NAME>
+    - `<function-native: $FUNCTION_NAME>`
 - Named functions defined in SimpleScript, regardless of whether it is a user defined function or a standard library function.
-    - <function-ss: $FUNCTION_NAME>
+    - `<function-ss: $FUNCTION_NAME>`
 - Anonymous functions defined in SimpleScript, regardless of whether it is a user defined function or a standard library function.
-    - <function-ss: [anonymous]>
+    - `<function-ss: [anonymous]>`
 
 
-## Others
-### Why isn't feature "X" included? And what's the workaround?
+## Why isn't "X" included and what is the workaround?
 - enum
     - Might consider supporting but TBD... and for now use the workaround
     - just like in JS, this is not supported, but can be easily worked around using structs/objects
@@ -777,6 +800,10 @@ When printing functions, the type of function and the function name will be disp
             - Well with Result<T, E> you know explicitly what you will get in the function Type signature itself
                 - unlike exceptions, where you never know who or where might throw, problem if u using third party libraries
                 - Prevents "Invisible code paths"
+    - Copy rust's idiomatic error handling
+        - use a monad
+        - then instead of doing manual checking, include a syntatic sugar for it like haskell too
+        - smth like a ? at the end of the statement or at the start of the statement
 - A part of the spec should include native code from standard library
     - native code as in, implemented by the runtime, instead of being libraries written in SS itself
         - JSON support
@@ -822,9 +849,12 @@ When printing functions, the type of function and the function name will be disp
     - So perhaps these native functions will be part of the spec
 
 
-
 ## Preferences
+<!-- @todo Might change to use snake case -->
+<!-- Function names should be lowercase, with words separated by underscores as necessary to improve readability. -->
 - Use camelCase for value and function names
 - Tabs over spaces, because it is quicker to tokenize in simple scanner implementations
 
+
 ## References
+References to resources like tutorial sites, other languages, research papers and more that helped shape and guide many of the language design decisions of certain subjects, e.g. Midori's error model
