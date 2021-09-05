@@ -343,6 +343,18 @@ Note:
     - Might support different types, e.g. comparisons between floats and ints
 
 
+## Type System
+### Purpose
+The purpose of a type system is to allow us to model our problem domain in our software. To rely on the type system to remove as much bugs as possible, we must be able to model the problem domain as close as possible, thus it is important to have an expressive type system.
+
+- When a language's type system is not expressive enough, it forces developers to convert their problem domain into something else to be represented in the system, this means that it will not be an exact real world representation and prone to breakage. 
+    - It will also prevent type driven development which is a good thing as it generally forces users to sit down and think through the system first before building.
+    - Language like Java and C have frustrated developers with their unexpressive and complex type systems, which makes newer programmers abandon strong/static type systems all together in favor of dynamically typed languages like Javascript to 'gain freedom', but in reality, the problems with being unable to model your problem domain just shows up in the future as runtime type errors.
+    - The solution is to use languages with expressive type systems that allow you to model your problem domain as close as possible easily.
+- The purpose of type annotations is to narrow the types allowed, to make a function more constrained to affect less of other data.
+    - e.g. Elm state model, only use a single field instead of the whole model record. So the type can be annotated as just that field rather than the whole model record to ensure that the function will not use anything other than that field, making it easier to find where bugs can occur (by looking at function signatures to see if that function even use a invalid data on the record or not) and make it easier to refactor (as you garuntee that lesser functions are affected when you change a field on a record)
+
+
 ## Scope and rules
 - lexical/static scoping
 - Block scope
