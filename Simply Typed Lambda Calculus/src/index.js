@@ -19,24 +19,21 @@ function main() {
   const ast = parse(sourceCode);
 
   // Check if there is any issues with the AST, if there is, log all errors and exit process
-  const diagnostics = Check(ast).diagnostics;
+  const { diagnostics } = Check(ast);
   if (diagnostics.length) {
     console.error(red(diagnostics.join("\n")));
-
-    // process.exit(1);
-    process.exit(0);
+    process.exit(1);
   }
 
   /* Either compile or evaluate the AST next */
 
   // Check if there is a "compile" string arguement before the file name
-  if (process.argv.pop() === "compile") {
-    console.log(green(`Compiling '${fileName}' to JavaScript\n`));
-    console.log(CompileJS(ast));
-  } else {
-    console.log(green(`Evaluating '${fileName}'\n`));
-    console.log(Eval(ast));
-  }
+  if (process.argv.pop() === "compile")
+    console.log(
+      green(`Compiling '${fileName}' to JavaScript\n`),
+      CompileJS(ast)
+    );
+  else console.log(green(`Evaluating '${fileName}'\n`), Eval(ast));
 }
 
 main();
