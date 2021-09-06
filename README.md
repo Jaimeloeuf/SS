@@ -8,31 +8,27 @@ Just a simple programming language / experiment to build a simpler and less quir
 - Read the language's specification and design goals in [here](./spec.md)
 - See the [syntatic grammar definition in BNF](./syntatic%20grammar.bnf)
 
-Core tenets:
+### Core tenets
 1. Simple
 2. Simple to Understand --> Intuitive code with no assumptions or quirkiness (WYSIWYG)
 3. Simple to Write --> Intuitive semantics without requiring any hackery (WYSIWYG)
 
-Specifically:
-- readability (and in extension, familiarity)
-- ease of use (easy and intuitive constructs/syntax)
-- strongly & statically typed language, but using type inference to prevent unnecessary type annotations
-- high level language
-- simple memory model
-    - either with a gc
-    - or using a borrow tracker like rust
-- not too verbose
-- not too abstract, e.g. can support abstract ideas like meta programming, but not too extreme as it may reduce readability and in extension, maintainability
-- no stupid module issues like python
+### Specific language goals and features
+- Simple to read and understand by using explicit constructs to avoid surprises caused by implicit language constructs
+- Simple to write with easy and intuitive constructs and syntax
+- Strongly & Statically typed language with type inference and optional type annotations
+- High level language so that you don't have to deal with low level constructs of underlying hardware and execution models
+- Not too abstract, e.g. can support abstract ideas like meta programming, but not too extreme as it may reduce readability and in extension, maintainability
+- No stupid module issues like python
 
 
-## Goals / Milestones
+## Project Goals and Milestones
 - Reference implementation of the language
     - Intepreter in Rust
     - Byte Code stack based Virtual Machine in Rust
     - A compiler frontend for LLVM
     - Perhaps a Graal/Wasm/JVM version to target a popular bytecode virtual machine
-    <!-- - Transpilation to JavaScript to run in the web -->
+    - Transpilation to JavaScript to run in browsers
 - Others
     - Language server
     - VS code and vim extensions
