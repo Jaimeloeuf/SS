@@ -12,6 +12,7 @@ module.exports.SymbolTableImpl = class SymbolTableImpl {
       if (val !== undefined) return val;
     }
 
+    // @todo Should error out instead
     return undefined;
   }
 };

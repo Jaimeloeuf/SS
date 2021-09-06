@@ -162,26 +162,27 @@ module.exports.Check = function Check(ast, diagnostics = []) {
     // e1: T1, e2: T2, e1 e2: T1
     case ASTNodes.Application: {
       const l = Check(ast.left);
-      const leftType = l.type || [];
+      // Immediately end if function type is undefined, which means error occurred in the nested left child(s)
+      if (!l.type) return { diagnostics };
+
+      const leftType = l.type;
       diagnostics = diagnostics.concat(l.diagnostics);
 
       const r = Check(ast.right);
-      const rightType = r.type || [];
+      const rightType = r.type;
       diagnostics = diagnostics.concat(r.diagnostics);
 
-      if (leftType.length)
-        if (!ast.right || leftType[0] === rightType) {
-          return {
-            diagnostics,
-            type: leftType[1],
-          };
-        } else {
-          diagnostics.push("Incorrect type of application");
-          return {
-            diagnostics,
-          };
-        }
-      else return { diagnostics };
+      // If right child have no type, or if right child's type matches function parameter type,
+      // return type as the type of the function body
+      if (!ast.right || leftType[0] === rightType) {
+        return {
+          diagnostics,
+          type: leftType[1],
+        };
+      } else {
+        diagnostics.push("Incorrect type of application");
+        return { diagnostics };
+      }
     }
 
     default:
