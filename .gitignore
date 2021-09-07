@@ -1,2 +1,8 @@
 # Gitignore for general items
+
+# Rust
 build/
+target/
+
+# JS
+node_modules/
