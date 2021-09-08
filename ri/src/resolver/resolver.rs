@@ -117,6 +117,11 @@ impl Resolver {
     fn resolve_statement(&mut self, stmt: &Stmt) -> Result<bool, ResolvingError> {
         match *stmt {
             // No expression is halting, so by extension, the expression stmt is not halting
+            // Why are unused values caught in type checker instead of resolver?
+            // Because although we dont allow Expression statements like, `1 + 1`
+            // Expression statements like `call_function()` should be allowed
+            // And since resolver have no way of telling if `1 + 1` produces a value or if call_function() does,
+            // Type checker is used as it can already get the type back, which can be used to make ignore a part of the type system
             Stmt::Expr(ref expr) => self.resolve_expression(expr)?,
             // A block stmt can contain nested return statements, therefore a block stmt can be halting
             Stmt::Block(_, _) => {
