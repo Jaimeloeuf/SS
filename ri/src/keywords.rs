@@ -17,7 +17,7 @@ pub fn get_token_type_if_keyword(word_to_test_that_might_be_keyword: &str) -> Op
         // Function related stuff
         // "async" => Some(TokenType::Async),
         // "pure" => Some(TokenType::Pure),
-        "function" => Some(TokenType::Function),
+        "fn" => Some(TokenType::Function),
         "return" => Some(TokenType::Return),
 
         "ignore" => Some(TokenType::Ignore),

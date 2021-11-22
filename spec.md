@@ -448,8 +448,8 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
     // Declare in front, because if this is a pure function, we can essentially treat this as a variable definition
     // just like how it is, const TYPE name = value
     // Fns with return first is,  function TYPE name (INPUT)
-    function int functionName(int arg) { }
-    function functionName(int arg): int { }
+    fn int functionName(int arg) { }
+    fn functionName(int arg): int { }
     ```
 - IIFEs are supported, and used mainly to enclose all the data and logic into its self enclosing scope
 - Arrow functions are supported as lambdas / anonymous functions
@@ -502,7 +502,7 @@ iterable(myArray).forEach((value, index) => console.log(`Index: ${index}  Value:
 ```js
 // All functions are assumed to be pure
 // If compiler realises that they are not pure, then will throw error
-function functionName(args) {
+fn functionName(args) {
     // Can only access variables in this function scope
     // Cannot access global variables???
     //      What about closures?
@@ -516,12 +516,12 @@ function functionName(args) {
 ### Impure functions
 ```js
 @impure // Use decorators to explicitly declare these as impure (anything with side effect / none pure input/output type)
-function functionName(args) {
+fn functionName(args) {
     // Can access both pure and impure functions from within this scope
 }
 // Other type of possible syntaxes
-// async function functionName(args) {
-// impure function functionName(args) {
+// async fn functionName(args) {
+// impure fn functionName(args) {
 // Can async functions be pure??
 // This depends on the definition of what our async tag will do to the function.
 ```
@@ -552,7 +552,7 @@ const value = composition(inputValueForF1);
 // 
 FP.composeWithInput(inputValueForF1, f1, f2, f3, f4);
 
-function composeWithInput(input, ...fns){
+fn composeWithInput(input, ...fns){
     return fns.reduce((prev, curr) => curr(prev), input);
 }
 ```
@@ -561,7 +561,7 @@ function composeWithInput(input, ...fns){
 ```js
 import memoize from "std:memoize";
 
-function pureFunc(arg) {
+fn pureFunc(arg) {
     // Can only memoize pure functions
 }
 
@@ -570,7 +570,7 @@ function pureFunc(arg) {
 const memoizedPureFunc = memoize(pureFunc);
 
 // OR using anonymous functions
-const memoizedPureFunc = memoize(function pureFunc(arg) {
+const memoizedPureFunc = memoize(fn pureFunc(arg) {
     // Can only memoize pure functions
 });
 ```
@@ -583,7 +583,7 @@ const memoizedPureFunc = memoize(function pureFunc(arg) {
 
 ```js
 // generic type input
-function factoryFunction(<T> constructorArgs) {
+fn factoryFunction(<T> constructorArgs) {
     return {
         int intValue: value,
         typeof constructorArgs args: constructorArgs,
