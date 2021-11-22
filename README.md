@@ -6,6 +6,7 @@ Just a simple programming language / experiment to build a simpler and less quir
 
 ## Language design goals
 - Read the language's specification and design goals in [here](./spec.md)
+- See the [Language Design Guidelines here](./Language%20Design%20Guidelines.md)
 - See the [syntatic grammar definition in BNF](./syntatic%20grammar.bnf)
 
 ### Core tenets
