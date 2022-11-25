@@ -1,8 +1,9 @@
-use std::env;
+use clap::Parser as CLI_Parser;
 use std::fs;
 use std::time::Instant;
 
 mod callables;
+mod cli;
 mod environment;
 mod hash;
 mod interpreter;
@@ -16,6 +17,7 @@ mod token_type;
 mod type_checker;
 mod value;
 
+use cli::Cli;
 use interpreter::interpreter::Interpreter;
 use parser::parser_struct::Parser;
 use resolver::resolver::Resolver;
@@ -34,20 +36,17 @@ macro_rules! verbosePrintln {
 }
 
 fn main() {
+    // Use Clap lib to parse out CLI arguments
+    let args = Cli::parse();
+
+    // @todo Get the full file name instead of the relative path
+    println!("Entering file '{}'\n", &args.file_path);
+
+    // Only track execution time for debug builds
+    #[cfg(debug_assertions)]
     let start_of_main = Instant::now();
 
-    verbosePrintln!("SS version: 0.0.1");
-    let args: Vec<String> = env::args().collect();
-
-    // for arg in &args {
-    //     // Use this to look for flags passed in as args
-    // }
-
-    let filename = &args[1];
-    // @todo Get the full file name instead of the relative path
-    println!("Entering file '{}'\n", filename);
-
-    run_file(&filename);
+    run_file(&args.file_path);
 
     // @todo To also ran before running the interpreter
     verbosePrintln!("\nCompleted in: {:?}\n", start_of_main.elapsed());
@@ -55,6 +54,8 @@ fn main() {
 
 // @todo Should return a Result variant too! Can be a Runtime Variant?
 fn run_file(filename: &String) {
+    // This reads the whole file into memory, however large the file may be.
+    // Alternative is to use https://doc.rust-lang.org/1.39.0/std/io/struct.BufReader.html
     let source = fs::read_to_string(filename).expect("RuntimeError - File not found");
 
     /* Caching mechanism */
