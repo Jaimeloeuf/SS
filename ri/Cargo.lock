@@ -3,13 +3,6 @@
 version = 3
 
 [[package]]
-name = "SimpleScript"
-version = "0.1.0"
-dependencies = [
- "clap",
-]
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -194,6 +187,13 @@ dependencies = [
  "libc",
  "linux-raw-sys",
  "windows-sys",
+]
+
+[[package]]
+name = "simple_script"
+version = "0.1.0"
+dependencies = [
+ "clap",
 ]
 
 [[package]]
