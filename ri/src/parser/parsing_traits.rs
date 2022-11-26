@@ -60,9 +60,13 @@ impl Parser {
     }
 
     fn const_declaration(&mut self) -> Result<Stmt, ParsingError> {
-        let name = self.consume(TokenType::Identifier, "Expected name for constant")?;
-        // @todo Will fail without this clone???? cannot even clone later????
-        let name = name.clone();
+        // Get the identifier token reference and clone it directly so that self (parser)
+        // is not mutably borrowed more than once, since the `is_next_token` method borrows
+        // self mutably too, and it cannot happen if name still holds a reference from the
+        // `consume` method with a mutably borrowed self.
+        let name = self
+            .consume(TokenType::Identifier, "Expected name for constant")?
+            .clone();
 
         if self.is_next_token(TokenType::Equal) {
             // For variables, implementation with Null default value
@@ -85,8 +89,13 @@ impl Parser {
     }
 
     fn function_declaration(&mut self) -> Result<Stmt, ParsingError> {
-        let name = self.consume(TokenType::Identifier, "Expected name for function")?;
-        let name = name.clone();
+        // Get the identifier token reference and clone it directly so that self (parser)
+        // is not mutably borrowed more than once, since the `parameters` method borrows
+        // self mutably too, and it cannot happen if name still holds a reference from the
+        // `consume` method with a mutably borrowed self.
+        let name = self
+            .consume(TokenType::Identifier, "Expected name for function")?
+            .clone();
 
         // Get the function parameters
         let parameters: Vec<Token> = self.parameters(
@@ -100,7 +109,7 @@ impl Parser {
         self.consume(TokenType::LeftBrace, "Expected '{' before function body.")?;
 
         let body = self.block_statement()?;
-        Ok(Stmt::Func(name.clone(), parameters, Box::new(body)))
+        Ok(Stmt::Func(name, parameters, Box::new(body)))
     }
 
     /* ==========================  End of declaration methods  ========================== */
