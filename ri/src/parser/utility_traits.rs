@@ -7,7 +7,7 @@ use crate::token_type::TokenType;
 
 /// Infrastructure/Utility methods on the Parser struct
 impl Parser {
-    /// Get a immutable reference to the current token
+    /// Get a immutable reference to the current token without modifying the parser index.
     pub fn current(&self) -> &Token {
         // It is safe to unwrap here as before every call to this method, the parsing
         // loop will have already checked that it is not at the end of the vector yet.
@@ -40,12 +40,21 @@ impl Parser {
         self.tokens.get(self.current_index - 1).unwrap()
     }
 
+    /// Simple utility method to advance the parser index.
+    /// This is a inlined method used to make the usage of this more readable.
+    /// Unlike the `get_current_token_and_advance` utility method, this does not return
+    /// a reference to the token, use that method if the token reference is needed.
+    #[inline]
+    pub fn advance(&mut self) -> () {
+        self.current_index += 1;
+    }
+
     /// Get a immutable reference to the current token and increment the parser 'current_index'.
-    pub fn advance(&mut self) -> &Token {
+    pub fn get_current_token_and_advance(&mut self) -> &Token {
         // Old way of doing it.
         // Only increment the current token counter if not at end yet
         // if !self.is_at_end() {
-        //     self.current_index += 1;
+        //     self.advance();
         // }
         // Get previous token without call to "previous" method to save the extra function call... but LLVM is probs smart enough to optimize this
         // self.tokens.get(self.current_index - 1).unwrap()
@@ -53,7 +62,10 @@ impl Parser {
         // Assume caller will check if it is at the end of token vector so no need for extra check here.
         // Because when calling advance, the expected semantics is for the `current` method to advance
         // the current parser index and not conditionally advanced if not at end.
-        self.current_index += 1;
+        //
+        // Calling advance first so that a temporary variable is not required to hold the reference to
+        // the current token before it is used as the last expression to be returned.
+        self.advance();
         self.previous()
     }
 
@@ -62,9 +74,7 @@ impl Parser {
     /// Otherwise, returns false and leave current token alone
     pub fn is_next_token(&mut self, token_type_to_check: TokenType) -> bool {
         if self.check(token_type_to_check) {
-            // Alternative is to call `self.advance()` but since the &Token is not needed,
-            // it is better to just increment the current index directly
-            self.current_index += 1;
+            self.advance();
             true
         } else {
             false
@@ -77,9 +87,7 @@ impl Parser {
     pub fn is_next_token_any_of_these(&mut self, token_types_to_check: Vec<TokenType>) -> bool {
         for token_type in token_types_to_check {
             if self.check(token_type) {
-                // Alternative is to call `self.advance()` but since the &Token is not needed,
-                // it is better to just increment the current index directly
-                self.current_index += 1;
+                self.advance();
                 return true;
             }
         }
@@ -96,7 +104,7 @@ impl Parser {
         message: &'static str,
     ) -> Result<&Token, ParsingError> {
         if self.check(token_type) {
-            Ok(self.advance())
+            Ok(self.get_current_token_and_advance())
         } else {
             Err(ParsingError::UnexpectedTokenError(
                 // @todo change parsing error to take ref instead?
@@ -111,9 +119,7 @@ impl Parser {
         &mut self,
         method: fn(&mut Parser) -> Result<Stmt, ParsingError>,
     ) -> Result<Stmt, ParsingError> {
-        // Alternative is to call `self.advance()` but since the &Token is not needed,
-        // it is better to just increment the current index directly
-        self.current_index += 1;
+        self.advance();
         method(self)
     }
 }

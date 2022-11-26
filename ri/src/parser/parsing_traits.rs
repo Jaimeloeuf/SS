@@ -597,8 +597,10 @@ impl Parser {
             // Stop synchronize loop when semicolon and these token types are read.
             // This assumes that in most cases, the error only cascades to a semicolon.
             // This is a best case effort too, where it will fail when dealing with the semicolons in a for loop.
-            // self.advance returns previous token, so it is chained here instead of making another call to self.previous()
-            match self.advance().token_type {
+            //
+            // self.get_current_token_and_advance returns previous token, so it is chained here instead of making
+            // another call to self.previous()
+            match self.get_current_token_and_advance().token_type {
                 TokenType::Semicolon
                 | TokenType::Function
                 | TokenType::Const
