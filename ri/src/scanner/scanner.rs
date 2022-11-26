@@ -1,6 +1,4 @@
-/*
-    Scanner module to scan source file for a vector of tokens
-*/
+//! Scanner module to scan source file for a vector of tokens
 
 use super::error::ScannerError;
 use super::scanner_struct::Scanner;
@@ -9,15 +7,16 @@ use crate::keywords::get_token_type_if_keyword;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+/// Implementation of all the main methods used for scanning the source string into a vec of tokens.
 impl Scanner {
-    // Move ownership of source string into Scanner struct here
+    /// Move ownership of source string into Scanner struct here
     pub fn scan_tokens(source: String) -> Result<Vec<Token>, Vec<ScannerError>> {
         let mut tokens: Vec<Token> = Vec::<Token>::new();
         let mut errors: Vec<ScannerError> = Vec::<ScannerError>::new();
 
         // Create new scanner struct to use internally
         let mut scanner = Scanner {
-            source: source,
+            source,
             start: 0,
             current: 0,
             line: 1,
@@ -55,9 +54,9 @@ impl Scanner {
         }
     }
 
-    // Match current character to new Token, and handle processing needed for certain token types that spans multiple chars like strings
-    // Eats and discards characters for newlines and comments and returns None
-    // Returns a ScannerError if the current character cannot be matched
+    /// Match current character to new Token, and handle processing needed for certain token types that spans multiple chars like strings
+    /// Eats and discards characters for newlines and comments and returns None
+    /// Returns a ScannerError if the current character cannot be matched
     fn scan_token(&mut self) -> Result<Option<Token>, ScannerError> {
         let current_character: char = self.advance();
 

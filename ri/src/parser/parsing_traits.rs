@@ -7,8 +7,9 @@ use crate::literal::Literal;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+/// Implementation of all the main methods used for parsing the vec of tokens into a vec of statements.
 impl Parser {
-    // Consumes a token vector (takes ownership) to produce a statements vector (moved out)
+    /// Consumes a token vector (takes ownership) to produce a statements vector (moved out)
     pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
         let mut parser = Parser {
             tokens,
@@ -239,37 +240,31 @@ impl Parser {
         self.assignment()
     }
 
-    // Not supporting assignment first
-    // fn assignment(&mut self) -> Result<Expr, ParsingError> {
-    //     let expr = self.or()?;
-
-    //     if self.is_next_token(TokenType::Equal) {
-    //         let token = self.previous().clone();
-    //         // Recursively calls itself as this is the top level expression parsing method. Can also call expression method but it will just call assignment method
-    //         let value = self.assignment()?;
-
-    //         match expr {
-    //             Expr::Const(token, _) => Ok(Expr::Assign(token, Box::new(value), None)),
-    //             Expr::Get(target, token) => Ok(Expr::Set(target, token, Box::new(value))),
-    //             _ => Err(ParsingError::InvalidAssignmentError(token)),
-    //         }
-    //     } else {
-    //         Ok(expr)
-    //     }
-    // }
-    // Temporary assignment method that Errors out when assignment is found
+    /// Not supporting assignment right now.
+    /// This is a temporary assignment method that Errors out when an assignment is found.
     fn assignment(&mut self) -> Result<Expr, ParsingError> {
         let expr = self.or()?;
 
         if self.is_next_token(TokenType::Equal) {
             // Assignments are not supported yet
             unimplemented!();
+
+            // let token = self.previous().clone();
+
+            // // Recursively calls itself as this is the top level expression parsing method. Can also call expression method but it will just call assignment method
+            // let value = self.assignment()?;
+
+            // match expr {
+            //     Expr::Const(token, _) => Ok(Expr::Assign(token, Box::new(value), None)),
+            //     Expr::Get(target, token) => Ok(Expr::Set(target, token, Box::new(value))),
+            //     _ => Err(ParsingError::InvalidAssignmentError(token)),
+            // }
         } else {
             Ok(expr)
         }
     }
 
-    // 'or' have a lower precedence than 'and'
+    /// 'or' have a lower precedence than 'and'
     fn or(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.and()?;
 
@@ -282,6 +277,7 @@ impl Parser {
         Ok(expr)
     }
 
+    /// 'and' have a higher precedence than 'or'
     fn and(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.equality()?;
 
@@ -357,7 +353,7 @@ impl Parser {
         }
     }
 
-    // Handles both function call and array access
+    /// Handles both function call and array access
     fn call(&mut self) -> Result<Expr, ParsingError> {
         let mut expr = self.primary()?;
 
@@ -386,7 +382,7 @@ impl Parser {
         Ok(expr)
     }
 
-    // Handle function calls by parsing for any arguments
+    /// Handle function calls by parsing for any arguments
     fn finish_call(&mut self, callee: Expr) -> Result<Expr, ParsingError> {
         // Only create none empty vec for holding argument expressions if there are argument(s)
         let arguments: Vec<Expr> = if !self.check(TokenType::RightParen) {
@@ -411,8 +407,8 @@ impl Parser {
         Ok(Expr::Call(Box::new(callee), arguments, parenthesis.clone()))
     }
 
-    // Primary expressions
-    // Check for Identifier then Literal values True/False/Null then Strings/Numbers then Anonymous functions before moving on to grouped expressions
+    /// Primary expressions.
+    /// Check for Identifier then Literal values True/False/Null then Strings/Numbers then Anonymous functions before moving on to grouped expressions.
     // @todo Boolean types can we still be represented using TokenType, so should literal Bool values be used?
     fn primary(&mut self) -> Result<Expr, ParsingError> {
         if self.is_next_token(TokenType::Identifier) {
@@ -550,8 +546,8 @@ impl Parser {
     }
 
     // @todo Maybe use Vec<&Token> instead so dont have to clone every token once lifetime specifiers are added to Stmt
-    // Method to parse function parameters only. Works for all types of functions
-    // Caller to pass in error message to display if TokenType::LeftParen is not found at the beginning of expected parameter expression
+    /// Method to parse function parameters only. Works for all types of functions
+    /// Caller to pass in error message to display if TokenType::LeftParen is not found at the beginning of expected parameter expression
     fn parameters(
         &mut self,
         missing_left_paren_error: &'static str,
@@ -590,7 +586,7 @@ impl Parser {
         Ok(parameters)
     }
 
-    // Synchronize the tokens to approx the next valid token
+    /// Synchronize the tokens to approx the next valid token
     fn synchronize(&mut self) {
         // Loop till either EOF token or when one of the possible new start tokens is read
         // Where new start token, is a token that could indicate a new start where all previous syntax errors are behind it

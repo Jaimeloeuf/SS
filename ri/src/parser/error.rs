@@ -1,6 +1,5 @@
-/**
- * Module for error handling of Parser errors.
- */
+//! Module for error handling of Parser errors.
+
 use crate::token::Token;
 use std;
 
@@ -11,12 +10,6 @@ pub enum ParsingError {
     UnexpectedTokenError(Token, &'static str),
 
     UnexpectedEofError(Token),
-
-    /*
-        Unused
-    */
-    // For if assignments are supported
-    // InvalidAssignmentError(Token),
 }
 
 impl std::fmt::Display for ParsingError {
@@ -30,9 +23,6 @@ impl std::fmt::Display for ParsingError {
             ParsingError::UnexpectedEofError(ref token) => {
                 write!(f, "[line {}] Unexpected end of input", token.line)
             }
-            // ParsingError::InvalidAssignmentError(ref token) => {
-            //     write!(f, "[line {}] Invalid assignment target", token.line)
-            // }
         }
     }
 }

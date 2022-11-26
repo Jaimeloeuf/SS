@@ -3,14 +3,16 @@ use super::scanner_struct::Scanner;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
+/// Implementation of all the utility traits.
+/// Seperated from the main trait implementations to make it more readable.
 impl Scanner {
+    /// Check if scanner has reached the end of the source file string.
     pub fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
 
-    // advance() is for input
-    // Consume next character from source and return it.
-    // Must be valid char else this will panic during the unwrap
+    /// Advance the scanner by consuming the next character from source and returning it.
+    /// Must be a valid character else this will panic during the unwrap.
     pub fn advance(&mut self) -> char {
         self.current += 1;
         // @todo Optimize this
@@ -23,7 +25,8 @@ impl Scanner {
         // self.source.push(current_character);
     }
 
-    // This is a conditional advance(). Only consumes current character if it's what we're looking for.
+    /// This is a conditional `advance()`, as it only consumes the current character if
+    /// it matches what is passed in.
     pub fn conditional_advance(&mut self, expected: char) -> bool {
         if self.is_at_end() || (self.source.chars().nth(self.current).unwrap() != expected) {
             false
@@ -34,8 +37,8 @@ impl Scanner {
         }
     }
 
-    // Get next character in source string without advancing index of current character
-    // Used to check lexical grammar
+    /// Peek is used to check lexical grammar while scanning, by getting the next character
+    /// in source string without advancing the current character index.
     pub fn peek(&self) -> char {
         if self.is_at_end() {
             '\0'
@@ -44,8 +47,8 @@ impl Scanner {
         }
     }
 
-    // Get next next character in source string without advancing index of current character
-    // Used to check lexical grammar
+    /// Peek next is used to check lexical grammar while scanning, by getting the next next
+    /// character in source string without advancing the current character index.
     pub fn peek_next(&self) -> char {
         if self.current + 1 >= self.source.len() {
             '\0'
@@ -54,8 +57,8 @@ impl Scanner {
         }
     }
 
-    // Simple wrapper around Token::new_none_literal to simplify none literal token creation
-    // As alot of places reuses this syntax with just different token types, used as a inlined function
+    /// Simple wrapper around Token::new_none_literal to simplify none literal token creation.
+    /// This is a inlined method as alot of places reuse this syntax only with different token types.
     #[inline]
     pub fn new_none_literal(&self, token_type: TokenType) -> Option<Token> {
         Some(Token::new_none_literal(token_type, self.line))

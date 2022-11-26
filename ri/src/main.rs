@@ -53,6 +53,7 @@ fn main() {
 }
 
 // @todo Should return a Result variant too! Can be a Runtime Variant?
+/// Function to compile and run a SimpleScript program file
 fn run_file(filename: &String) {
     // This reads the whole file into memory, however large the file may be.
     // Alternative is to use https://doc.rust-lang.org/1.39.0/std/io/struct.BufReader.html
