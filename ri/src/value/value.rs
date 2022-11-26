@@ -22,7 +22,7 @@ pub enum Value {
     // Why Rc<Callable> instead of Rc<Function>?
     // Because native functions simply impl Callable trait while, user functions are Function Structs that implement the Callable trait
     // We want to use a single interface for both function types, thus we use the common denominator between them, the Callable trait
-    Func(Rc<Callable>),
+    Func(Rc<dyn Callable>),
     // Class(Rc<LoxClass>),
     // Instance(Rc<RefCell<LoxInstance>>),
 }
@@ -70,7 +70,7 @@ impl Value {
 
     // Method to get callable if Value is a Callable value type, else errors out
     // Takes line number of the token, which will be used by the RuntimeError if this fails
-    pub fn callable(&self, line_number: usize) -> Result<Rc<Callable>, RuntimeError> {
+    pub fn callable(&self, line_number: usize) -> Result<Rc<dyn Callable>, RuntimeError> {
         // Only match callable value types, all else errors out
         match *self {
             // Why cant I borrow it out instead of clone?

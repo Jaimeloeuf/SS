@@ -3,7 +3,7 @@ name = "simple_script"
 description = "Compiler toolchain for SimpleScript"
 version = "0.1.0"
 authors = ["Jaime <jaimeloeuf@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 
 [dependencies]
