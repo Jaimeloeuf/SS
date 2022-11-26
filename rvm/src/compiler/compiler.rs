@@ -578,10 +578,10 @@ impl Compiler {
         // Runtime check on debug builds to ensure function parameter count is actually stored
         #[cfg(debug_assertions)]
         if functions_parameter_count.is_none() {
-            panic!(format!(
+            panic!(
                 "Compiler Debug Error: '{}' function parameter count not stored",
                 function_name
-            ));
+            );
         }
 
         // Ensure that the number of arguments match the number of parameters defined

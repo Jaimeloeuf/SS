@@ -16,7 +16,7 @@ impl Scanner {
         loop {
             let token = match scanner.scan_token() {
                 Ok(token) => token,
-                Err(err) => panic!(format!("{:?}", err)),
+                Err(err) => panic!("{:?}", err),
             };
 
             if token.line != line as usize {

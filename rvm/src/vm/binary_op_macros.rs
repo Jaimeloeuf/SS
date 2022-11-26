@@ -16,7 +16,7 @@ macro_rules! generic_binary_op {
         // Only run this check during debug builds, assuming correctly generated OpCodes will not have this issue
         #[cfg(debug_assertions)]
         if a.is_none() || b.is_none(){
-            panic!(format!("VM Debug Error: Stack missing values for {} operation '{}'",  $op_name, stringify!($operator)));
+            panic!("VM Debug Error: Stack missing values for {} operation '{}'",  $op_name, stringify!($operator));
         }
 
         match (a, b) {
