@@ -3,11 +3,9 @@ use crate::token::Token;
 
 #[derive(Debug)]
 pub enum TypeError {
-    /// @todo Conver to panic!
-    InternalError(&'static str),
-
-    /// Mismatched types error
-    TypeError(String),
+    /// Variant for type mismatch errors, where type found is different from type expected.
+    /// TypeChecker to construct a custom error message String and move ownership here.
+    WithDynamicMessage(String),
 
     /// Unused values:
     /// - Unused function call expressions that evaluates to a value
@@ -19,9 +17,7 @@ pub enum TypeError {
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            TypeError::InternalError(ref message) => write!(f, "{}", message),
-
-            TypeError::TypeError(ref message) => write!(f, "{}", message),
+            TypeError::WithDynamicMessage(ref message) => write!(f, "{}", message),
 
             TypeError::UnusedValue(type_of_unused_value) => write!(
                 f,

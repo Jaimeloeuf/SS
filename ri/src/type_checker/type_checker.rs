@@ -156,10 +156,12 @@ impl TypeChecker {
                 return Ok(function_type);
             }
             Stmt::If(ref condition, ref then_branch, ref else_branch, _) => {
-                if self.check_expression(condition)? != Type::Bool {
-                    return Err(TypeError::InternalError(
-                        "TESTING - Conditions of If stmts must be bool",
-                    ));
+                let type_found = self.check_expression(condition)?;
+                if type_found != Type::Bool {
+                    return Err(TypeError::WithDynamicMessage(format!(
+                        "Conditions of If statements must be bool. Found {}",
+                        type_found
+                    )));
                 }
 
                 // Assuming most if/else blocks either have return stmts within both bodies or none.
@@ -190,9 +192,11 @@ impl TypeChecker {
                         // Loop only useful if there is more than one if/else, i.e if there are any 'else-if' blocks
                         for return_type in &return_types {
                             if return_type != &return_types[0] {
-                                return Err(TypeError::InternalError(
-                                    "TESTING - Function must have the same return type throughout the function body"
-                                ));
+                                return Err(TypeError::WithDynamicMessage(format!(
+                                    "Function must have the same return type throughout the function body. Expected {}, found {}",
+                                    &return_types[0],
+                                    return_type
+                                )));
                             }
                         }
                         // If all return types are the same, then move out and use first type as function return type
@@ -220,11 +224,10 @@ impl TypeChecker {
                 return match self.check_expression(condition)? {
                     // If there are any return statements within loop, the type will be bubbled up.
                     Type::Bool => self.check_statement(body),
-
-                    // Only Bools can be used for loop condition
-                    unexpected_type => Err(TypeError::InternalError(
-                        "Expect boolean condition for While statements, found 'unexpected_type'",
-                    )),
+                    unexpected_type => Err(TypeError::WithDynamicMessage(format!(
+                        "Conditions for While statement must be bool. Found {}",
+                        unexpected_type
+                    ))),
                 };
             }
         };
@@ -290,9 +293,10 @@ impl TypeChecker {
                             if l_type == Type::Number {
                                 Type::Number
                             } else {
-                                return Err(TypeError::InternalError(
-                                    "TESTING - Binary - Expect number for '&operator.token_type'",
-                                ));
+                                return Err(TypeError::WithDynamicMessage(format!(
+                                    "Operands for Arithmetic expressions must be Numbers. Found {} and {}",
+                                    l_type, r_type
+                                )));
                             }
                         }
 
@@ -305,9 +309,10 @@ impl TypeChecker {
                             if l_type == Type::Number {
                                 Type::Bool
                             } else {
-                                return Err(TypeError::InternalError(
-                                    "TESTING - Binary - Expect number for '&operator.token_type'",
-                                ));
+                                return Err(TypeError::WithDynamicMessage(format!(
+                                    "Operands for Comparison expressions must be Numbers. Found {} and {}",
+                                    l_type, r_type
+                                )));
                             }
                         }
 
@@ -316,10 +321,10 @@ impl TypeChecker {
                         }
                     }
                 } else {
-                    // @todo Fix error msg, add a, 'found type {l_type} and {r_type}'
-                    return Err(TypeError::InternalError(
-                        "TESTING - Binary - operands of binary expressions must have the SAME type",
-                    ));
+                    return Err(TypeError::WithDynamicMessage(format!(
+                        "Operands of binary expressions must have the SAME type. Found {} and {}",
+                        l_type, r_type
+                    )));
                 }
             }
 
@@ -360,18 +365,20 @@ impl TypeChecker {
                         }
 
                         value_type => {
-                            // @todo fix error and show the actual value type used
-                            return Err(TypeError::InternalError(
-                                "TESTING - cannot call 'value_type' as a function",
-                            ));
+                            return Err(TypeError::WithDynamicMessage(format!(
+                                "Cannot call {} as a function",
+                                value_type
+                            )));
                         }
                     };
 
                 // Ensure that the number of arguments matches the number of parameters defined
                 if arguments.len() != number_of_parameters {
-                    return Err(TypeError::InternalError(
-                        "TESTING - Call - different numbers of arguments",
-                    ));
+                    return Err(TypeError::WithDynamicMessage(format!(
+                        "Number of arguments must match number of parameters defined. Expected {}, found {}",
+                        number_of_parameters,
+                        arguments.len()
+                    )));
                 }
 
                 // Create a fixed length vec of arg types and get the arg types by resolving the args individually
@@ -419,8 +426,13 @@ impl TypeChecker {
 
                 // Resolve for elements[1..] of the array, where all elements are expressions
                 for element in elements.into_iter().skip(1) {
-                    if self.check_expression(element)? != array_element_type {
-                        return Err(TypeError::InternalError("TESTING - Array"));
+                    let type_found = self.check_expression(element)?;
+                    if type_found != array_element_type {
+                        return Err(TypeError::WithDynamicMessage(format!(
+                            "All elements in an Array must be the same type, where the expected type is the type of the first element. Expected {} but found {}",
+                            array_element_type,
+                            type_found
+                        )));
                     }
                 }
 
@@ -428,10 +440,13 @@ impl TypeChecker {
             }
             Expr::ArrayAccess(ref array_identifier_expr, ref index_expression) => {
                 // @todo Ensure that the indexing expression is a unsigned integer, not just a number, to remove the runtime check
-                if self.check_expression(index_expression)? != Type::Number {
-                    return Err(TypeError::InternalError(
-                        "TESTING - index expression must be uint",
-                    ));
+                // @todo Or perhaps allow negative number where it just means indexing backwards
+                let type_found = self.check_expression(index_expression)?;
+                if type_found != Type::Number {
+                    return Err(TypeError::WithDynamicMessage(format!(
+                        "Array index expression must be a Number, found {}",
+                        type_found
+                    )));
                 }
 
                 // If this resolves to a valid Type::Array(..) type, then extract the 'array_element_type'
@@ -439,10 +454,10 @@ impl TypeChecker {
                     Type::Array(array_element_type) => *array_element_type,
 
                     value_type => {
-                        // @todo fix error and show the actual value type used
-                        return Err(TypeError::InternalError(
-                            "TESTING - cannot access 'value_type' as an array",
-                        ));
+                        return Err(TypeError::WithDynamicMessage(format!(
+                            "Cannot use {} as an array",
+                            value_type
+                        )));
                     }
                 }
             }
@@ -453,10 +468,11 @@ impl TypeChecker {
                 // Both operand types in Logical expressions must be Type::Bool and always evaluate to a Boolean value
                 match (l_type, r_type) {
                     (Type::Bool, Type::Bool) => Type::Bool,
-                    _ => {
-                        return Err(TypeError::InternalError(
-                            "TESTING - Logical expressions must be bool",
-                        ))
+                    (type_1, type_2) => {
+                        return Err(TypeError::WithDynamicMessage(format!(
+                            "Both operands of a logical expression must be bool. Found {} and {}",
+                            type_1, type_2
+                        )));
                     }
                 }
             }
@@ -468,18 +484,20 @@ impl TypeChecker {
                         if expr_type == Type::Bool {
                             Type::Bool
                         } else {
-                            return Err(TypeError::InternalError(
-                                "TESTING - Unary NOT expressions must be bool",
-                            ));
+                            return Err(TypeError::WithDynamicMessage(format!(
+                                "Unary NOT expression must be bool. Found {}",
+                                expr_type
+                            )));
                         }
                     }
                     TokenType::Minus => {
                         if expr_type == Type::Number {
                             Type::Number
                         } else {
-                            return Err(TypeError::InternalError(
-                                "TESTING - Unary NEGATE expressions must be Number",
-                            ));
+                            return Err(TypeError::WithDynamicMessage(format!(
+                                "Unary NEGATE expression must be Number. Found {}",
+                                expr_type
+                            )));
                         }
                     }
                     invalid_token_type => panic!(
@@ -602,9 +620,11 @@ impl TypeChecker {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
                     if return_type != &return_types[0] {
-                        return Err(TypeError::InternalError(
-                            "TESTING - Function must have the same return type throughout the function body"
-                        ));
+                        return Err(TypeError::WithDynamicMessage(format!(
+                            "Function must have the same return type throughout the function body. Expected {}, found {}",
+                            &return_types[0],
+                            return_type
+                        )));
                     }
                 }
 
