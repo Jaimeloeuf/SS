@@ -185,9 +185,12 @@ impl TypeChecker {
                 // Type check return values, and bubble them up if any
                 if !return_types.is_empty() {
                     return Ok(if return_types.len() == 1 {
-                        // If there is only a single return, use the type immediately without further checks
-                        // Move out from vec since vec is no longer needed
-                        return_types.remove(0)
+                        // If there is only a single return, use the type immediately without further checks.
+                        // Pop and move Type out from vec since vec is no longer needed.
+                        //
+                        // This can be unwrapped directly since return_types vec has already been checked to be not empty,
+                        // so it is safe to assume the pop will always safely return a Some(Type) variant instead of None.
+                        return_types.pop().unwrap()
                     } else {
                         // Loop only useful if there is more than one if/else, i.e if there are any 'else-if' blocks
                         for return_type in &return_types {
@@ -199,8 +202,12 @@ impl TypeChecker {
                                 )));
                             }
                         }
-                        // If all return types are the same, then move out and use first type as function return type
-                        return_types.remove(0)
+
+                        // If all return types are the same, then pop and move out the last type variant as function return type
+                        //
+                        // This can be unwrapped directly since return_types vec has already been checked to be not empty,
+                        // so it is safe to assume the pop will always safely return a Some(Type) variant instead of None.
+                        return_types.pop().unwrap()
                     });
                 }
             }
@@ -559,6 +566,7 @@ impl TypeChecker {
             Some(mut argument_types) => {
                 let mut scope = self.types.borrow_mut();
 
+                // @todo Optimize this loop and change use of remove(0) to pop()
                 for param_token in param_tokens {
                     // scope.insert(
                     scope.define(
@@ -613,9 +621,12 @@ impl TypeChecker {
             if return_types.is_empty() {
                 Type::None
             } else if return_types.len() == 1 {
-                // If there is only a single return, use the type immediately without further checks
-                // Move out from vec since vec is no longer needed
-                return_types.remove(0)
+                // If there is only a single return, use the type immediately without further checks.
+                // Pop and move Type out from vec since vec is no longer needed.
+                //
+                // This can be unwrapped directly since return_types vec has already been checked to be not empty,
+                // so it is safe to assume the pop will always safely return a Some(Type) variant instead of None.
+                return_types.pop().unwrap()
             } else {
                 // @todo Optimize by skipping the first element, otherwise it will be compared with itself
                 for return_type in &return_types {
@@ -628,8 +639,11 @@ impl TypeChecker {
                     }
                 }
 
-                // If all return types are the same, then move out first type as function return type
-                return_types.remove(0)
+                // If all return types are the same, then pop and move out the last type variant as function return type
+                //
+                // This can be unwrapped directly since return_types vec has already been checked to be not empty,
+                // so it is safe to assume the pop will always safely return a Some(Type) variant instead of None.
+                return_types.pop().unwrap()
             },
         )
     }

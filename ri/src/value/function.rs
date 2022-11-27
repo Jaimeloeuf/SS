@@ -90,7 +90,7 @@ impl Callable for Function {
         // Because closure scope values are "fixed" on definition and not execution.
         let mut environment = Environment::new(Some(Rc::clone(&self.closure)));
 
-        // @todo Optimize the loop
+        // @todo Optimize the loop and change .remove(0) to pop()
         // Insert all the arguments into the new environment/scope of the function
         for (index, token) in parameters.iter().enumerate() {
             if let Some(ref parameter_name) = token.lexeme {
