@@ -64,8 +64,9 @@ impl Token {
         }
     }
 
-    // Only used for debugging token stream from scanner
+    // Only used for debugging token stream from scanner in debug builds
     #[allow(dead_code)]
+    #[cfg(debug_assertions)]
     pub fn to_debug_string(&self) -> String {
         if self.literal.is_none() {
             format!("[Line {}] {:?}", self.line, self.token_type)
