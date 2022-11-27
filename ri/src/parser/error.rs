@@ -1,19 +1,21 @@
 //! Module for error handling of Parser errors.
 
 use crate::token::Token;
-use std;
+use std::fmt;
 
 // @todo Specify lifetime for Tokens instead of taking ownership, which requires .clone() of token
 #[derive(Debug)]
 pub enum ParsingError {
-    /// Static string message are hardcoded parser error messages
+    /// UnexpectedTokenError takes static str compiler error messages as these are hardcoded
+    /// in the parser and do not require any dynamic String message to be generated.
     UnexpectedTokenError(Token, &'static str),
 
+    /// Only used if somehow there was an unexpected EOF token.
     UnexpectedEofError(Token),
 }
 
-impl std::fmt::Display for ParsingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for ParsingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParsingError::UnexpectedTokenError(ref token, message) => write!(
                 f,

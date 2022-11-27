@@ -581,8 +581,7 @@ impl<'lifetime_of_tokens> Parser<'lifetime_of_tokens> {
             // @todo Use a better token then the closing ]
             Ok(Expr::Array(self.previous().clone(), elements))
         } else if self.is_at_end() {
-            // Copied over from rlox
-            // Not sure if this case will ever happen but just an extra safeguard for Unexpected Eof tokens
+            // @todo This is copied over from rlox, but not sure if this case will ever happen, but just an extra safeguard for Unexpected Eof tokens
             Err(ParsingError::UnexpectedEofError(self.current().clone()))
         } else {
             // @todo Should the token be consumed here so that it would not have a issue doing error synchronization?

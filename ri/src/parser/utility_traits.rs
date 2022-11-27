@@ -107,7 +107,6 @@ impl<'lifetime_of_tokens> Parser<'lifetime_of_tokens> {
             Ok(self.get_current_token_and_advance())
         } else {
             Err(ParsingError::UnexpectedTokenError(
-                // @todo change parsing error to take ref instead?
                 self.current().clone(),
                 message,
             ))
