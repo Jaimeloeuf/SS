@@ -8,9 +8,12 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 /// Implementation of all the main methods used for parsing the vec of tokens into a vec of statements.
-impl Parser {
-    /// Consumes a token vector (takes ownership) to produce a statements vector (moved out)
-    pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
+impl<'lifetime_of_tokens> Parser<'lifetime_of_tokens> {
+    /// Produce an AST (vector of statements) by parsing a vector of Tokens.
+    ///
+    /// The tokens are passed in as an immutable reference to the Vector so that the tokens can be reused
+    /// by other parts of the compiler like the resolver/type-checker without needing to clone any Tokens.
+    pub fn parse(tokens: &'lifetime_of_tokens Vec<Token>) -> Result<Vec<Stmt>, Vec<ParsingError>> {
         let mut parser = Parser {
             tokens,
             current_index: 0,
@@ -53,8 +56,17 @@ impl Parser {
         // Pass control to statement method to continue parsing for statment or expression
         // Using advance_and_call to call advance method before calling method to eat the matched token
         match &self.current().token_type {
-            TokenType::Const => self.advance_and_call(Parser::const_declaration),
-            TokenType::Function => self.advance_and_call(Parser::function_declaration),
+            // The `self.advance_and_call` indirection method is not used for now due to lifetime issues
+            // TokenType::Const => self.advance_and_call(Parser::const_declaration),
+            // TokenType::Function => self.advance_and_call(Parser::function_declaration),
+            TokenType::Const => {
+                self.advance();
+                self.const_declaration()
+            }
+            TokenType::Function => {
+                self.advance();
+                self.function_declaration()
+            }
             _ => self.statement(),
         }
     }
@@ -75,6 +87,7 @@ impl Parser {
             // } else {
             //     Expr::Literal(Literal::Null)
             // };
+
             let initial_value = self.expression()?;
             self.consume(TokenType::Semicolon, "Expect ';' after const declaration")?;
             Ok(Stmt::Const(name, initial_value))
@@ -122,13 +135,39 @@ impl Parser {
         // Pass control to expression_statement method to continue parsing for an expression
         // Using advance_and_call to call advance method before calling method to eat the matched token
         match &self.current().token_type {
-            TokenType::Print => self.advance_and_call(Parser::print_statement),
-            TokenType::LeftBrace => self.advance_and_call(Parser::block_statement),
-            TokenType::If => self.advance_and_call(Parser::if_statement),
-            TokenType::While => self.advance_and_call(Parser::while_statement),
-            // TokenType::For => self.advance_and_call(Parser::for_statement),
-            TokenType::Return => self.advance_and_call(Parser::return_statement),
-            TokenType::Ignore => self.advance_and_call(Parser::ignore_statement),
+            // The `self.advance_and_call` indirection method is not used for now due to lifetime issues
+            // TokenType::Print => self.advance_and_call(Parser::print_statement),
+            // TokenType::LeftBrace => self.advance_and_call(Parser::block_statement),
+            // TokenType::If => self.advance_and_call(Parser::if_statement),
+            // TokenType::While => self.advance_and_call(Parser::while_statement),
+            // // TokenType::For => self.advance_and_call(Parser::for_statement),
+            // TokenType::Return => self.advance_and_call(Parser::return_statement),
+            // TokenType::Ignore => self.advance_and_call(Parser::ignore_statement),
+            TokenType::Print => {
+                self.advance();
+                self.print_statement()
+            }
+            TokenType::LeftBrace => {
+                self.advance();
+                self.block_statement()
+            }
+            TokenType::If => {
+                self.advance();
+                self.if_statement()
+            }
+            TokenType::While => {
+                self.advance();
+                self.while_statement()
+            }
+            // TokenType::For => {self.advance();self.for_statement()}
+            TokenType::Return => {
+                self.advance();
+                self.return_statement()
+            }
+            TokenType::Ignore => {
+                self.advance();
+                self.ignore_statement()
+            }
             _ => self.expression_statement(),
         }
     }

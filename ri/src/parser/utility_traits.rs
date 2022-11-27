@@ -6,7 +6,7 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 /// Infrastructure/Utility methods on the Parser struct
-impl Parser {
+impl<'lifetime_of_tokens> Parser<'lifetime_of_tokens> {
     /// Get a immutable reference to the current token without modifying the parser index.
     pub fn current(&self) -> &Token {
         // It is safe to unwrap here as before every call to this method, the parsing
@@ -114,10 +114,17 @@ impl Parser {
         }
     }
 
-    /// Indirection for all declaration and statement methods, to call advance method first
+    /// Indirection for all declaration and statement methods, to call advance method first.
+    /// This is a inlined method used to make the usage of this more readable.
+    ///
+    /// @todo
+    /// Currently unused due to lifetime issues in Paser method call sites.
+    /// Temporarily manually calling advance and the specific parsing method directly at call sites.
+    #[allow(dead_code)]
+    #[inline]
     pub fn advance_and_call(
-        &mut self,
-        method: fn(&mut Parser) -> Result<Stmt, ParsingError>,
+        &'lifetime_of_tokens mut self,
+        method: fn(&'lifetime_of_tokens mut Parser) -> Result<Stmt, ParsingError>,
     ) -> Result<Stmt, ParsingError> {
         self.advance();
         method(self)

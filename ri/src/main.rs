@@ -62,6 +62,16 @@ fn run_file(filename: &String) {
     /* Caching mechanism */
     // hash::calculate_hash(&source);
 
+    // Use Scanner to create a Vector of tokens, which will have a lifetime of this entire function.
+    // The lifetime covers all calls to the other compiler (parser/resolver/typechecker/interpreter) components,
+    // so that all the other components can access the references to the Tokens without having to constantly clone it.
+    //
+    // References to the tokens will be held by different structs such as Expr/Stmt within the AST parsed by the parser,
+    // and other components will be able to reference these tokens when they get the AST. Which is why the lifetime of
+    // this token vector must outlive the AST's lifetime.
+    //
+    // The other components' structs needs to hold ref to tokens so that they can be used for purposes like getting
+    // the lexeme, debugging and error message generation for the source code line numbers use cases.
     let tokens = match Scanner::scan_tokens(source) {
         Ok(tokens) => tokens,
         Err(e) => {
@@ -82,7 +92,7 @@ fn run_file(filename: &String) {
     };
 
     // Parse tokens for AST
-    let mut ast = match Parser::parse(tokens) {
+    let mut ast = match Parser::parse(&tokens) {
         Ok(ast) => ast,
         Err(e) => {
             eprintln!("-------- Parsing SYNTAX ERROR --------");
